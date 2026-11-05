@@ -1,5 +1,7 @@
 # 篤魚蛋 Poke Fishballs
 
+**Mini games to poke the most fishballs in one minute.**
+
 A one-minute browser game about a street-stall favourite: curry fishballs (咖喱魚蛋) on a bamboo stick. You run the stall. Poke as many fishballs as you can, fill each stick with six, and serve the queue before time runs out.
 
 The game was inspired by the creator's childhood memory of buying curry fishballs after school in Macau.
