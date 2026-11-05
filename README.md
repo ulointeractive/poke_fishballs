@@ -46,7 +46,7 @@ Works with a mouse or a touch screen. The dots next to **呢串** show how many 
 
 ### The stick
 
-- Every poke must go **down, then up, then down again**. You can't poke a second time without lifting the stick first.
+- **Every touch is one poke.** Even a very quick tap counts: the stick always finishes going down into the curry. Touches a little outside a fishball still count, so it works well with fingers on a phone.
 - **Where you hit the item is where it sits on the stick.** Hit a fishball left of centre and it sits off to the side, so the stick looks crooked.
 - A stick holds **6 items**. Once it's full, lifting it hands it over automatically.
 
@@ -125,7 +125,7 @@ In 挑戰, fishballs are always topped up first, so the pot always has at least 
 
 - Your score never goes below 0.
 
-The result screen shows your score, sticks served, fishballs poked, centre hits, slips, wrong items (挑戰), your personal best, and where this game ranks among your games on this device (e.g. 呢部機第 2 名).
+The result screen shows your score, sticks served, fishballs poked, centre hits, slips, wrong items (挑戰), and your personal best.
 
 ---
 
@@ -167,7 +167,6 @@ There's no leaderboard. **我嘅紀錄 / My games** (top-right button, or on the
 - Summary: games played, best score and average score for that level.
 - Each game shows its rank, then its **score**, with its rank title (e.g. 魚蛋師傅) at the top right. Underneath, in tiny text: how many fishballs and sticks on the left, and the date and time in the bottom-right corner.
 - The game just played is highlighted.
-- The result screen shows the new game's rank, e.g. 呢部機第 2 名 / #2 on this device.
 - To compare with friends, share the result text or image (see below).
 
 ### Where records are kept
@@ -225,8 +224,8 @@ The **speaker** button turns all sound on or off; it shows a crossed-out speaker
 
 ## Language
 
-- The **EN / 粵** button, at the top right of the instructions panel, switches the whole game between Cantonese (Traditional Chinese) and English: every screen, button, pop-up message, customer line, rank title, share message and result image.
-- On a player's first visit, the game picks Cantonese if their browser language is Chinese, and English otherwise. After that it remembers the player's choice on that device.
+- The **EN / 粵** button, at the top right of every pop-up (instructions, pause, result, 我嘅紀錄), switches the whole game between Cantonese (Traditional Chinese) and English: every screen, button, pop-up message, customer line, rank title, share message and result image.
+- The game always starts in Cantonese. If the player switches to English, it remembers that choice on that device.
 - All text lives in `js/i18n.js`. To change a word, edit it there.
 
 ---
@@ -251,7 +250,7 @@ Works with touch, mouse or pen. On a keyboard, Esc or P pauses.
 - **Tablets and desktops:** the game sits in a centred column up to 760 px wide.
 - The pot, items and customers redraw to fit whenever the screen size or orientation changes.
 
-Tested by emulating these screens in Chromium: iPhone SE, iPhone 15 Pro Max, iPhone 15 sideways, Pixel 7 upright and sideways, Galaxy S9+, iPad Pro 11 upright and sideways, desktop at 1440×900 and 1024×640, and a 320×568 phone. None scroll sideways or up and down, and the start screen fits on all of them.
+Tested by emulating these screens in Chromium: iPhone SE, iPhone 15 Pro Max, iPhone 15 sideways, Pixel 7 upright and sideways, Galaxy S9+, iPad Pro 11 upright and sideways, desktop at 1440×900 and 1024×640, and a 320×568 phone. None scroll sideways or up and down. Pop-ups cover the whole screen, and one that is too tall is shrunk to fit instead of scrolling (only the list of games in 我嘅紀錄 scrolls inside its card).
 
 Not yet tested on real Safari, the browser engine used on every iPhone and iPad. A real-device check before launch is recommended.
 

@@ -54,7 +54,7 @@
       <div class="card">
         <div class="card-top">
           <h1 data-i18n="intro.title">篤魚蛋</h1>
-          <button class="chip lang" id="lang" type="button">EN</button>
+          <button class="chip lang" type="button">EN</button>
         </div>
         <p data-i18n="intro.lead"></p>
         <ol class="steps">
@@ -104,7 +104,10 @@
 
     <div class="overlay" id="result" hidden>
       <div class="card">
-        <h2 id="rank"></h2>
+        <div class="card-top">
+          <h2 id="rank"></h2>
+          <button class="chip lang" type="button">EN</button>
+        </div>
         <p class="note" id="r-level"></p>
         <span class="flag" id="r-new" hidden data-i18n="result.new"></span>
         <div class="big"><b id="r-score">0</b><span data-i18n="unit.pts"></span></div>
@@ -115,7 +118,6 @@
           <dt data-i18n="r.slip"></dt><dd id="r-slip"></dd>
           <dt id="r-wrong-l" data-i18n="r.wrong"></dt><dd id="r-wrong"></dd>
           <dt data-i18n="r.best"></dt><dd id="r-best"></dd>
-          <dt data-i18n="r.place"></dt><dd id="r-place">—</dd>
         </dl>
         <p class="note" id="r-save"></p>
         <div class="row">
@@ -134,7 +136,10 @@
 
     <div class="overlay" id="paused" hidden>
       <div class="card">
-        <h2 data-i18n="pause.title"></h2>
+        <div class="card-top">
+          <h2 data-i18n="pause.title"></h2>
+          <button class="chip lang" type="button">EN</button>
+        </div>
         <p class="note" id="pause-info"></p>
         <button class="btn" id="resume" type="button" data-i18n="btn.resume"></button>
         <div class="row">
@@ -145,12 +150,15 @@
     </div>
 
     <div class="overlay" id="board" hidden>
-      <div class="card">
+      <div class="card scroll">
         <div class="card-top">
           <h2 data-i18n="rec.title"></h2>
+          <span class="top-tools">
+          <button class="chip lang" type="button">EN</button>
           <button class="chip icon" id="close-board" type="button" data-i18n-aria="btn.close">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
           </button>
+          </span>
         </div>
         <div class="seg" role="group" data-i18n-aria="lb.levelAria">
           <button id="rec-normal" type="button" aria-pressed="true" data-i18n="level.normal"></button>

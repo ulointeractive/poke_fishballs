@@ -14,11 +14,14 @@ function resolvePoke() {
   if (stick.balls.length >= STICK_CAP) return;
   ripples.push({ x: fx, y: fy, t: 0 });
 
-  let hit = null, hs = null;
+  // fingers are less exact than a mouse: a touch a little outside a fishball still counts
+  // (sideways it becomes a slip, see below), and the closest item wins
+  const reach = L.r * 1.25;
+  let hit = null, hs = null, hd = Infinity;
   for (const b of balls) {
     if (b.drop > 0.05) continue;
-    const s = ballScreen(b), dx = tx - s.sx, dy = ty - s.sy;
-    if (dx * dx + dy * dy < L.r * L.r && (!hit || s.sy > hs.sy)) { hit = b; hs = s; }
+    const s = ballScreen(b), dx = tx - s.sx, dy = ty - s.sy, d = dx * dx + dy * dy;
+    if (d < reach * reach && d < hd) { hit = b; hs = s; hd = d; }
   }
   if (!hit) {
     impulse(fx, fy, L.r * 4, L.R * 0.55);
@@ -28,7 +31,7 @@ function resolvePoke() {
     return;
   }
   const off = (tx - hs.sx) / L.r;
-  if (Math.abs(off) > 0.72) {
+  if (Math.abs(off) > 0.8) {
     hit.vx += -Math.sign(off) * L.R * 1.1;
     impulse(fx, fy, L.r * 3.5, L.R * 0.6);
     slips++;

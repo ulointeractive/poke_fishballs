@@ -6,11 +6,11 @@ function update(dt) {
     timeLeft -= dt;
     if (timeLeft <= 0) { timeLeft = 0; endGame(); }
   }
-  // a new poke has to start from a lifted stick: down -> up -> down
-  if (stick.needLift && stick.depth < 0.35) stick.needLift = false;
-  const plunging = stick.pressed && !stick.needLift;
-  stick.depth += ((plunging ? 1 : 0) - stick.depth) * Math.min(1, dt * (plunging ? 22 : 14));
-  if (plunging && !stick.resolved && stick.depth > 0.85) { stick.resolved = true; if (state === 'play') resolvePoke(); }
+  // every touch is one poke: once a finger goes down the stick finishes its plunge, even if the
+  // finger is lifted again straight away (quick taps on phones), and a held finger keeps it down
+  const plunging = stick.poking || stick.pressed;
+  stick.depth += ((plunging ? 1 : 0) - stick.depth) * Math.min(1, dt * (plunging ? 40 : 14));
+  if (stick.poking && stick.depth > 0.85) finishPoke();
 
   stick.balls.forEach((b, i, a) => { b.rel += (slotRel(i, a.length) - b.rel) * Math.min(1, dt * 14); });
 
@@ -93,20 +93,29 @@ function setPos(e) {
 }
 cv.addEventListener('pointermove', setPos);
 cv.addEventListener('contextmenu', (e) => e.preventDefault());   // no long-press menu on Android
+// the stick has reached the curry: work out what this poke hit
+function finishPoke() {
+  stick.poking = false; stick.resolved = true;
+  if (state !== 'play') return;
+  resolvePoke();
+  // a quick tap may already be over by now: hand over a full stick straight away
+  if (!stick.pressed && stick.balls.length >= STICK_CAP) handOut();
+}
 cv.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   // phones can suspend sound after a call or app switch; wake it on the next touch
   if (ac && ac.state !== 'running') { try { ac.resume(); } catch (err) {} }
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  if (state !== 'play') { setPos(e); return; }
+  // a very fast second tap: settle the first poke where it was aimed before moving the stick
+  if (stick.poking) finishPoke();
   setPos(e);
-  if (state !== 'play' || stick.pressed) return;
-  stick.pressed = true; stick.resolved = false;
-  if (stick.depth >= 0.35) stick.needLift = true;
+  stick.pressed = true; stick.poking = true; stick.resolved = false;
 });
 function release() {
   if (!stick.pressed) return;
   stick.pressed = false;
-  if (state === 'play' && stick.balls.length >= STICK_CAP) handOut();
+  if (state === 'play' && !stick.poking && stick.balls.length >= STICK_CAP) handOut();
   updateHUD();
 }
 cv.addEventListener('pointerup', release);
@@ -120,7 +129,7 @@ function setChips(enabled) {
 function pauseGame() {
   if (state !== 'play') return;
   state = 'paused';
-  stick.pressed = false; stick.needLift = false;
+  stick.pressed = false; stick.poking = false;
   showPauseInfo();
   $('paused').hidden = false;
   updatePauseButton();
@@ -154,7 +163,7 @@ function startGame() {
   if (ac && ac.state === 'suspended') ac.resume();
   state = 'play';
   timeLeft = GAME_TIME; score = 0; sticks = 0; served = 0; perfects = 0; slips = 0; wrong = 0;
-  stick.balls = []; stick.pressed = false; stick.needLift = false;
+  stick.balls = []; stick.pressed = false; stick.poking = false;
   flyers = []; pops = []; bubbles = [];
   lastHitT = tNow; lastNagT = {};
   customers.forEach((c) => { c.bubbleT = 0; });
@@ -179,7 +188,6 @@ function fillResult(run, res) {
   $('r-wrong').hidden = $('r-wrong-l').hidden = lv !== 'hard';
   if (!res) return;
   $('r-best').textContent = t('n.pts', Math.max(run.score, Store.localBest(lv)));
-  $('r-place').textContent = t('r.rank', Store.place(run));
   $('r-save').textContent = t('r.privacy');
 }
 function showPauseInfo() {
@@ -198,7 +206,7 @@ function rankFor(n, lv) {
 }
 async function endGame() {
   state = 'over';
-  stick.pressed = false;
+  stick.pressed = false; stick.poking = false;
   setChips(true);
   addPop(t('pop.timeUp'), W / 2, L.cy - L.R * 0.2, '#ffe27a', 30);
   const run = { level: playLevel, score, sticks, served, perfects, slips, wrong, at: Date.now() };

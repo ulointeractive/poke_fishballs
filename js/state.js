@@ -42,5 +42,5 @@ let bg = null, sprites = null;
 let lastRun = null;
 const stick = {
   balls: [], depth: 0, pressed: false, resolved: false, x: 0, y: 0, hasPointer: false,
-  needLift: false,   // the stick must come back up before it can poke again
+  poking: false,     // a touch started a poke that hasn't reached the curry yet
 };
