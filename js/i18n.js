@@ -43,7 +43,7 @@ const STRINGS = {
     'lb.levelAria': '關卡',
    
     'h.games': '玩咗幾多局',
-    'btn.back': '返去', 'btn.cancel': '取消',
+    'btn.close': '關閉', 'btn.cancel': '取消',
     'rec.title': '我嘅紀錄', 'h.best': '最高', 'h.avg': '平均',
     'rec.note': '紀錄只儲存喺呢部機，最多保留最近 50 局。',
     'rec.delete': '刪除所有紀錄', 'rec.deleteAsk': '確定？呢部機所有紀錄都會刪除，冇得復原。',
@@ -114,7 +114,7 @@ const STRINGS = {
     'lb.levelAria': 'Level',
    
     'h.games': 'Games played',
-    'btn.back': 'Back', 'btn.cancel': 'Cancel',
+    'btn.close': 'Close', 'btn.cancel': 'Cancel',
     'rec.title': 'My games', 'h.best': 'Best', 'h.avg': 'Average',
     'rec.note': 'Saved on this device only, up to the last 50 games.',
     'rec.delete': 'Delete all records', 'rec.deleteAsk': "Sure? All your games on this device will be deleted. This can't be undone.",

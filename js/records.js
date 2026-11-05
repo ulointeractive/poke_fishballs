@@ -117,3 +117,4 @@ $('lang').addEventListener('click', () => setLang(lang === 'zh' ? 'en' : 'zh'));
 langListeners.push(renderBoards);
 $('r-menu').addEventListener('click', () => { $('result').hidden = true; $('intro').hidden = false; setLevel(playLevel); });
 $('close-board').addEventListener('click', () => { $('board').hidden = true; });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('board').hidden) $('board').hidden = true; });

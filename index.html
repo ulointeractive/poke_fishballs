@@ -146,7 +146,12 @@
 
     <div class="overlay" id="board" hidden>
       <div class="card">
-        <h2 data-i18n="rec.title"></h2>
+        <div class="card-top">
+          <h2 data-i18n="rec.title"></h2>
+          <button class="chip icon" id="close-board" type="button" data-i18n-aria="btn.close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+          </button>
+        </div>
         <div class="seg" role="group" data-i18n-aria="lb.levelAria">
           <button id="rec-normal" type="button" aria-pressed="true" data-i18n="level.normal"></button>
           <button id="rec-hard" type="button" aria-pressed="false" data-i18n="level.hard"></button>
@@ -168,7 +173,6 @@
             </div>
           </div>
         </div>
-        <button class="btn ghost" id="close-board" type="button" data-i18n="btn.back"></button>
       </div>
     </div>
   </main>
