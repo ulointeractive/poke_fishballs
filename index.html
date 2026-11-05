@@ -137,7 +137,7 @@ body {
   border: 3px solid #8d9593;
   background: #b9bfbd;
 }
-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: none; display: block; }
+#pot { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: none; display: block; }
 .overlay {
   position: absolute; inset: 0;
   display: grid; place-items: center;
@@ -256,6 +256,28 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
 .legend svg { width: 100%; max-width: 300px; height: auto; align-self: center; }
 .legend-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px; text-align: center; color: var(--muted); line-height: 1.35; }
 .legend-cols b { display: block; font-size: 14px; color: var(--ink); }
+.levels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.level {
+  font: inherit; text-align: left; cursor: pointer;
+  background: #fff; color: var(--ink);
+  border: 2px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.level b { font-size: 17px; }
+.level span { font-size: 12px; color: var(--muted); }
+.level[aria-checked="true"] { border-color: var(--sign); background: #fff5f2; }
+.level[aria-checked="true"] b { color: var(--sign); }
+.level:focus-visible, .seg button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.legend canvas { width: 100%; max-width: 320px; height: 64px; align-self: center; display: block; }
+.legend-cols.four { grid-template-columns: repeat(4, 1fr); }
+.seg { display: flex; gap: 6px; margin-bottom: 10px; }
+.seg button {
+  font: inherit; font-size: 14px; font-weight: 700; flex: 1; cursor: pointer;
+  border: 2px solid var(--sign); border-radius: 999px; padding: 5px 8px;
+  background: transparent; color: var(--sign);
+}
+.seg button[aria-pressed="true"] { background: var(--sign); color: #fff; }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; color: #fff; background: var(--sign-deep); border-radius: 3px; padding: 0 5px; margin-right: 4px; vertical-align: 1px; }
 .toast { font-size: 13px; color: #1f6b3a; min-height: 1em; }
 @media (max-width: 420px) {
   .hud { gap: 10px; }
@@ -298,6 +320,18 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
           <li>放手提起竹籤，再篤下一粒<small>Release to lift, then poke the next one</small></li>
           <li>一串六粒，自動交俾客人<small>Six per stick, handed to the customer automatically</small></li>
         </ol>
+        <div class="levels" role="radiogroup" aria-label="揀關卡">
+          <button class="level" id="lv-normal" role="radio" aria-checked="true" type="button"><b>普通</b><span>成煲都係魚蛋</span></button>
+          <button class="level" id="lv-hard" role="radio" aria-checked="false" type="button"><b>挑戰</b><span>雜錦煲，篤錯會扣分</span></button>
+        </div>
+        <div class="legend" id="legend-hard" hidden>
+          <p class="legend-title">挑戰關：淨係篤魚蛋！</p>
+          <canvas id="legend-items" aria-label="白蘿蔔、牛丸、墨魚丸、豬皮"></canvas>
+          <div class="legend-cols four">
+            <span><b>白蘿蔔</b></span><span><b>牛丸</b></span><span><b>墨魚丸</b></span><span><b>豬皮</b></span>
+          </div>
+          <p class="note">篤到其他嘢：扣 2 分，仲會佔咗竹籤一個位。煲裡面嘅湯都滾得快啲。</p>
+        </div>
         <div class="legend">
           <p class="legend-title">篤邊度最好？篤中心！</p>
           <svg viewBox="0 0 300 74" role="img" aria-label="篤正中心 2 分，篤偏咗 1 分，篤太邊會滑走 0 分">
@@ -331,6 +365,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     <div class="overlay" id="result" hidden>
       <div class="card">
         <h2 id="rank">魚蛋師傅</h2>
+        <p class="note" id="r-level"></p>
         <span class="flag" id="r-new" hidden>新紀錄！</span>
         <div class="big"><b id="r-score">0</b><span>分</span></div>
         <dl class="stats">
@@ -338,6 +373,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
           <dt>篤到魚蛋</dt><dd id="r-served">0 粒</dd>
           <dt>正中紅心</dt><dd id="r-perfect">0 次</dd>
           <dt>滑走咗</dt><dd id="r-slip">0 次</dd>
+          <dt id="r-wrong-l">篤錯嘢</dt><dd id="r-wrong">0 件</dd>
           <dt>你嘅最佳</dt><dd id="r-best">0 分</dd>
           <dt>排行榜</dt><dd id="r-place">—</dd>
         </dl>
@@ -357,7 +393,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         <p class="toast" id="toast" aria-live="polite"></p>
         <div class="row">
           <button class="btn" id="again" type="button">再篤過</button>
-          <button class="btn ghost" id="r-board" type="button">睇排行榜</button>
+          <button class="btn ghost" id="r-board" type="button">排行榜</button>
+          <button class="btn ghost" id="r-menu" type="button">換關卡</button>
         </div>
       </div>
     </div>
@@ -369,6 +406,10 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
           <button class="tab" id="tab-hist" role="tab" type="button" aria-selected="false">我嘅紀錄</button>
         </div>
         <section id="pane-lb">
+          <div class="seg" role="group" aria-label="關卡">
+            <button id="lb-normal" type="button" aria-pressed="true">普通</button>
+            <button id="lb-hard" type="button" aria-pressed="false">挑戰</button>
+          </div>
           <div class="champ" id="champ" hidden>
             <span class="who"><small>紀錄保持者</small><span id="champ-name"></span></span>
             <span class="pts" id="champ-pts"></span>
@@ -379,8 +420,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         <section id="pane-hist" hidden>
           <div class="summary">
             <div><b id="h-games">0</b><span>玩咗幾多局</span></div>
-            <div><b id="h-best">0</b><span>最高</span></div>
-            <div><b id="h-avg">0</b><span>平均</span></div>
+            <div><b id="h-best">0</b><span>普通最高</span></div>
+            <div><b id="h-avg">0</b><span>挑戰最高</span></div>
           </div>
           <ol class="list hist" id="hist-list"></ol>
         </section>
@@ -398,8 +439,15 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   const STICK_CAP = 6;          // fishballs per stick; a full stick is handed over automatically
   const CENTER_BONUS = 1;       // extra point for a fishball poked dead centre
   const GAME_TIME = 60;
-  const BALL_COUNT = 30;
-  const REFILL_EVERY = 0.25;    // seconds between new fishballs dropped into the pot
+  const REFILL_EVERY = 0.25;    // seconds between new items dropped into the pot
+  const WRONG_PENALTY = 2;      // challenge level: poking anything that isn't a fishball
+  const LEVELS = {
+    normal: { label: '普通', count: 30, others: 0, flow: 1 },
+    hard:   { label: '挑戰', count: 34, others: 0.4, flow: 1.35 },
+  };
+  const KINDS = { fish: '魚蛋', radish: '白蘿蔔', beef: '牛丸', cuttle: '墨魚丸', skin: '豬皮' };
+  const OTHER_KINDS = ['radish', 'beef', 'cuttle', 'skin'];
+  const COLLECTION = { normal: 'scores', hard: 'scoresHard' };
   const HISTORY_MAX = 50;
   const SHARE_URL = 'https://claude.ai/artifact/Q3pvQLryEHuyTrhSmoiqeC';
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -424,7 +472,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   const L = {};
   let balls = [], ripples = [], pops = [], steam = [], flyers = [], customers = [], leavers = [];
   let state = 'ready';
-  let timeLeft = GAME_TIME, score = 0, sticks = 0, served = 0, perfects = 0, slips = 0;
+  let timeLeft = GAME_TIME, score = 0, sticks = 0, served = 0, perfects = 0, slips = 0, wrong = 0;
+  let level = 'normal', playLevel = 'normal', lbLevel = 'normal';
   let tNow = 0, refillTimer = 0;
   let bg = null, sprites = null;
   let lastRun = null;
@@ -438,8 +487,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   // Offline (file opened directly): this browser's localStorage only.
   const Store = {
     mode: 'local', db: null, user: null, uid: null, canSave: true,
-    leaders: [], lbLoaded: false, lbTimedOut: false,
-    history: [], mine: null, name: '',
+    leaders: { normal: [], hard: [] }, lbLoaded: { normal: false, hard: false }, lbTimedOut: false,
+    history: [], mine: { normal: null, hard: null }, name: '',
 
     async init() {
       this.loadLocal();
@@ -457,50 +506,61 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       } catch (e) { /* stay local */ }
       renderBoards();
     },
+    localBest(lv) {
+      return this.history.filter((r) => (r.level || 'normal') === lv).reduce((m, r) => Math.max(m, r.score), 0);
+    },
     loadLocal() {
       try { this.history = JSON.parse(localStorage.getItem('fishball-history') || '[]') || []; } catch (e) { this.history = []; }
-      const best = this.history.reduce((m, r) => Math.max(m, r.score), 0);
-      this.mine = this.history.length ? { best } : null;
+      for (const lv of ['normal', 'hard']) {
+        const best = this.localBest(lv);
+        this.mine[lv] = best ? { best } : null;
+      }
     },
     subscribe() {
-      const timer = setTimeout(() => { if (!this.lbLoaded) { this.lbTimedOut = true; renderBoards(); } }, 10000);
-      this.db.collection('scores').orderBy('best', 'desc').limit(50).onSnapshot((snap) => {
-        this.leaders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        if (!snap.metadata.fromCache) { this.lbLoaded = true; clearTimeout(timer); }
-        else if (this.leaders.length) this.lbLoaded = true;
-        renderBoards();
-      }, () => { this.lbTimedOut = true; clearTimeout(timer); renderBoards(); });
-      this.db.doc('scores/' + this.uid).onSnapshot((d) => {
-        this.mine = d.exists ? d.data() : null;
-        if (!this.name && this.mine && this.mine.name) { this.name = cleanName(this.mine.name); syncNameInputs(); }
-        renderBoards();
-      }, () => {});
+      const timer = setTimeout(() => {
+        if (!this.lbLoaded.normal || !this.lbLoaded.hard) { this.lbTimedOut = true; renderBoards(); }
+      }, 10000);
+      for (const lv of ['normal', 'hard']) {
+        this.db.collection(COLLECTION[lv]).orderBy('best', 'desc').limit(50).onSnapshot((snap) => {
+          this.leaders[lv] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          if (!snap.metadata.fromCache || this.leaders[lv].length) this.lbLoaded[lv] = true;
+          if (this.lbLoaded.normal && this.lbLoaded.hard) clearTimeout(timer);
+          renderBoards();
+        }, () => { this.lbTimedOut = true; renderBoards(); });
+        this.db.doc(COLLECTION[lv] + '/' + this.uid).onSnapshot((d) => {
+          this.mine[lv] = d.exists ? d.data() : null;
+          if (!this.name && this.mine[lv] && this.mine[lv].name) { this.name = cleanName(this.mine[lv].name); syncNameInputs(); }
+          renderBoards();
+        }, () => {});
+      }
       this.db.doc('data/users/' + this.uid + '/history').onSnapshot((d) => {
         this.history = (d.exists && Array.isArray(d.data().runs)) ? d.data().runs : [];
         renderBoards();
       }, () => {});
     },
     async saveRun(run) {
-      const prevBest = this.mine ? this.mine.best || 0 : 0;
+      const lv = run.level;
+      const mine = this.mine[lv];
+      const prevBest = mine ? mine.best || 0 : 0;
       const isNew = run.score > prevBest;
       const runs = [run, ...this.history].slice(0, HISTORY_MAX);
       if (this.mode === 'cloud' && this.canSave) {
         try {
           await this.db.doc('data/users/' + this.uid + '/history').set({ runs });
-          const games = (this.mine && this.mine.games || 0) + 1;
-          const top = isNew ? { best: run.score, sticks: run.sticks, served: run.served, perfects: run.perfects, at: run.at }
-            : { best: prevBest, sticks: this.mine.sticks || 0, served: this.mine.served || 0, perfects: this.mine.perfects || 0, at: this.mine.at || run.at };
+          const games = (mine && mine.games || 0) + 1;
+          const top = isNew ? { best: run.score, sticks: run.sticks, served: run.served, perfects: run.perfects, wrong: run.wrong, at: run.at }
+            : { best: prevBest, sticks: mine.sticks || 0, served: mine.served || 0, perfects: mine.perfects || 0, wrong: mine.wrong || 0, at: mine.at || run.at };
           const doc = { ...top, games, name: this.name };
-          await this.db.doc('scores/' + this.uid).set(doc);
+          await this.db.doc(COLLECTION[lv] + '/' + this.uid).set(doc);
           this.history = runs;
-          this.mine = doc;
+          this.mine[lv] = doc;
           return { isNew, saved: 'cloud' };
         } catch (e) {
           this.canSave = false;
         }
       }
       this.history = runs;
-      this.mine = { best: Math.max(prevBest, run.score) };
+      this.mine[lv] = { best: Math.max(prevBest, run.score) };
       try { localStorage.setItem('fishball-history', JSON.stringify(runs)); } catch (e) {}
       return { isNew, saved: this.mode === 'cloud' ? 'readonly' : 'local' };
     },
@@ -508,21 +568,26 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       this.name = cleanName(raw);
       try { localStorage.setItem('fishball-name', this.name); } catch (e) {}
       syncNameInputs();
-      if (this.mode === 'cloud' && this.canSave && this.mine) {
-        try {
-          const doc = { ...this.mine, name: this.name };
-          await this.db.doc('scores/' + this.uid).set(doc);
-          this.mine = doc;
-        } catch (e) { this.canSave = false; return false; }
+      if (this.mode === 'cloud' && this.canSave) {
+        for (const lv of ['normal', 'hard']) {
+          if (!this.mine[lv] || this.mine[lv].games == null) continue;
+          try {
+            const doc = { ...this.mine[lv], name: this.name };
+            await this.db.doc(COLLECTION[lv] + '/' + this.uid).set(doc);
+            this.mine[lv] = doc;
+          } catch (e) { this.canSave = false; return false; }
+        }
       }
       renderBoards();
       return true;
     },
-    place() {
-      if (this.mode !== 'cloud' || !this.mine) return null;
-      const i = this.leaders.findIndex((r) => r.id === this.uid);
+    place(lv) {
+      const mine = this.mine[lv];
+      if (this.mode !== 'cloud' || !mine) return null;
+      const list = this.leaders[lv];
+      const i = list.findIndex((r) => r.id === this.uid);
       if (i >= 0) return i + 1;
-      return this.leaders.filter((r) => r.best > this.mine.best).length + 1;
+      return list.filter((r) => r.best > mine.best).length + 1;
     },
   };
 
@@ -544,87 +609,95 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   }
   // the all-time record stays on top until somebody beats it
   function showChamp(name, pts) {
-    const box = $('champ'), line = $('intro-record');
-    if (name == null) { box.hidden = true; line.hidden = true; return; }
+    const box = $('champ');
+    if (name == null) { box.hidden = true; return; }
     $('champ-name').textContent = name;
     $('champ-pts').textContent = pts;
     const u = document.createElement('small'); u.textContent = ' 分'; $('champ-pts').appendChild(u);
     box.hidden = false;
-    line.textContent = Store.mode === 'cloud' ? `現時紀錄：${name}，${pts} 分。你破唔破到？` : `你喺呢部機嘅最高分：${pts} 分`;
-    line.hidden = false;
+  }
+  function showIntroRecord(text) {
+    const line = $('intro-record');
+    line.textContent = text || '';
+    line.hidden = !text;
   }
 
   let renderSeq = 0;
   async function renderBoards() {
     const seq = ++renderSeq;
-    // leaderboard
     const lb = $('lb-list');
     const note = $('lb-note');
+    $('lb-normal').setAttribute('aria-pressed', String(lbLevel === 'normal'));
+    $('lb-hard').setAttribute('aria-pressed', String(lbLevel === 'hard'));
+    const row = (posText, nameText, subText, pts, me) => {
+      const el = li(me ? 'me' : '');
+      const pos = document.createElement('span'); pos.className = 'pos'; pos.textContent = posText;
+      const who = document.createElement('span'); who.className = 'who'; who.textContent = nameText;
+      const sub = document.createElement('small'); sub.textContent = subText; who.appendChild(sub);
+      const p = document.createElement('span'); p.className = 'pts'; p.textContent = pts;
+      const u = document.createElement('small'); u.textContent = '分'; p.appendChild(u);
+      el.append(pos, who, p);
+      return el;
+    };
     if (Store.mode === 'cloud') {
-      note.textContent = Store.canSave ? '每人只計最高分。' : '你可以睇排行榜，但冇權限儲存分數。請叫分享者俾你「Contributor」權限。';
-      if (!Store.lbLoaded) {
+      note.textContent = Store.canSave ? '每人每關只計最高分。' : '你可以睇排行榜，但冇權限儲存分數。請叫分享者俾你「Contributor」權限。';
+      const ids = [...new Set([...Store.leaders.normal, ...Store.leaders.hard].map((r) => r.id))];
+      const ps = ids.length ? await Store.user.profiles(ids) : {};
+      if (seq !== renderSeq) return;
+      const nameOf = (r) => cleanName(r.name) || (ps[r.id] && ps[r.id].name) || '無名英雄';
+      const list = Store.leaders[lbLevel];
+      if (!Store.lbLoaded[lbLevel]) {
+        showChamp(null);
         lb.replaceChildren(emptyRow(Store.lbTimedOut ? '暫時連唔到排行榜，遲啲再試。' : '載入緊…'));
-      } else if (!Store.leaders.length) {
+      } else if (!list.length) {
         showChamp(null);
         lb.replaceChildren(emptyRow('未有人上榜，你做第一個！'));
       } else {
-        const ps = await Store.user.profiles(Store.leaders.map((r) => r.id));
-        if (seq !== renderSeq) return;
-        const nameOf = (r) => cleanName(r.name) || (ps[r.id] && ps[r.id].name) || '無名英雄';
-        showChamp(nameOf(Store.leaders[0]), Store.leaders[0].best);
-        lb.replaceChildren(...Store.leaders.map((r, i) => {
-          const row = li(r.id === Store.uid ? 'me' : '');
-          const pos = document.createElement('span'); pos.className = 'pos'; pos.textContent = i + 1;
-          const who = document.createElement('span'); who.className = 'who';
-          const nm = nameOf(r);
-          who.textContent = r.id === Store.uid ? nm + '（你）' : nm;
-          const sub = document.createElement('small'); sub.textContent = `${r.sticks || 0} 串 · 正中 ${r.perfects || 0} 次`; who.appendChild(sub);
-          const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = r.best;
-          const u = document.createElement('small'); u.textContent = '分'; pts.appendChild(u);
-          row.append(pos, who, pts);
-          return row;
-        }));
+        showChamp(nameOf(list[0]), list[0].best);
+        lb.replaceChildren(...list.map((r, i) => row(i + 1, r.id === Store.uid ? nameOf(r) + '（你）' : nameOf(r),
+          lbLevel === 'hard' ? `${r.sticks || 0} 串 · 正中 ${r.perfects || 0} · 篤錯 ${r.wrong || 0}` : `${r.sticks || 0} 串 · 正中 ${r.perfects || 0} 次`,
+          r.best, r.id === Store.uid)));
       }
+      const top = Store.leaders[level][0];
+      showIntroRecord(top ? `${LEVELS[level].label}關現時紀錄：${nameOf(top)}，${top.best} 分。你破唔破到？` : '');
     } else {
       note.textContent = '而家係離線模式：排行榜只計呢部機玩過嘅分數。';
-      const top = [...Store.history].sort((a, b) => b.score - a.score).slice(0, 10);
+      const top = Store.history.filter((r) => (r.level || 'normal') === lbLevel).sort((a, b) => b.score - a.score).slice(0, 10);
       if (top.length) showChamp(Store.name || '你', top[0].score); else showChamp(null);
       if (!top.length) lb.replaceChildren(emptyRow('未有紀錄，玩一局先！'));
-      else lb.replaceChildren(...top.map((r, i) => {
-        const row = li();
-        const pos = document.createElement('span'); pos.className = 'pos'; pos.textContent = i + 1;
-        const who = document.createElement('span'); who.className = 'who'; who.textContent = Store.name || '你';
-        const sub = document.createElement('small'); sub.textContent = fmtDate(r.at); who.appendChild(sub);
-        const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = r.score;
-        const u = document.createElement('small'); u.textContent = '分'; pts.appendChild(u);
-        row.append(pos, who, pts);
-        return row;
-      }));
+      else lb.replaceChildren(...top.map((r, i) => row(i + 1, Store.name || '你', fmtDate(r.at), r.score, false)));
+      const b = Store.localBest(level);
+      showIntroRecord(b ? `你喺呢部機${LEVELS[level].label}關嘅最高分：${b} 分` : '');
     }
     // personal history
     const h = Store.history;
-    const best = h.reduce((m, r) => Math.max(m, r.score), 0);
-    $('h-games').textContent = Store.mine && Store.mine.games ? Math.max(Store.mine.games, h.length) : h.length;
-    $('h-best').textContent = Math.max(best, (Store.mine && Store.mine.best) || 0);
-    $('h-avg').textContent = h.length ? Math.round(h.reduce((s, r) => s + r.score, 0) / h.length) : 0;
+    const bestN = Math.max(Store.localBest('normal'), (Store.mine.normal && Store.mine.normal.best) || 0);
+    const bestH = Math.max(Store.localBest('hard'), (Store.mine.hard && Store.mine.hard.best) || 0);
+    $('h-games').textContent = h.length;
+    $('h-best').textContent = bestN;
+    $('h-avg').textContent = bestH;
     const hl = $('hist-list');
     if (!h.length) hl.replaceChildren(emptyRow('未有紀錄，玩一局先！'));
     else hl.replaceChildren(...h.map((r) => {
-      const row = li(r.score === best ? 'me' : '');
+      const lv = r.level || 'normal';
+      const best = lv === 'hard' ? bestH : bestN;
+      const el = li(r.score === best && best > 0 ? 'me' : '');
       const who = document.createElement('span'); who.className = 'who';
-      who.textContent = fmtDate(r.at);
+      const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = LEVELS[lv].label;
+      who.append(tag, document.createTextNode(fmtDate(r.at)));
       const sub = document.createElement('small');
-      sub.textContent = `${r.served != null ? r.served + ' 粒 · ' : ''}${r.sticks} 串 · 正中 ${r.perfects} · 滑走 ${r.slips}`;
+      sub.textContent = `${r.served != null ? r.served + ' 粒 · ' : ''}${r.sticks} 串 · 正中 ${r.perfects} · 滑走 ${r.slips}${lv === 'hard' ? ` · 篤錯 ${r.wrong || 0}` : ''}`;
       who.appendChild(sub);
       const bar = document.createElement('div'); bar.className = 'bar'; bar.style.width = `${best ? Math.max(4, (r.score / best) * 100) : 0}%`; who.appendChild(bar);
       const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = r.score;
       const u = document.createElement('small'); u.textContent = '分'; pts.appendChild(u);
-      row.append(who, pts);
-      return row;
+      el.append(who, pts);
+      return el;
     }));
   }
 
-  function openBoard(tab) {
+  function openBoard(tab, lv) {
+    if (lv) lbLevel = lv;
     showTab(tab);
     $('board').hidden = false;
     renderBoards();
@@ -637,7 +710,20 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   }
   $('open-board').addEventListener('click', () => openBoard('lb'));
   $('open-history').addEventListener('click', () => openBoard('hist'));
-  $('r-board').addEventListener('click', () => openBoard('lb'));
+  $('r-board').addEventListener('click', () => openBoard('lb', playLevel));
+  $('lb-normal').addEventListener('click', () => { lbLevel = 'normal'; renderBoards(); });
+  $('lb-hard').addEventListener('click', () => { lbLevel = 'hard'; renderBoards(); });
+  function setLevel(lv) {
+    level = lv;
+    $('lv-normal').setAttribute('aria-checked', String(lv === 'normal'));
+    $('lv-hard').setAttribute('aria-checked', String(lv === 'hard'));
+    $('legend-hard').hidden = lv !== 'hard';
+    if (lv === 'hard') drawLegend();
+    renderBoards();
+  }
+  $('lv-normal').addEventListener('click', () => setLevel('normal'));
+  $('lv-hard').addEventListener('click', () => setLevel('hard'));
+  $('r-menu').addEventListener('click', () => { $('result').hidden = true; $('intro').hidden = false; setLevel(playLevel); });
   $('tab-lb').addEventListener('click', () => showTab('lb'));
   $('tab-hist').addEventListener('click', () => showTab('hist'));
   $('close-board').addEventListener('click', () => { $('board').hidden = true; });
@@ -660,7 +746,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   }
   function shareText(r) {
     const who = Store.name ? `${Store.name}喺` : '我喺';
-    return `${who}「篤魚蛋」一分鐘攞咗 ${r.score} 分！篤咗 ${r.served} 粒魚蛋，交咗 ${r.sticks} 串，正中 ${r.perfects} 次。你破唔破到？\n${SHARE_URL}`;
+    return `${who}「篤魚蛋」${r.level === 'hard' ? '挑戰關' : ''}一分鐘攞咗 ${r.score} 分！篤咗 ${r.served} 粒魚蛋，交咗 ${r.sticks} 串，正中 ${r.perfects} 次。你破唔破到？\n${SHARE_URL}`;
   }
   $('share').addEventListener('click', async () => {
     if (!lastRun) return;
@@ -691,7 +777,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     g.font = `900 110px ${fd}`; g.fillText('咖喱魚蛋', 540, 185);
     g.fillStyle = '#fbfbf8'; g.fillRect(80, 320, 920, 680);
     g.fillStyle = '#2b1f17';
-    g.font = `700 48px ${fb}`; g.fillText(Store.name || '一分鐘挑戰', 540, 410);
+    g.font = `700 48px ${fb}`; g.fillText((Store.name || '一分鐘挑戰') + (r.level === 'hard' ? ' · 挑戰關' : ''), 540, 410);
     g.font = `900 260px ${fd}`; g.fillText(String(r.score), 540, 600);
     g.font = `700 48px ${fb}`; g.fillStyle = '#6d625a'; g.fillText('分', 540, 750);
     g.font = `400 40px ${fb}`;
@@ -771,19 +857,17 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const oldR = L.R;
     L.top = clamp(H * 0.25, 100, 170);
-    L.depth = 0.26;
+    L.depth = 0.4;
     const availH = H - L.top - 14;
-    L.R = Math.max(70, Math.min(W * 0.46, availH / (2 * 0.6 + L.depth + 0.04)));
+    L.R = Math.max(70, Math.min(W * 0.47, availH / (2 * 0.58 + L.depth + 0.04)));
     // on tall (phone) screens, tilt the pot towards the player so it fills the space
-    L.sq = clamp((availH / L.R - L.depth - 0.06) / 2, 0.6, 0.8);
+    L.sq = clamp((availH / L.R - L.depth - 0.06) / 2, 0.58, 0.8);
     L.cx = W / 2;
     const total = (2 * L.sq + L.depth) * L.R;
     L.cy = L.top + Math.max(8, (availH - total) / 2) + L.sq * L.R + 4;
     L.r = L.R * 0.1;
-    L.bx = L.R * 0.91 - L.r * 1.02;   // fishball centre limits (flat coords)
-    L.by = L.R * 0.88 - L.r * 1.05;
-    // curry surface, in screen coords
-    L.liq = { x: L.cx - L.R * 0.92, y: L.cy - L.R * L.sq * 0.84, w: L.R * 1.84, h: L.R * L.sq * 1.76 };
+    L.rin = L.R * 0.89 - L.r;           // item centres stay inside this circle (flat coords)
+    L.lrx = L.R * 0.92; L.lry = L.R * L.sq * 0.9;   // curry surface ellipse, screen radii
     if (oldR) { const k = L.R / oldR; balls.forEach((b) => { b.x *= k; b.y *= k; }); }
     customers.forEach((c, i) => { c.tx = slotX(i); });
     if (!stick.hasPointer) { stick.x = L.cx + L.R * 0.5; stick.y = L.cy + L.R * L.sq * 0.1; }
@@ -826,75 +910,142 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     for (let i = 0; i < 14; i++) { const y = L.top + 8 + i * 9; b.beginPath(); b.moveTo(0, y); b.lineTo(W, y + 30); b.stroke(); }
   }
 
-  // ---------- fishball sprites (pre-rendered, three surface variants) ----------
+  // ---------- pot items: pre-rendered sprites per kind, mode and surface variant ----------
   const VARIANTS = 3;
-  function paintBall(g, x, y, r, mode, v) {
-    const base = g.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.05, x, y, r * 1.02);
-    base.addColorStop(0, '#fde9b0');
-    base.addColorStop(0.45, '#efbd5a');
-    base.addColorStop(0.85, '#cc8a2e');
-    base.addColorStop(1, '#9c5c1b');
-    g.fillStyle = base;
-    g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
-    g.save();
-    g.beginPath(); g.arc(x, y, r, 0, TAU); g.clip();
-    // fine pores on the fried surface
-    let s = 1234 + v * 7919;
-    const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-    for (let i = 0; i < 34; i++) {
-      const a = rnd() * TAU, d = Math.sqrt(rnd()) * r * 0.95;
-      g.fillStyle = rnd() < 0.6 ? 'rgba(140,72,18,0.16)' : 'rgba(255,244,210,0.2)';
-      g.beginPath(); g.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, r * (0.025 + rnd() * 0.04), 0, TAU); g.fill();
+  function shapePath(g, x, y, r, kind, v) {
+    g.beginPath();
+    if (kind === 'radish') {
+      // a chunk of white radish: rounded cube seen from above
+      const s = r * 0.84, a = (v - 1) * 0.35, cr = r * 0.3;
+      const pts = [[-s, -s], [s, -s], [s, s], [-s, s]].map(([px, py]) => [x + px * Math.cos(a) - py * Math.sin(a), y + px * Math.sin(a) + py * Math.cos(a)]);
+      g.moveTo((pts[0][0] + pts[1][0]) / 2, (pts[0][1] + pts[1][1]) / 2);
+      for (let i = 1; i <= 4; i++) g.arcTo(pts[i % 4][0], pts[i % 4][1], pts[(i + 1) % 4][0], pts[(i + 1) % 4][1], cr);
+      g.closePath();
+    } else if (kind === 'skin') {
+      // a wavy piece of pig skin
+      const a = (v - 1) * 0.6;
+      for (let i = 0; i <= 48; i++) {
+        const t = (i / 48) * TAU, wob = 1 + 0.07 * Math.sin(t * 8 + v * 2);
+        const px = Math.cos(t) * r * 1.08 * wob, py = Math.sin(t) * r * 0.72 * wob;
+        const qx = x + px * Math.cos(a) - py * Math.sin(a), qy = y + px * Math.sin(a) + py * Math.cos(a);
+        if (i) g.lineTo(qx, qy); else g.moveTo(qx, qy);
+      }
+      g.closePath();
+    } else {
+      g.arc(x, y, kind === 'beef' ? r * 0.94 : r, 0, TAU);
     }
-    // curry-soaked edge
-    const rim = g.createRadialGradient(x, y, r * 0.55, x, y, r);
-    rim.addColorStop(0, 'rgba(190,95,15,0)');
-    rim.addColorStop(1, 'rgba(160,75,10,0.38)');
-    g.fillStyle = rim; g.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  const PALETTE = {
+    fish:   ['#fde9b0', '#efbd5a', '#cc8a2e', '#9c5c1b'],
+    beef:   ['#b8875e', '#7a4a2b', '#55311b', '#341e10'],
+    cuttle: ['#fffdf7', '#efe8d8', '#d6cbb2', '#a99a7c'],
+    radish: ['#fbf4de', '#efe1b6', '#dcc286', '#b98a45'],
+    skin:   ['#f6d29c', '#e2a865', '#c98845', '#99602a'],
+  };
+  function paintItem(g, x, y, r, kind, mode, v) {
+    const c = PALETTE[kind];
+    const base = g.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.05, x, y, r * 1.1);
+    base.addColorStop(0, c[0]); base.addColorStop(0.45, c[1]); base.addColorStop(0.85, c[2]); base.addColorStop(1, c[3]);
+    g.fillStyle = base;
+    shapePath(g, x, y, r, kind, v); g.fill();
+    g.save();
+    shapePath(g, x, y, r, kind, v); g.clip();
+    let sd = 1234 + v * 7919 + kind.length * 104729;
+    const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+    const specks = { fish: ['rgba(140,72,18,0.16)', 'rgba(255,244,210,0.2)', 34],
+      beef: ['rgba(30,15,5,0.35)', 'rgba(210,160,120,0.25)', 46],
+      cuttle: ['rgba(150,120,80,0.28)', 'rgba(240,150,110,0.25)', 30],
+      radish: ['rgba(200,170,110,0.18)', 'rgba(255,255,240,0.3)', 18],
+      skin: ['rgba(110,60,20,0.45)', 'rgba(255,230,190,0.25)', 60] }[kind];
+    for (let i = 0; i < specks[2]; i++) {
+      const a = rnd() * TAU, d = Math.sqrt(rnd()) * r * 1.05;
+      g.fillStyle = rnd() < 0.6 ? specks[0] : specks[1];
+      g.beginPath(); g.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, r * (kind === 'skin' ? 0.02 : 0.025 + rnd() * 0.04), 0, TAU); g.fill();
+    }
+    if (kind === 'radish') {
+      // fibres and a curry-stained edge
+      g.strokeStyle = 'rgba(205,170,100,0.25)'; g.lineWidth = Math.max(1, r * 0.05);
+      for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(x - r, y + i * r * 0.32); g.lineTo(x + r, y + i * r * 0.32 + r * 0.2); g.stroke(); }
+      g.strokeStyle = 'rgba(200,120,30,0.45)'; g.lineWidth = r * 0.3;
+      shapePath(g, x, y, r, kind, v); g.stroke();
+    } else if (kind === 'skin') {
+      g.strokeStyle = 'rgba(150,90,35,0.35)'; g.lineWidth = Math.max(1, r * 0.06);
+      g.beginPath(); g.moveTo(x - r * 0.7, y - r * 0.1); g.quadraticCurveTo(x, y + r * 0.25, x + r * 0.7, y - r * 0.05); g.stroke();
+    } else {
+      const rim = g.createRadialGradient(x, y, r * 0.55, x, y, r);
+      rim.addColorStop(0, 'rgba(190,95,15,0)');
+      rim.addColorStop(1, kind === 'beef' ? 'rgba(40,20,5,0.35)' : 'rgba(160,75,10,0.38)');
+      g.fillStyle = rim; g.fillRect(x - r * 1.2, y - r * 1.2, r * 2.4, r * 2.4);
+    }
     if (mode === 'pot') {
       const sub = g.createLinearGradient(0, y + r * 0.3, 0, y + r);
       sub.addColorStop(0, 'rgba(178,90,16,0.92)'); sub.addColorStop(1, 'rgba(130,62,10,0.95)');
-      g.fillStyle = sub; g.fillRect(x - r, y + r * 0.3, r * 2, r);
+      g.fillStyle = sub; g.fillRect(x - r * 1.3, y + r * 0.3, r * 2.6, r);
       g.fillStyle = 'rgba(255,210,140,0.45)';
-      g.beginPath(); g.ellipse(x, y + r * 0.3, r * 0.94, r * 0.08, 0, 0, TAU); g.fill();
+      g.fillRect(x - r * 1.3, y + r * 0.27, r * 2.6, Math.max(1, r * 0.08));
     } else if (mode === 'stick') {
       const glaze = g.createLinearGradient(0, y, 0, y + r);
       glaze.addColorStop(0, 'rgba(190,95,15,0)'); glaze.addColorStop(1, 'rgba(176,86,12,0.5)');
-      g.fillStyle = glaze; g.fillRect(x - r, y, r * 2, r);
+      g.fillStyle = glaze; g.fillRect(x - r * 1.3, y, r * 2.6, r);
     }
     g.restore();
+    const shine = kind === 'radish' || kind === 'skin' ? 0.45 : kind === 'beef' ? 0.35 : 0.8;
     const hl = g.createRadialGradient(x - r * 0.36, y - r * 0.4, 0, x - r * 0.36, y - r * 0.4, r * 0.38);
-    hl.addColorStop(0, 'rgba(255,255,255,0.8)');
+    hl.addColorStop(0, `rgba(255,255,255,${shine})`);
     hl.addColorStop(1, 'rgba(255,255,255,0)');
     g.fillStyle = hl;
     g.beginPath(); g.arc(x - r * 0.36, y - r * 0.4, r * 0.38, 0, TAU); g.fill();
   }
   function buildSprites() {
-    const r = L.r, pad = 2, half = r + pad, size = Math.ceil(half * 2 * dpr);
-    sprites = { half, pot: [], stick: [], plain: [] };
-    for (const mode of ['pot', 'stick', 'plain']) {
-      for (let v = 0; v < VARIANTS; v++) {
-        const c = document.createElement('canvas');
-        c.width = c.height = size;
-        const g = c.getContext('2d');
-        g.scale(dpr, dpr);
-        paintBall(g, half, half, r, mode, v);
-        sprites[mode].push(c);
+    const r = L.r, half = r * 1.3 + 2, size = Math.ceil(half * 2 * dpr);
+    sprites = { half };
+    for (const kind of Object.keys(KINDS)) {
+      sprites[kind] = {};
+      for (const mode of ['pot', 'stick', 'plain']) {
+        sprites[kind][mode] = [];
+        for (let v = 0; v < VARIANTS; v++) {
+          const c = document.createElement('canvas');
+          c.width = c.height = size;
+          const g = c.getContext('2d');
+          g.scale(dpr, dpr);
+          paintItem(g, half, half, r, kind, mode, v);
+          sprites[kind][mode].push(c);
+        }
       }
     }
   }
-  function drawBall(x, y, v, mode) {
+  function drawItem(x, y, kind, v, mode) {
     const h = sprites.half;
-    ctx.drawImage(sprites[mode][v], x - h, y - h, h * 2, h * 2);
+    ctx.drawImage(sprites[kind][mode][v], x - h, y - h, h * 2, h * 2);
+  }
+  function drawLegend() {
+    const c = $('legend-items');
+    const w = c.clientWidth || 300, h = c.clientHeight || 64, d = Math.min(2, window.devicePixelRatio || 1);
+    c.width = Math.round(w * d); c.height = Math.round(h * d);
+    const g = c.getContext('2d');
+    g.setTransform(d, 0, 0, d, 0, 0);
+    g.clearRect(0, 0, w, h);
+    const r = Math.min(h * 0.36, w / 11);
+    OTHER_KINDS.forEach((k, i) => paintItem(g, (w / 4) * (i + 0.5), h / 2, r, k, 'plain', 1));
   }
 
-  // ---------- fishballs ----------
+  // ---------- pot items ----------
+  function pickKind() {
+    const cfg = LEVELS[playLevel];
+    if (!cfg.others) return 'fish';
+    const fish = balls.filter((b) => b.kind === 'fish').length;
+    const wantFish = Math.round(cfg.count * (1 - cfg.others));
+    return fish < wantFish ? 'fish' : pick(OTHER_KINDS);
+  }
   function makeBall(x, y, drop = 0) {
-    return { x, y, vx: 0, vy: 0, phase: Math.random() * TAU, v: Math.floor(Math.random() * VARIANTS), drop };
+    return { x, y, vx: 0, vy: 0, phase: Math.random() * TAU, v: Math.floor(Math.random() * VARIANTS), drop, kind: pickKind() };
   }
   function seedBalls() {
     balls = [];
-    for (let i = 0; i < BALL_COUNT; i++) balls.push(makeBall(rand(-1, 1) * L.bx, rand(-1, 1) * L.by));
+    for (let i = 0; i < LEVELS[playLevel].count; i++) {
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * L.rin;
+      balls.push(makeBall(Math.cos(a) * d, Math.sin(a) * d));
+    }
     for (let k = 0; k < 60; k++) collide();
   }
   function ballScreen(b) {
@@ -926,15 +1077,19 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         }
       }
     }
+    // round pot wall
     for (const b of balls) {
-      if (b.x > L.bx) { b.x = L.bx; if (b.vx > 0) b.vx *= -0.6; }
-      if (b.x < -L.bx) { b.x = -L.bx; if (b.vx < 0) b.vx *= -0.6; }
-      if (b.y > L.by) { b.y = L.by; if (b.vy > 0) b.vy *= -0.6; }
-      if (b.y < -L.by) { b.y = -L.by; if (b.vy < 0) b.vy *= -0.6; }
+      const d = Math.hypot(b.x, b.y);
+      if (d > L.rin) {
+        const nx = b.x / d, ny = b.y / d;
+        b.x = nx * L.rin; b.y = ny * L.rin;
+        const vr = b.vx * nx + b.vy * ny;
+        if (vr > 0) { b.vx -= 1.6 * vr * nx; b.vy -= 1.6 * vr * ny; }
+      }
     }
   }
   function physics(dt) {
-    const flow = L.R * 0.14;
+    const flow = L.R * 0.16 * LEVELS[playLevel].flow;
     for (const b of balls) {
       if (b.drop > 0) {
         b.drop = Math.max(0, b.drop - dt * 2.4);
@@ -943,8 +1098,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       }
       const d = Math.hypot(b.x, b.y) || 1;
       // a slow simmering swirl plus a wandering current
-      const tx = (-b.y / d) * flow * Math.min(1, d / L.bx) + Math.sin(tNow * 0.6 + b.phase * 3) * flow * 0.5;
-      const ty = (b.x / d) * flow * Math.min(1, d / L.bx) + Math.cos(tNow * 0.8 + b.phase * 2) * flow * 0.5;
+      const tx = (-b.y / d) * flow * (d / L.rin) + Math.sin(tNow * 0.6 + b.phase * 3) * flow * 0.5;
+      const ty = (b.x / d) * flow * (d / L.rin) + Math.cos(tNow * 0.8 + b.phase * 2) * flow * 0.5;
       const k = 1 - Math.exp(-1.1 * dt);
       b.vx += (tx - b.vx) * k; b.vy += (ty - b.vy) * k;
       b.x += b.vx * dt; b.y += b.vy * dt;
@@ -955,8 +1110,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   // ---------- poking ----------
   function addPop(text, x, y, color = '#fff', size = 18) { pops.push({ text, x, y, t: 0, color, size }); }
   function inCurry(sx, sy) {
-    const q = L.liq;
-    return sx > q.x && sx < q.x + q.w && sy > q.y && sy < q.y + q.h;
+    const dx = (sx - L.cx) / L.lrx, dy = (sy - L.cy) / L.lry;
+    return dx * dx + dy * dy < 1;
   }
 
   function resolvePoke() {
@@ -986,30 +1141,42 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       return;
     }
     balls.splice(balls.indexOf(hit), 1);
-    stick.balls.push({ off, rel: hs.sy - ty, v: hit.v });
+    stick.balls.push({ off, rel: hs.sy - ty, v: hit.v, kind: hit.kind });
     impulse(fx, fy, L.r * 4.2, L.R * 0.75);
-    served++;
-    if (Math.abs(off) < 0.18) {
-      perfects++; score += 1 + CENTER_BONUS;
-      sound('perfect'); addPop(`正中！+${1 + CENTER_BONUS}`, tx, ty - 30, '#ffe27a', 22);
+    if (hit.kind !== 'fish') {
+      // wrong item: lose points, and it still takes a place on the stick
+      wrong++;
+      score = Math.max(0, score - WRONG_PENALTY);
+      addPop(`篤錯${KINDS[hit.kind]}！−${WRONG_PENALTY}`, tx, ty - 30, '#ff9b8a', 20);
     } else {
-      score += 1;
-      sound('poke'); addPop('+1', tx, ty - 30, '#fff', 18);
+      served++;
+      if (Math.abs(off) < 0.18) {
+        perfects++; score += 1 + CENTER_BONUS;
+        sound('perfect'); addPop(`正中！+${1 + CENTER_BONUS}`, tx, ty - 30, '#ffe27a', 22);
+      } else {
+        score += 1;
+        sound('poke'); addPop('+1', tx, ty - 30, '#fff', 18);
+      }
     }
     updateHUD();
   }
 
-  // a full stick goes to the next customer; how neat it is decides their reaction
+  // a full stick goes to the next customer; what's on it and how neat it is decides their reaction
   function handOut() {
     const n = stick.balls.length;
     if (!n) return;
     const target = customers.find((c) => !c.served);
     if (!target) return;
     target.served = true;
+    const odd = stick.balls.find((b) => b.kind !== 'fish');
     const avg = stick.balls.reduce((s, b) => s + Math.abs(b.off), 0) / n;
-    const say = avg < 0.2 ? pick(['正呀！', '好靚！']) : avg < 0.42 ? pick(['唔該！', '多謝！']) : pick(['咁歪嘅…', '歪咗喎']);
-    const mood = avg < 0.2 ? 2 : avg < 0.42 ? 1 : 0;
-    const list = stick.balls.map((b, i, a) => ({ off: b.off, rel: slotRel(i, a.length), v: b.v }));
+    let say, mood;
+    if (odd) { say = pick(['我要魚蛋呀！', `點解有${KINDS[odd.kind]}嘅？`]); mood = 0; }
+    else {
+      say = avg < 0.2 ? pick(['正呀！', '好靚！']) : avg < 0.42 ? pick(['唔該！', '多謝！']) : pick(['咁歪嘅…', '歪咗喎']);
+      mood = avg < 0.2 ? 2 : avg < 0.42 ? 1 : 0;
+    }
+    const list = stick.balls.map((b, i, a) => ({ off: b.off, rel: slotRel(i, a.length), v: b.v, kind: b.kind }));
     flyers.push({ balls: list, x0: stick.x, y0: tipY(), t: 0, target, say, mood });
     stick.balls = [];
     sticks++;
@@ -1116,42 +1283,45 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     ctx.closePath(); ctx.fill();
     ctx.fillStyle = 'rgba(110,78,36,0.55)';
     ctx.fillRect(-w / 2 - 0.5, -len * 0.9, w + 1, Math.max(1.5, w * 0.35));
-    for (const b of list) drawBall(-b.off * r, b.rel, b.v, 'stick');
+    for (const b of list) drawItem(-b.off * r, b.rel, b.kind || 'fish', b.v, 'stick');
     ctx.restore();
   }
 
-  // square stainless pot, seen from the front and above
+  // round stainless pot, seen from the front and above
   function drawPot() {
-    const { cx, cy, R, sq } = L, hh = R * sq, depth = R * L.depth, q = L.liq;
+    const { cx, cy, R, sq } = L, depth = R * L.depth;
     ctx.fillStyle = 'rgba(40,40,40,0.22)';
-    ctx.beginPath(); ctx.ellipse(cx, cy + hh + depth, R * 1.08, R * 0.12, 0, 0, TAU); ctx.fill();
-    // front face
-    const face = ctx.createLinearGradient(cx - R, 0, cx + R, 0);
-    face.addColorStop(0, '#6a7270'); face.addColorStop(0.15, '#d4d8d6'); face.addColorStop(0.45, '#9ba2a0');
-    face.addColorStop(0.75, '#e9eceb'); face.addColorStop(1, '#646b69');
-    ctx.fillStyle = face;
-    rr(cx - R, cy + hh - 8, R * 2, depth + 8, 6); ctx.fill();
-    ctx.fillStyle = 'rgba(0,0,0,0.12)';
-    ctx.fillRect(cx - R, cy + hh + depth * 0.55, R * 2, 2);
-    // top rim
-    const rim = ctx.createLinearGradient(0, cy - hh, 0, cy + hh);
-    rim.addColorStop(0, '#c3c8c6'); rim.addColorStop(0.5, '#eef0ef'); rim.addColorStop(1, '#b4bab8');
+    ctx.beginPath(); ctx.ellipse(cx, cy + depth + 4, R * 1.05, R * sq * 0.55, 0, 0, TAU); ctx.fill();
+    const body = ctx.createLinearGradient(cx - R, 0, cx + R, 0);
+    body.addColorStop(0, '#5f6664'); body.addColorStop(0.18, '#d9dddb'); body.addColorStop(0.42, '#8e9593');
+    body.addColorStop(0.7, '#f0f2f1'); body.addColorStop(1, '#5b6260');
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.moveTo(cx - R, cy);
+    ctx.lineTo(cx - R * 0.97, cy + depth);
+    ctx.ellipse(cx, cy + depth, R * 0.97, R * sq * 0.97, 0, Math.PI, 0, true);
+    ctx.lineTo(cx + R, cy);
+    ctx.closePath(); ctx.fill();
+    // handles
+    ctx.fillStyle = '#6c7371';
+    rr(cx - R - R * 0.1, cy + depth * 0.25, R * 0.12, R * 0.07, 3); ctx.fill();
+    rr(cx + R - R * 0.02, cy + depth * 0.25, R * 0.12, R * 0.07, 3); ctx.fill();
+    // rim
+    const rim = ctx.createLinearGradient(cx - R, cy - R * sq, cx + R, cy + R * sq);
+    rim.addColorStop(0, '#f4f6f5'); rim.addColorStop(0.5, '#9ca3a1'); rim.addColorStop(1, '#e6e9e8');
     ctx.fillStyle = rim;
-    rr(cx - R, cy - hh, R * 2, hh * 2, R * 0.05); ctx.fill();
-    // inner walls: back wall visible above the curry
-    const inner = ctx.createLinearGradient(0, cy - hh * 0.95, 0, q.y + 4);
-    inner.addColorStop(0, '#5d6462'); inner.addColorStop(1, '#8b9290');
-    ctx.fillStyle = inner;
-    rr(cx - R * 0.95, cy - hh * 0.95, R * 1.9, hh * 1.9, R * 0.03); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx, cy, R, R * sq, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#737a78';
+    ctx.beginPath(); ctx.ellipse(cx, cy, R * 0.955, R * sq * 0.955, 0, 0, TAU); ctx.fill();
     // curry
-    const liq = ctx.createRadialGradient(cx - R * 0.25, cy - hh * 0.3, R * 0.05, cx, cy, R * 1.2);
-    liq.addColorStop(0, '#eaa53c'); liq.addColorStop(0.55, '#c8761f'); liq.addColorStop(1, '#84440f');
+    const liq = ctx.createRadialGradient(cx - R * 0.2, cy - R * sq * 0.3, R * 0.05, cx, cy, R * 0.95);
+    liq.addColorStop(0, '#eaa53c'); liq.addColorStop(0.55, '#c8761f'); liq.addColorStop(1, '#7c3f0d');
     ctx.fillStyle = liq;
-    ctx.fillRect(q.x, q.y, q.w, q.h);
+    ctx.beginPath(); ctx.ellipse(cx, cy, L.lrx, L.lry, 0, 0, TAU); ctx.fill();
     ctx.save();
-    ctx.beginPath(); ctx.rect(q.x, q.y, q.w, q.h); ctx.clip();
-    for (let i = 0; i < 7; i++) {
-      const a = tNow * 0.18 + i * 0.9, d = R * (0.25 + 0.12 * (i % 3));
+    ctx.beginPath(); ctx.ellipse(cx, cy, L.lrx, L.lry, 0, 0, TAU); ctx.clip();
+    for (let i = 0; i < 6; i++) {
+      const a = tNow * 0.18 + i * 1.05, d = R * (0.25 + 0.1 * (i % 3));
       ctx.fillStyle = `rgba(255,${190 + i * 6},90,0.10)`;
       ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * d, cy + Math.sin(a) * d * sq, R * 0.18, R * 0.05, a * 0.5, 0, TAU); ctx.fill();
     }
@@ -1161,27 +1331,24 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.ellipse(cx + rp.x, cy + rp.y * sq, rad, rad * sq, 0, 0, TAU); ctx.stroke();
     }
-    // tidemark where curry meets the back wall
-    ctx.fillStyle = 'rgba(255,200,120,0.35)';
-    ctx.fillRect(q.x, q.y, q.w, 2);
     ctx.restore();
   }
 
   function drawBalls() {
-    const { cx, cy, sq } = L, q = L.liq;
+    const { cx, cy, sq } = L;
     const list = balls.map((b) => ({ b, s: ballScreen(b) })).sort((p, o) => p.s.sy - o.s.sy);
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, W, q.y + 2);
-    ctx.rect(q.x, q.y, q.w, q.h);
+    ctx.rect(0, 0, W, cy);
+    ctx.ellipse(cx, cy, L.lrx, L.lry, 0, 0, TAU);
     ctx.clip();
     for (const { b, s } of list) {
       if (b.drop > 0.02) {
         ctx.fillStyle = `rgba(60,25,0,${0.25 * (1 - b.drop)})`;
         ctx.beginPath(); ctx.ellipse(cx + b.x, cy + b.y * sq + L.r * 0.3, L.r * 0.8, L.r * 0.8 * sq, 0, 0, TAU); ctx.fill();
-        drawBall(s.sx, s.sy, b.v, 'plain');
+        drawItem(s.sx, s.sy, b.kind, b.v, 'plain');
       } else {
-        drawBall(s.sx, s.sy, b.v, 'pot');
+        drawItem(s.sx, s.sy, b.kind, b.v, 'pot');
       }
     }
     ctx.restore();
@@ -1255,11 +1422,12 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
 
     physics(dt);
 
-    if (balls.length < BALL_COUNT) {
+    if (balls.length < LEVELS[playLevel].count) {
       refillTimer += dt;
       if (refillTimer > REFILL_EVERY) {
         refillTimer = 0;
-        balls.push(makeBall(rand(-0.6, 0.6) * L.bx, rand(-1, -0.4) * L.by, 1));
+        const a = rand(Math.PI * 1.15, Math.PI * 1.85), d = rand(0.3, 0.9) * L.rin;
+        balls.push(makeBall(Math.cos(a) * d, Math.sin(a) * d, 1));
       }
     } else refillTimer = 0;
 
@@ -1267,7 +1435,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     pops.forEach((p) => (p.t += dt)); pops = pops.filter((p) => p.t < 0.9);
 
     if (!reduceMotion && Math.random() < dt * 8) {
-      steam.push({ x: L.cx + rand(-0.8, 0.8) * L.R, y: L.cy + rand(-0.6, 0.6) * L.R * L.sq, t: 0, life: rand(1.6, 2.6), s: rand(0.8, 1.4), vx: rand(-8, 8) });
+      steam.push({ x: L.cx + rand(-0.7, 0.7) * L.R, y: L.cy + rand(-0.3, 0.3) * L.R * L.sq, t: 0, life: rand(1.6, 2.6), s: rand(0.8, 1.4), vx: rand(-8, 8) });
     }
     steam.forEach((p) => { p.t += dt; p.y -= dt * L.R * 0.28; p.x += p.vx * dt; });
     steam = steam.filter((p) => p.t < p.life);
@@ -1345,11 +1513,12 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   // ---------- game flow ----------
   function setChips(enabled) { $('open-board').disabled = !enabled; $('open-history').disabled = !enabled; }
   function startGame() {
+    playLevel = level;
     if (cleanName($('name-intro').value) !== Store.name) Store.setName($('name-intro').value);
     initAudio();
     if (ac && ac.state === 'suspended') ac.resume();
     state = 'play';
-    timeLeft = GAME_TIME; score = 0; sticks = 0; served = 0; perfects = 0; slips = 0;
+    timeLeft = GAME_TIME; score = 0; sticks = 0; served = 0; perfects = 0; slips = 0; wrong = 0;
     stick.balls = []; stick.pressed = false; stick.needLift = false;
     flyers = []; pops = [];
     seedBalls();
@@ -1357,11 +1526,12 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     setChips(false);
     updateHUD();
   }
-  function rankFor(n) {
-    if (n >= 320) return '傳說級魚蛋佬';
-    if (n >= 240) return '魚蛋師傅';
-    if (n >= 160) return '熟手學徒';
-    if (n >= 80) return '新嚟幫手';
+  function rankFor(n, lv) {
+    const t = lv === 'hard' ? [240, 180, 120, 60] : [320, 240, 160, 80];
+    if (n >= t[0]) return '傳說級魚蛋佬';
+    if (n >= t[1]) return '魚蛋師傅';
+    if (n >= t[2]) return '熟手學徒';
+    if (n >= t[3]) return '新嚟幫手';
     return '篤到手軟';
   }
   async function endGame() {
@@ -1369,12 +1539,15 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     stick.pressed = false;
     setChips(true);
     addPop('時間到！', W / 2, L.cy - L.R * 0.2, '#ffe27a', 30);
-    const run = { score, sticks, served, perfects, slips, at: Date.now() };
+    const run = { level: playLevel, score, sticks, served, perfects, slips, wrong, at: Date.now() };
     lastRun = run;
     $('share-text').hidden = true;
     $('toast').textContent = '';
     syncNameInputs();
-    $('rank').textContent = rankFor(score);
+    $('rank').textContent = rankFor(score, playLevel);
+    $('r-level').textContent = `${LEVELS[playLevel].label}關`;
+    $('r-wrong').textContent = `${wrong} 件`;
+    $('r-wrong').hidden = $('r-wrong-l').hidden = playLevel !== 'hard';
     $('r-score').textContent = score;
     $('r-sticks').textContent = `${sticks} 串`;
     $('r-served').textContent = `${served} 粒`;
@@ -1388,15 +1561,15 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     try { res = await Store.saveRun(run); } catch (e) {}
     await shown;
     $('r-new').hidden = !res.isNew;
-    $('r-best').textContent = `${(Store.mine && Store.mine.best) || score} 分`;
-    const place = Store.place();
+    $('r-best').textContent = `${(Store.mine[playLevel] && Store.mine[playLevel].best) || score} 分`;
+    const place = Store.place(playLevel);
     $('r-place').textContent = place ? `第 ${place} 名` : '只計呢部機';
     $('r-save').textContent = res.saved === 'readonly' ? '你嘅分數只儲存喺呢部機：你冇權限寫入排行榜。' : '';
     $('result').hidden = false;
     renderBoards();
   }
   $('start').addEventListener('click', startGame);
-  $('again').addEventListener('click', startGame);
+  $('again').addEventListener('click', () => { level = playLevel; startGame(); });
 
   // ---------- boot ----------
   // The claude.ai viewer can swap in a new version of this page while it is open;
