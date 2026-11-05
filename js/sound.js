@@ -9,7 +9,8 @@ function initAudio() {
     ac = new (window.AudioContext || window.webkitAudioContext)();
     // everything goes through a limiter, so music and sound effects together never distort
     const limiter = ac.createDynamicsCompressor();
-    limiter.threshold.value = -10; limiter.ratio.value = 8; limiter.connect(ac.destination);
+    limiter.threshold.value = -12; limiter.ratio.value = 12; limiter.attack.value = 0.002; limiter.release.value = 0.1;
+    const master = ac.createGain(); master.gain.value = 0.85; limiter.connect(master).connect(ac.destination);
     sfxOut = ac.createGain(); sfxOut.connect(limiter);
     musicOut = ac.createGain(); musicOut.gain.value = muted ? 0 : MUSIC_VOL; musicOut.connect(limiter);
     const nl = Math.floor(ac.sampleRate * 0.5);
@@ -106,58 +107,83 @@ updateMuteButton();
 langListeners.push(updateMuteButton);
 
 // ---------- background music ----------
-// An original, cheerful street-stall tune in a five-note (pentatonic) scale, played while a game runs.
-// As time runs out it gets tense: faster and faster, a key change up at 20 s and again at 10 s,
-// a busier beat, and a ticking clock in the last 10 seconds. Notes are semitones from A4 (440 Hz); null = rest.
+// An original, high-energy arcade track in A minor (chords Am - F - C - G), made in code: four-on-the-floor
+// kick, snare on 2 and 4, fast hi-hats, a pumping bass, a quick synth arpeggio and a synth lead.
+// As time runs out it gets more intense: faster and faster, a key change up at 20 s and again at 10 s,
+// busier drums and an octave-up arpeggio from 20 s, and a ticking clock in the last 10 seconds.
+// Notes are semitones from A4 (440 Hz); null = rest. One step = a 16th note; 16 steps = one bar.
 const MUSIC_VOL = 1;
-const TUNE = [
-  5, null, 9, 12, 14, 12, 9, null,   14, null, 12, 9, 7, 9, 5, null,
-  2, 5, 7, 9, 12, null, 9, 7,        5, 7, 9, 7, 5, null, 0, null,
-  12, null, 14, 17, 14, 12, 9, null, 14, 12, 9, 12, 14, null, 17, null,
-  9, 7, 5, 7, 9, 12, 9, 7,           5, null, null, null, 5, null, null, null,
+const LEAD = [
+  12, null, null, 12, 15, null, 12, null, 19, null, 17, null, 15, null, 12, null,
+  null, null, 8, null, 12, null, 15, null, 17, null, 15, null, 12, null, null, null,
+  15, null, null, 15, 19, null, 15, null, 22, null, 19, null, 15, null, 19, null,
+  17, null, null, null, 14, null, null, null, 10, null, 14, null, 17, null, 19, null,
+  24, null, 22, null, 19, null, 22, null, 24, null, null, 19, null, null, 15, null,
+  17, null, 15, null, 12, null, 15, null, 17, null, 19, null, 20, null, null, null,
+  19, null, null, 19, 22, null, 19, null, 15, null, 19, null, 22, null, 24, null,
+  22, null, null, null, 19, null, null, null, 17, null, 14, null, 10, null, null, null,
 ];
-const ROOTS = [-19, -22, -26, -24];   // one bass note per bar: D, B, G, A
+const BASS = [-24, -28, -21, -26];                                   // A, F, C, G
+const ARP = [[12, 15, 19, 24], [8, 12, 15, 20], [15, 19, 22, 27], [10, 14, 17, 22]];
+const ARP_ORDER = [0, 1, 2, 3, 2, 1, 2, 3];
 const hz = (n) => 440 * Math.pow(2, n / 12);
-let musicTimer = 0, musicStep = 0, musicNext = 0;
+let musicTimer = 0, musicStep = 0, musicNext = 0, musicStepLen = 0.1;
+// one synth note: an oscillator (plus a slightly detuned twin when asked) through a low-pass filter
+function synth(type, n, at, dur, vol, cutoff = 8000, twin = false) {
+  const f = ac.createBiquadFilter(), g = ac.createGain();
+  f.type = 'lowpass'; f.frequency.setValueAtTime(cutoff, at);
+  g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.008);
+  g.gain.setValueAtTime(vol, at + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  f.connect(g).connect(musicOut);
+  for (const cents of twin ? [-8, 8] : [0]) {
+    const o = ac.createOscillator();
+    o.type = type; o.frequency.setValueAtTime(hz(n), at); o.detune.value = cents;
+    o.connect(f); o.start(at); o.stop(at + dur + 0.02);
+  }
+}
+function kick(at, vol) {
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.frequency.setValueAtTime(160, at); o.frequency.exponentialRampToValueAtTime(42, at + 0.12);
+  g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.22);
+  o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.24);
+}
 function musicNote(step, at) {
   const left = state === 'play' || state === 'paused' ? timeLeft : GAME_TIME;
-  const lift = left <= 10 ? 3 : left <= 20 ? 2 : 0;   // key change up as time runs out
-  const n0 = TUNE[step % TUNE.length], n = n0 === null ? null : n0 + lift;
-  const bar = Math.floor(step / 8) % ROOTS.length, beat = step % 8, root = ROOTS[bar] + lift;
-  const play = (type, f, dur, vol) => {
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.type = type; o.frequency.setValueAtTime(f, at);
-    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-    o.connect(g).connect(musicOut); o.start(at); o.stop(at + dur + 0.02);
-  };
-  if (n !== null) { play('triangle', hz(n), 0.22, 0.2); play('square', hz(n + 12), 0.08, 0.03); }
-  if (beat === 0 || beat === 6) play('triangle', hz(root), 0.3, 0.26);
-  if (beat === 3) play('triangle', hz(root + 12), 0.15, 0.14);
-  if (beat === 4) play('triangle', hz(root + 7), 0.25, 0.22);
-  if (beat === 0 || beat === 4) noise('lowpass', 180, 60, 0.12, 0.45, 0, musicOut, at);        // pot thump
-  if (beat % 2 === 1) noise('highpass', 7000, 7000, 0.03, 0.09, 0, musicOut, at);             // tick
-  if (left <= 20) {
-    // getting tense: a thump on every beat and a pulsing low note underneath
-    if (beat === 2 || beat === 6) noise('lowpass', 200, 60, 0.1, 0.35, 0, musicOut, at);
-    play('sawtooth', hz(root - 12), 0.09, 0.05);
+  const tense = left <= 20, final = left <= 10;
+  const lift = final ? 3 : tense ? 2 : 0;               // key change up as time runs out
+  const s16 = step % 16, bar = Math.floor(step / 16) % 4, len = musicStepLen;
+  // drums
+  if (s16 % 4 === 0) kick(at, 0.9);
+  if (s16 === 4 || s16 === 12) { noise('bandpass', 1900, 1500, 0.14, 0.4, 0, musicOut, at); synth('triangle', -21, at, 0.06, 0.12); }
+  if (final && s16 >= 12) noise('bandpass', 2200, 1800, 0.06, 0.22, 0, musicOut, at);   // snare roll into each bar
+  noise('highpass', 8000, 8000, 0.025, s16 % 2 ? 0.12 : (tense ? 0.08 : 0.04), 0, musicOut, at);
+  if (tense && s16 % 4 === 2) noise('highpass', 6000, 6000, 0.12, 0.08, 0, musicOut, at); // open hat
+  // pumping bass: 8th notes, root and octave
+  if (s16 % 2 === 0) synth('sawtooth', BASS[bar] + lift + (s16 % 4 === 2 ? 12 : 0), at, len * 1.7, 0.22, 650);
+  // 16th-note arpeggio, an octave higher once it gets tense
+  synth('square', ARP[bar][ARP_ORDER[s16 % 8]] + lift + (tense ? 12 : 0), at, len * 0.8, 0.035, 3200);
+  // lead: held until the next note (at most a quarter note)
+  const n = LEAD[step % LEAD.length];
+  if (n !== null) {
+    let hold = 1; while (hold < 4 && LEAD[(step + hold) % LEAD.length] === null) hold++;
+    synth('sawtooth', n + lift, at, len * hold * 0.95, 0.11, 2600, true);
   }
-  if (left <= 10 && beat % 4 === 0) {
+  if (final && s16 % 4 === 0) {
     // the last 10 seconds: a ticking clock
     const o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'square'; o.frequency.setValueAtTime(beat === 0 ? 2000 : 1500, at);
+    o.type = 'square'; o.frequency.setValueAtTime(s16 === 0 ? 2000 : 1500, at);
     g.gain.setValueAtTime(0.06, at); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.04);
     o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.05);
   }
 }
 function startMusic() {
   if (!ac || musicTimer) return;
-  musicNext = ac.currentTime + 0.1;
+  musicNext = ac.currentTime + 0.1; musicStep = 0;
   musicTimer = setInterval(() => {
     const boil = typeof boilLevel === 'function' ? boilLevel() : 1;
-    // 128 beats a minute at the start, up to about 190 in the last seconds
-    const eighth = 60 / (128 * (1 + 0.5 * (boil - 1) / (BOIL_MAX - 1))) / 2;
-    while (musicNext < ac.currentTime + 0.15) { musicNote(musicStep++, musicNext); musicNext += eighth; }
-  }, 30);
+    // 140 beats a minute at the start, up to about 200 in the last seconds
+    musicStepLen = 60 / (140 * (1 + 0.43 * (boil - 1) / (BOIL_MAX - 1))) / 4;
+    while (musicNext < ac.currentTime + 0.15) { musicNote(musicStep++, musicNext); musicNext += musicStepLen; }
+  }, 25);
 }
 function stopMusic() { clearInterval(musicTimer); musicTimer = 0; }
