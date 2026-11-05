@@ -153,7 +153,7 @@ const lead = (seq, step, at, len, fn) => {
 //   bass: 'pump' (root and octave in 8ths), 'gate' (a pulsing 16th-note bass) or 'bounce' (off-beat octaves)
 //   kick: 'four' (every beat) or 'double' (every 8th note, for a pounding feel)
 function arcadeTheme(cfg) {
-  return Object.assign({ bass: 'pump', kick: 'four', leadWave: 'sawtooth', leadCut: 2600, arpWave: 'square', arpOrder: [0, 1, 2, 3, 2, 1, 2, 3] }, cfg, {
+  return Object.assign({ bass: 'pump', kick: 'four', leadWave: 'sawtooth', leadCut: 2600, arpWave: 'sawtooth', arpOrder: [0, 1, 2, 3, 2, 1, 2, 3] }, cfg, {
     note(step, at, len, lift, tense) {
       const s = step % 16, bar = Math.floor(step / 16) % this.roots.length, r = this.roots[bar] + lift;
       if (this.kick === 'double' ? s % 2 === 0 : s % 4 === 0) kick(at, this.kick === 'double' && s % 4 ? 0.55 : 0.9);
@@ -162,73 +162,75 @@ function arcadeTheme(cfg) {
       if (this.bass === 'gate') synth('sawtooth', r + (s % 8 === 6 ? 12 : 0), at, len * 0.8, 0.2, 520);
       else if (this.bass === 'bounce') { if (s % 2 === 0) synth('sawtooth', r + (s % 4 === 2 ? 12 : 0), at, len * 1.4, 0.24, 800); }
       else if (s % 2 === 0) synth('sawtooth', r + (s % 4 === 2 ? 12 : 0), at, len * 1.7, 0.22, 650);
-      synth(this.arpWave, this.arp[bar][this.arpOrder[s % this.arpOrder.length]] + lift + (tense ? 12 : 0), at, len * 0.8, 0.035, 3200);
+      synth(this.arpWave, this.arp[bar][this.arpOrder[s % this.arpOrder.length]] + lift + (tense ? 12 : 0), at, len * 0.8, 0.04, 2200);
       lead(this.lead, step, at, len, (n, d) => synth(this.leadWave, n + lift, at, d, 0.11, this.leadCut, true));
     },
   });
 }
+// Melodies use the full major or minor scale and move by step, with half-steps and leading notes, over
+// chords with 7ths and a dominant chord that pulls back home: the sound of Western pop and game music.
 const MUSIC = {
-  // 1. 街機 / Arcade: driving and upbeat, A minor (Am - F - C - G)
+  // 1. 街機 / Arcade: driving and upbeat, A minor (Am7 - Fmaj7 - G7 - E7)
   arcade: arcadeTheme({
     bpm: 140,
-    roots: [-24, -28, -21, -26],
-    arp: [[12, 15, 19, 24], [8, 12, 15, 20], [15, 19, 22, 27], [10, 14, 17, 22]],
+    roots: [-24, -28, -26, -29],
+    arp: [[12, 15, 19, 22], [8, 12, 15, 19], [10, 14, 17, 20], [7, 11, 14, 17]],
     lead: [
-      12, null, null, 12, 15, null, 12, null, 19, null, 17, null, 15, null, 12, null,
-      null, null, 8, null, 12, null, 15, null, 17, null, 15, null, 12, null, null, null,
-      15, null, null, 15, 19, null, 15, null, 22, null, 19, null, 15, null, 19, null,
-      17, null, null, null, 14, null, null, null, 10, null, 14, null, 17, null, 19, null,
-      24, null, 22, null, 19, null, 22, null, 24, null, null, 19, null, null, 15, null,
-      17, null, 15, null, 12, null, 15, null, 17, null, 19, null, 20, null, null, null,
-      19, null, null, 19, 22, null, 19, null, 15, null, 19, null, 22, null, 24, null,
-      22, null, null, null, 19, null, null, null, 17, null, 14, null, 10, null, null, null,
+      12, null, 14, 15, 17, null, 19, null, 17, null, 15, null, 14, null, 15, null,
+      8, null, 10, 12, 15, null, 14, null, 12, null, 10, null, 8, null, null, null,
+      14, null, 15, 17, 19, null, 17, null, 15, null, 14, null, 17, null, null, null,
+      14, null, 11, null, 7, null, 11, null, 14, null, null, null, 11, null, null, null,
+      24, null, 22, 19, 17, null, 19, null, 22, null, 19, null, 15, null, null, null,
+      20, null, 19, null, 15, null, 12, null, 15, null, 19, null, 20, null, 19, null,
+      22, null, null, 20, 19, null, 17, null, 14, null, 17, null, 19, null, 20, null,
+      23, null, null, null, 19, null, null, null, 17, null, 14, null, 11, null, null, null,
     ],
   }),
-  // 2. 霓虹 / Neon: night-time retro synthwave, C minor (Cm - Ab - Eb - Bb), pulsing bass and long, soaring lead notes
+  // 2. 霓虹 / Neon: night-time retro synthwave, C minor (Cm7 - Abmaj7 - Fm7 - G7), pulsing bass and long lead notes
   neon: arcadeTheme({
     bpm: 128, bass: 'gate', leadWave: 'square', leadCut: 3000, arpOrder: [0, 1, 2, 3],
-    roots: [-21, -25, -18, -23],
-    arp: [[3, 6, 10, 15], [-1, 3, 6, 11], [6, 10, 13, 18], [1, 5, 8, 13]],
+    roots: [-21, -25, -28, -26],
+    arp: [[3, 6, 10, 13], [-1, 3, 6, 10], [8, 11, 15, 18], [10, 14, 17, 20]],
     lead: [
-      15, null, null, null, null, null, 13, null, 15, null, null, null, 18, null, 17, null,
-      15, null, null, null, null, null, 11, null, null, null, 10, null, 11, null, 13, null,
-      10, null, null, null, null, null, 13, null, 15, null, null, null, 17, null, 18, null,
-      17, null, null, null, 13, null, null, null, 10, null, null, null, null, null, null, null,
+      15, null, null, null, 17, null, null, null, 18, null, 17, null, 15, null, 14, null,
+      15, null, null, null, 13, null, null, null, 11, null, 10, null, 11, null, null, null,
+      8, null, 10, 11, 15, null, null, null, 13, null, 11, null, 10, null, 8, null,
+      14, null, null, null, 17, null, null, null, 20, null, null, null, 17, null, 14, null,
     ],
   }),
-  // 3. 魔王 / Boss: dark and urgent final-boss fight, E minor (Em - C - Am - B), pounding kick and a sharp lead
+  // 3. 魔王 / Boss: dark and urgent final-boss fight, E harmonic minor (Em - Cmaj7 - Am7 - B7), pounding kick, fast runs
   boss: arcadeTheme({
     bpm: 165, kick: 'double', leadCut: 3400,
     roots: [-29, -21, -24, -22],
-    arp: [[7, 10, 14, 19], [3, 7, 10, 15], [0, 3, 7, 12], [2, 6, 9, 14]],
+    arp: [[7, 10, 14, 19], [3, 7, 10, 14], [0, 3, 7, 10], [2, 6, 9, 12]],
     lead: [
-      19, null, 18, 19, null, null, 14, null, 15, null, 14, null, 12, null, 10, null,
-      15, null, 14, 15, null, null, 10, null, 12, null, 10, null, 7, null, null, null,
-      12, null, 14, 15, null, null, 19, null, 17, null, 15, null, 14, null, 12, null,
-      14, null, null, null, 18, null, null, null, 21, null, 18, null, 14, null, 18, null,
+      19, 18, 19, null, 14, null, 15, 14, 12, null, 10, null, 7, null, null, null,
+      15, 14, 15, null, 10, null, 12, 10, 9, null, 7, null, 3, null, null, null,
+      12, 14, 15, 17, 19, null, 17, 15, 14, null, 15, null, 12, null, null, null,
+      18, null, null, null, 14, null, 18, null, 21, null, 18, null, 14, null, 12, null,
     ],
   }),
-  // 4. 英雄 / Hero: bright and triumphant, D major (D - A - Bm - G), a heroic lead like a level-clear tune
+  // 4. 英雄 / Hero: bright and triumphant, D major (D - Bm7 - Gmaj7 - A7), like a level-clear tune
   hero: arcadeTheme({
     bpm: 145, leadCut: 3600,
-    roots: [-19, -24, -22, -26],
-    arp: [[5, 9, 12, 17], [0, 4, 7, 12], [2, 5, 9, 14], [-2, 2, 5, 10]],
+    roots: [-19, -22, -26, -24],
+    arp: [[5, 9, 12, 17], [2, 5, 9, 12], [10, 14, 17, 21], [12, 16, 19, 22]],
     lead: [
-      17, null, null, 17, 16, null, 14, null, 12, null, null, null, 9, null, 12, null,
-      16, null, null, 16, 14, null, 12, null, 7, null, null, null, 4, null, 7, null,
-      14, null, null, 14, 12, null, 9, null, 14, null, 17, null, 19, null, 17, null,
-      14, null, null, null, 12, null, null, null, 10, null, 9, null, 7, null, null, null,
+      17, null, 16, 17, 21, null, 19, null, 17, null, 16, null, 14, null, null, null,
+      14, null, 12, 14, 17, null, 16, null, 14, null, 12, null, 9, null, null, null,
+      10, null, 9, 10, 14, null, 12, null, 10, null, 9, null, 7, null, null, null,
+      4, null, 7, null, 10, null, 12, null, 16, null, null, null, 17, null, null, null,
     ],
   }),
-  // 5. 賽車 / Racer: fast racing-game drive, F# minor (F#m - D - E - C#), bouncing off-beat bass
+  // 5. 賽車 / Racer: fast racing-game drive, F# harmonic minor (F#m7 - Dmaj7 - E - C#7), bouncing off-beat bass
   racer: arcadeTheme({
     bpm: 152, bass: 'bounce', leadCut: 4200,
     roots: [-27, -31, -29, -32],
-    arp: [[9, 12, 16, 21], [5, 9, 12, 17], [7, 11, 14, 19], [4, 8, 11, 16]],
+    arp: [[9, 12, 16, 19], [5, 9, 12, 16], [7, 11, 14, 19], [4, 8, 11, 14]],
     lead: [
-      21, null, 19, null, 16, null, 19, null, 21, null, null, null, 24, null, 21, null,
-      17, null, 16, null, 12, null, 16, null, 17, null, null, null, 21, null, 17, null,
-      19, null, 16, null, 11, null, 16, null, 19, null, null, null, 23, null, 19, null,
+      21, null, 20, 21, 24, null, 21, null, 19, null, 17, null, 16, null, null, null,
+      17, null, 16, 17, 21, null, 17, null, 16, null, 14, null, 12, null, null, null,
+      14, null, 16, 19, 23, null, 19, null, 16, null, 14, null, 11, null, null, null,
       20, null, null, null, 16, null, null, null, 11, null, 16, null, 20, null, 23, null,
     ],
   }),
