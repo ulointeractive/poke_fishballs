@@ -765,6 +765,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   function resize() {
     const rect = stage.getBoundingClientRect();
     dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (rect.width < 2 || rect.height < 2) return;   // not laid out yet; the ResizeObserver will call again
     W = rect.width; H = rect.height;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -788,6 +789,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     if (!stick.hasPointer) { stick.x = L.cx + L.R * 0.5; stick.y = L.cy + L.R * L.sq * 0.1; }
     buildBackground();
     buildSprites();
+    if (!oldR) seedBalls();   // first real layout
   }
 
   function buildBackground() {
@@ -1206,7 +1208,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
-    if (bg) ctx.drawImage(bg, 0, 0, W, H);
+    if (!sprites || !W || !H) return;
+    if (bg && bg.width && bg.height) ctx.drawImage(bg, 0, 0, W, H);
     const people = customers.concat(leavers).sort((a, b) => a.x - b.x);
     for (const c of people) drawCustomer(c);
     drawPot();
@@ -1396,22 +1399,35 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   $('again').addEventListener('click', startGame);
 
   // ---------- boot ----------
-  resize();
-  seedBalls();
-  for (let i = 0; i < 4; i++) spawnCustomer(slotX(i));
-  updateHUD();
-  new ResizeObserver(() => resize()).observe(stage);
-  Store.init();
-
-  let last = performance.now();
-  function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
-    last = now; tNow += dt;
-    update(dt);
-    draw();
+  // The claude.ai viewer can swap in a new version of this page while it is open;
+  // booting through its update hook makes the new version start cleanly.
+  let booted = false;
+  function start() {
+    if (booted) return;
+    booted = true;
+    resize();
+    for (let i = 0; i < 4; i++) spawnCustomer(slotX(i));
+    updateHUD();
+    new ResizeObserver(() => resize()).observe(stage);
+    Store.init();
+    let last = performance.now();
+    function frame(now) {
+      const dt = clamp((now - last) / 1000, 0, 0.05);
+      last = now; tNow += dt;
+      // one bad frame must never stop the game loop
+      if (L.R) { try { update(dt); draw(); } catch (e) { console.error(e); } }
+      requestAnimationFrame(frame);
+    }
     requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  const hot = window.claude && window.claude.hot;
+  try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ name: Store.name })); } catch (e) {}
+  try {
+    if (hot && typeof hot.ready === 'function') hot.ready(start);
+    else start();
+  } catch (e) { start(); }
+  // fallback in case the viewer's hook never calls back
+  setTimeout(start, 1500);
 })();
 </script>
 </body>
