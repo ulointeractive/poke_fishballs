@@ -1,10 +1,11 @@
-// records.js: Leaderboard, personal history and player names (online in claude.ai, browser storage otherwise).
-
-// ---------- records: shared leaderboard + personal history ----------
-// Online (inside claude.ai): leaderboard in `scores/<viewer id>`, history private in `data/users/<id>/history`.
-// Offline (file opened directly): this browser's localStorage only.
+// records.js: Personal history and player name (always kept on this device), plus the optional shared leaderboard.
+//
+// Privacy rule: everything stays in this browser's storage. Nothing goes online unless the player taps
+// "upload to leaderboard"; then only { name, score } is written to the claude.ai leaderboard
+// (collections `scores` and `scoresHard`). Players can remove their entry again from the leaderboard screen.
+// Outside claude.ai (e.g. GitHub Pages) there is no shared leaderboard: the game shows this device's scores.
 const Store = {
-  mode: 'local', db: null, user: null, uid: null, canSave: true,
+  mode: 'local', db: null, uid: null, canSave: true,
   leaders: { normal: [], hard: [] }, lbLoaded: { normal: false, hard: false }, lbTimedOut: false,
   history: [], mine: { normal: null, hard: null }, name: '',
 
@@ -17,29 +18,27 @@ const Store = {
         const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
         const uid = db && user ? await user.id() : null;
         if (db && uid) {
-          Object.assign(this, { db, user, uid, mode: 'cloud' });
+          Object.assign(this, { db, uid, mode: 'cloud' });
           this.subscribe();
         }
       }
     } catch (e) { /* stay local */ }
     renderBoards();
+    updateUploadUI();
   },
   localBest(lv) {
     return this.history.filter((r) => (r.level || 'normal') === lv).reduce((m, r) => Math.max(m, r.score), 0);
   },
   loadLocal() {
     try { this.history = JSON.parse(localStorage.getItem('fishball-history') || '[]') || []; } catch (e) { this.history = []; }
-    for (const lv of ['normal', 'hard']) {
-      const best = this.localBest(lv);
-      this.mine[lv] = best ? { best } : null;
-    }
   },
+  // read-only: the shared boards and this player's own entry (if they ever uploaded one)
   subscribe() {
     const timer = setTimeout(() => {
       if (!this.lbLoaded.normal || !this.lbLoaded.hard) { this.lbTimedOut = true; renderBoards(); }
     }, 10000);
     for (const lv of ['normal', 'hard']) {
-      this.db.collection(COLLECTION[lv]).orderBy('best', 'desc').limit(50).onSnapshot((snap) => {
+      this.db.collection(COLLECTION[lv]).orderBy('score', 'desc').limit(50).onSnapshot((snap) => {
         this.leaders[lv] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         if (!snap.metadata.fromCache || this.leaders[lv].length) this.lbLoaded[lv] = true;
         if (this.lbLoaded.normal && this.lbLoaded.hard) clearTimeout(timer);
@@ -47,59 +46,59 @@ const Store = {
       }, () => { this.lbTimedOut = true; renderBoards(); });
       this.db.doc(COLLECTION[lv] + '/' + this.uid).onSnapshot((d) => {
         this.mine[lv] = d.exists ? d.data() : null;
-        if (!this.name && this.mine[lv] && this.mine[lv].name) { this.name = cleanName(this.mine[lv].name); syncNameInputs(); }
         renderBoards();
+        updateUploadUI();
       }, () => {});
     }
-    this.db.doc('data/users/' + this.uid + '/history').onSnapshot((d) => {
-      this.history = (d.exists && Array.isArray(d.data().runs)) ? d.data().runs : [];
-      renderBoards();
-    }, () => {});
   },
-  async saveRun(run) {
-    if (!this.name) {
-      this.name = randomName();
-      try { localStorage.setItem('fishball-name', this.name); } catch (e) {}
-      syncNameInputs();
-    }
-    const lv = run.level;
-    const mine = this.mine[lv];
-    const prevBest = Math.max(mine ? mine.best || 0 : 0, this.localBest(lv));
-    const isNew = run.score > prevBest;
-    const runs = [run, ...this.history].slice(0, HISTORY_MAX);
-    if (this.mode === 'cloud' && this.canSave) {
-      try {
-        await this.db.doc('data/users/' + this.uid + '/history').set({ runs });
-        if (!SAVE_RANKING) {
-          this.history = runs;
-          return { isNew, saved: 'test' };
-        }
-        const games = (mine && mine.games || 0) + 1;
-        const top = isNew ? { best: run.score, sticks: run.sticks, served: run.served, perfects: run.perfects, wrong: run.wrong, at: run.at }
-          : { best: prevBest, sticks: mine.sticks || 0, served: mine.served || 0, perfects: mine.perfects || 0, wrong: mine.wrong || 0, at: mine.at || run.at };
-        const doc = { ...top, games, name: this.name };
-        await this.db.doc(COLLECTION[lv] + '/' + this.uid).set(doc);
-        this.history = runs;
-        this.mine[lv] = doc;
-        return { isNew, saved: 'cloud' };
-      } catch (e) {
-        this.canSave = false;
-      }
-    }
-    this.history = runs;
-    this.mine[lv] = { best: Math.max(prevBest, run.score) };
-    try { localStorage.setItem('fishball-history', JSON.stringify(runs)); } catch (e) {}
-    return { isNew, saved: this.mode === 'cloud' ? 'readonly' : 'local' };
+  ensureName() {
+    if (this.name) return;
+    this.name = randomName();
+    try { localStorage.setItem('fishball-name', this.name); } catch (e) {}
+    syncNameInputs();
   },
+  // every game is saved on this device only
+  saveRun(run) {
+    this.ensureName();
+    const isNew = run.score > this.localBest(run.level);
+    this.history = [run, ...this.history].slice(0, HISTORY_MAX);
+    try { localStorage.setItem('fishball-history', JSON.stringify(this.history)); } catch (e) {}
+    return { isNew };
+  },
+  canUpload() { return this.mode === 'cloud' && this.canSave; },
+  // the player chose to upload: store only their name and score (keeping their higher score if they already have one)
+  async upload(run) {
+    if (!this.canUpload()) return 'unavailable';
+    if (!SAVE_RANKING) return 'test';
+    this.ensureName();
+    const lv = run.level, cur = this.mine[lv];
+    if (cur && cur.score >= run.score && cur.name === this.name) return 'lower';
+    const doc = { name: this.name, score: Math.max(run.score, cur ? cur.score || 0 : 0) };
+    try {
+      await this.db.doc(COLLECTION[lv] + '/' + this.uid).set(doc);
+      this.mine[lv] = doc;
+      return cur && cur.score > run.score ? 'renamed' : 'ok';
+    } catch (e) {
+      this.canSave = false;
+      return 'denied';
+    }
+  },
+  async removeMine(lv) {
+    if (this.mode !== 'cloud' || !this.mine[lv]) return false;
+    try { await this.db.doc(COLLECTION[lv] + '/' + this.uid).delete(); this.mine[lv] = null; return true; }
+    catch (e) { return false; }
+  },
+  // the name is saved on this device; an entry the player already uploaded shows the new name too
   async setName(raw) {
     this.name = cleanName(raw);
     try { localStorage.setItem('fishball-name', this.name); } catch (e) {}
     syncNameInputs();
-    if (this.mode === 'cloud' && this.canSave && SAVE_RANKING) {
+    if (this.mode === 'cloud' && this.canSave && SAVE_RANKING && this.name) {
       for (const lv of ['normal', 'hard']) {
-        if (!this.mine[lv] || this.mine[lv].games == null) continue;
+        const cur = this.mine[lv];
+        if (!cur || cur.name === this.name) continue;
         try {
-          const doc = { ...this.mine[lv], name: this.name };
+          const doc = { name: this.name, score: cur.score || 0 };
           await this.db.doc(COLLECTION[lv] + '/' + this.uid).set(doc);
           this.mine[lv] = doc;
         } catch (e) { this.canSave = false; return false; }
@@ -114,7 +113,7 @@ const Store = {
     const list = this.leaders[lv];
     const i = list.findIndex((r) => r.id === this.uid);
     if (i >= 0) return i + 1;
-    return list.filter((r) => r.best > mine.best).length + 1;
+    return list.filter((r) => r.score > mine.score).length + 1;
   },
 };
 
@@ -164,7 +163,7 @@ async function renderBoards() {
     const el = li(me ? 'me' : '');
     const pos = document.createElement('span'); pos.className = 'pos'; pos.textContent = posText;
     const who = document.createElement('span'); who.className = 'who'; who.textContent = nameText;
-    const sub = document.createElement('small'); sub.textContent = subText; who.appendChild(sub);
+    if (subText) { const sub = document.createElement('small'); sub.textContent = subText; who.appendChild(sub); }
     const p = document.createElement('span'); p.className = 'pts'; p.textContent = pts;
     const u = document.createElement('small'); u.textContent = t('unit.pts'); p.appendChild(u);
     el.append(pos, who, p);
@@ -172,6 +171,7 @@ async function renderBoards() {
   };
   if (Store.mode === 'cloud') {
     note.textContent = Store.canSave ? t('lb.note') : t('lb.readonly');
+    $('remove-mine').hidden = !Store.mine[lbLevel];
     if (seq !== renderSeq) return;
     const nameOf = (r) => cleanName(r.name) || t('anon');
     const list = Store.leaders[lbLevel];
@@ -182,15 +182,14 @@ async function renderBoards() {
       showChamp(null);
       lb.replaceChildren(emptyRow(t('lb.empty')));
     } else {
-      showChamp(nameOf(list[0]), list[0].best);
-      lb.replaceChildren(...list.map((r, i) => row(i + 1, r.id === Store.uid ? t('you.tag', nameOf(r)) : nameOf(r),
-        lbLevel === 'hard' ? t('lb.subHard', r.sticks || 0, r.perfects || 0, r.wrong || 0) : t('lb.subNormal', r.sticks || 0, r.perfects || 0),
-        r.best, r.id === Store.uid)));
+      showChamp(nameOf(list[0]), list[0].score);
+      lb.replaceChildren(...list.map((r, i) => row(i + 1, r.id === Store.uid ? t('you.tag', nameOf(r)) : nameOf(r), '', r.score, r.id === Store.uid)));
     }
     const top = Store.leaders[level][0];
-    showIntroRecord(top ? t('intro.record', levelLabel(level), nameOf(top), top.best) : '');
+    showIntroRecord(top ? t('intro.record', levelLabel(level), nameOf(top), top.score) : '');
   } else {
     note.textContent = t('lb.offline');
+    $('remove-mine').hidden = true;
     const top = Store.history.filter((r) => (r.level || 'normal') === lbLevel).sort((a, b) => b.score - a.score).slice(0, 10);
     if (top.length) showChamp(Store.name || t('you'), top[0].score); else showChamp(null);
     if (!top.length) lb.replaceChildren(emptyRow(t('hist.empty')));
@@ -200,8 +199,8 @@ async function renderBoards() {
   }
   // personal history
   const h = Store.history;
-  const bestN = Math.max(Store.localBest('normal'), (Store.mine.normal && Store.mine.normal.best) || 0);
-  const bestH = Math.max(Store.localBest('hard'), (Store.mine.hard && Store.mine.hard.best) || 0);
+  const bestN = Store.localBest('normal');
+  const bestH = Store.localBest('hard');
   $('h-games').textContent = h.length;
   $('h-best').textContent = bestN;
   $('h-avg').textContent = bestH;
@@ -269,3 +268,28 @@ $('save-name').addEventListener('click', saveResultName);
 $('roll-intro').addEventListener('click', () => { Store.setName(randomName()); });
 $('roll-result').addEventListener('click', () => { $('name-result').value = randomName(); saveResultName(); });
 $('name-result').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveResultName(); } });
+
+// ---------- opt-in upload ----------
+let uploadedRun = null;
+function updateUploadUI() {
+  const show = Store.mode === 'cloud';
+  $('upload').hidden = !show;
+  $('upload-note').hidden = !show;
+  $('upload').disabled = !lastRun || uploadedRun === lastRun || !Store.canUpload();
+}
+$('upload').addEventListener('click', async () => {
+  if (!lastRun) return;
+  $('upload').disabled = true;
+  const res = await Store.upload(lastRun);
+  if (res === 'ok' || res === 'renamed' || res === 'lower') uploadedRun = lastRun;
+  toast(t('toast.upload.' + res, Store.mine[lastRun.level] && Store.mine[lastRun.level].score));
+  fillResult(lastRun, lastSave);
+  renderBoards();
+  updateUploadUI();
+});
+$('remove-mine').addEventListener('click', async () => {
+  const ok = await Store.removeMine(lbLevel);
+  if (ok) { uploadedRun = null; updateUploadUI(); renderBoards(); }
+  $('lb-note').textContent = ok ? t('lb.removed') : t('lb.removeFail');
+});
+langListeners.push(updateUploadUI);

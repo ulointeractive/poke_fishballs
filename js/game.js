@@ -173,10 +173,10 @@ function fillResult(run, res) {
   $('r-wrong').textContent = t('n.items', run.wrong);
   $('r-wrong').hidden = $('r-wrong-l').hidden = lv !== 'hard';
   if (!res) return;
-  $('r-best').textContent = t('n.pts', Math.max(run.score, Store.localBest(lv), (Store.mine[lv] && Store.mine[lv].best) || 0));
+  $('r-best').textContent = t('n.pts', Math.max(run.score, Store.localBest(lv)));
   const place = Store.place(lv);
-  $('r-place').textContent = res.saved === 'test' ? t('r.test') : place ? t('r.rank', place) : t('r.localOnly');
-  $('r-save').textContent = res.saved === 'readonly' ? t('r.readonly') : res.saved === 'test' ? t('r.testNote') : '';
+  $('r-place').textContent = Store.mode !== 'cloud' ? t('r.localOnly') : place ? t('r.rank', place) : t('r.notUploaded');
+  $('r-save').textContent = t('r.privacy');
 }
 function showPauseInfo() {
   $('pause-info').textContent = t('pause.info', levelLabel(playLevel), timeLeft.toFixed(1), score);
@@ -207,14 +207,15 @@ async function endGame() {
   $('r-place').textContent = t('r.saving');
   $('r-save').textContent = '';
   const shown = new Promise((res) => setTimeout(res, 900));
-  let res = { isNew: false, saved: 'local' };
-  try { res = await Store.saveRun(run); } catch (e) {}
+  let res = { isNew: false };
+  try { res = Store.saveRun(run); } catch (e) {}
   await shown;
   $('r-new').hidden = !res.isNew;
   lastSave = res;
   fillResult(run, res);
   $('result').hidden = false;
   renderBoards();
+  updateUploadUI();
 }
 $('start').addEventListener('click', startGame);
 $('again').addEventListener('click', () => { level = playLevel; startGame(); });

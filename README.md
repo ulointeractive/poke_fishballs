@@ -1,6 +1,6 @@
 # 篤魚蛋 Poke Fishballs
 
-![篤魚蛋 Poke Fishballs: a stick of poked curry fishballs over a simmering pot at the stall](assets/thumbnail.png)
+![篤魚蛋 Poke Fishballs: a simmering pot of curry fishballs at the stall, with a cup of bamboo skewers](assets/thumbnail.png)
 
 **Mini games to poke the most fishballs in one minute.**
 
@@ -157,24 +157,29 @@ Shown at the end of each game:
 
 ### Leaderboard (排行榜)
 
-- Each level has its own **all-time** leaderboard showing the top 50 players. Use the 普通 / 挑戰 buttons to switch between them.
-- Each player appears once per level, with their best score.
-- The **record holder** (紀錄保持者) is shown in a red banner at the top and stays there until someone beats them. The start screen also shows the current record for the selected level.
+- **Nothing goes on the leaderboard unless the player chooses to.** After a game, **上傳到排行榜 / Upload to leaderboard** sends only their **name and score**. Everything else stays on their device.
+- If they already have a higher score on the leaderboard, it stays. Uploading again with a new name just updates the name.
+- Each level has its own **all-time** leaderboard showing the top 50. Use the 普通 / 挑戰 buttons to switch between them. Each player appears once per level.
+- The **record holder** (紀錄保持者) is shown in a red banner at the top until someone beats them. The start screen also shows the current record.
+- Players can take their score off at any time with **移除我喺呢關嘅分數 / Remove my score for this level** on the leaderboard screen.
+- The shared leaderboard only exists in the claude.ai version. Anywhere else (GitHub Pages, or `index.html` opened directly), the leaderboard screen shows that device's own best scores and there's no upload button.
 
 ### Personal history (我嘅紀錄)
 
 - Your last 50 games, each tagged 普通 or 挑戰, with date, score, fishballs, sticks, centre hits, slips and wrong items.
 - Summary: games played, best 普通 score, best 挑戰 score.
-- Only you can see your own history.
+- Always stored only in your browser on this device. It's never uploaded, and nobody else can see it.
 
 ### Where records are kept
 
-| How the game is opened | Leaderboard | Personal history |
+| | On the player's device | Online (claude.ai version only) |
 |---|---|---|
-| As the claude.ai artifact | Shared online with everyone who can open it | Saved online, private to each player |
-| `index.html` opened directly | Only this browser's own scores | Saved in this browser only |
+| Every game (history, best scores) | ✔ always | ✘ never |
+| Leaderboard name | ✔ | Only if the player uploads a score |
+| Score | ✔ | Only the one the player uploads |
+| Language choice | ✔ | ✘ |
 
-To save scores to the shared leaderboard, a player needs at least **Contributor** access to the artifact. Anyone with less access can play and see the leaderboard, but their scores stay on their own device, and the result screen tells them so.
+To upload, a player needs at least **Contributor** access to the artifact. Anyone with less access can still play and see the leaderboard; the upload just won't go through, and they're told why.
 
 ---
 
@@ -259,7 +264,7 @@ Not yet tested on real Safari, the browser engine used on every iPhone and iPad.
 | Service | Why | What it receives |
 |---|---|---|
 | Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`) | Downloads the two Chinese fonts | The player's IP address and browser details, as with any web font. No game data. |
-| claude.ai artifact services (only when played as the artifact) | Leaderboard, history, saving the result image | See "What is stored" below |
+| claude.ai artifact services (only when played as the artifact) | Reading the leaderboard; uploading `{name, score}` when the player taps Upload; saving the result image | See "What is stored" below |
 
 There are no analytics, ads, tracking pixels, cookies, API keys or passwords anywhere in the code. The game doesn't use the camera, microphone, location, contacts or photos.
 
@@ -269,11 +274,10 @@ The claude.ai artifact link appears in the code only as text in the share messag
 
 | Where | What | Who can see it |
 |---|---|---|
-| Online leaderboard (`scores`, `scoresHard`) | For each player: an opaque claude.ai id, the leaderboard name they chose or were given, best score and its stats, number of games, date of the best game | Everyone who can open the artifact |
-| Online history (`data/users/<id>/history`) | The player's last 50 games: level, score, stats, date | Only that player, not even the owner |
-| The browser's local storage | `fishball-lang` (language), `fishball-name` (leaderboard name), `fishball-history` (history when played offline or without save permission) | Only that browser |
+| The player's browser (local storage) | `fishball-history` (last 50 games), `fishball-name` (leaderboard name), `fishball-lang` (language) | Only that browser. Clearing the browser's site data deletes it. |
+| Online leaderboard (`scores`, `scoresHard`), only after the player taps Upload | `{ name, score }`, nothing else | Everyone who can open the artifact |
 
-- **Player identity:** the game asks claude.ai only for an opaque player id, a random-looking code used to keep each player's scores separate. It does **not** request names, photos or email addresses.
+- **Player identity:** each uploaded entry is filed under an anonymous claude.ai player code, so only that player can change or remove it. The code is used as the entry's address, not stored inside it. The game never asks for names, photos or email addresses.
 - **Names:** come only from what the player typed or the random generator.
 
 ### Browser features used, only when the player taps
@@ -284,9 +288,9 @@ The claude.ai artifact link appears in the code only as text in the share messag
 
 ### Things to be aware of
 
-- **Scores can be faked.** The game runs entirely in the player's browser, so a technically skilled player with save permission could write a fake best score for themselves. They can't change anyone else's score. The artifact owner can delete any entry, which Claude can do on request.
+- **Scores can be faked.** The game runs entirely in the player's browser, so a technically skilled player could upload a fake score for themselves. They can't change anyone else's. The artifact owner can delete any entry, which Claude can do on request.
 - **Names aren't moderated.** A player could type something rude. The owner can remove it the same way.
-- **Who can save:** only people with Contributor access or higher can write to the leaderboard. Viewers can play and see it, but their scores stay on their own device.
+- **The leaderboard depends on claude.ai.** If the artifact is deleted or becomes unavailable, the shared leaderboard (names and scores only) goes with it. The game itself, and every player's own records, keep working anywhere, because they live on each device.
 - **Google Fonts:** if you'd rather the game contacted no outside service, the fonts can be bundled with the game instead.
 
 ---
@@ -390,11 +394,10 @@ All in `js/config.js`:
 
 | Path | Contents | Who can write |
 |---|---|---|
-| `scores/<player id>` | 普通 best: `best`, `sticks`, `served`, `perfects`, `wrong`, `games`, `name`, `at` | Only that player, or the owner |
-| `scoresHard/<player id>` | Same, for 挑戰 | Only that player, or the owner |
-| `data/users/<player id>/history` | `runs`: last 50 games | Only that player (private) |
+| `scores/<player code>` | 普通 entry: `name`, `score` | Only that player, or the owner |
+| `scoresHard/<player code>` | 挑戰 entry: `name`, `score` | Only that player, or the owner |
 
-Everyone who can open the artifact can read both leaderboards. The player id is an opaque id from claude.ai, and no profile names are read.
+Everyone who can open the artifact can read both leaderboards. Nothing else is stored online: no history, no stats, no dates.
 
 ### Publishing checklist
 
