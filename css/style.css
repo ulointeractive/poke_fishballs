@@ -118,7 +118,7 @@ body {
 .dot.on { background: radial-gradient(circle at 35% 35%, #fde7a8, #eebb57 45%, #c9862c); border-color: #9c5f1c; }
 /* how each item went on the stick */
 .dot.on.perfect { border-color: #b8860b; box-shadow: 0 0 0 2px #ffe27a; }
-.dot.on.off { background: radial-gradient(circle at 75% 40%, #fde7a8, #f0a04b 45%, #c9622c); border-color: #e0702a; transform: translateX(3px); }
+.dot.on.off { background: radial-gradient(circle at 75% 40%, #fde7a8, #f0a04b 45%, #c9622c); border-color: #e0702a; }
 .dot.on.bad { background: radial-gradient(circle at 35% 35%, #ffd0c4, #e0614f 50%, #a8231b); border-color: #7a1810; }
 .timebar { flex: 1; min-width: 40px; height: 8px; background: var(--grout); border-radius: 4px; overflow: hidden; }
 .timebar > i { display: block; height: 100%; width: 100%; background: var(--sign); transform-origin: left; }

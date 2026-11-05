@@ -38,7 +38,7 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 5. **Release** to lift the stick, then press again to poke the next one.
 6. When a stick has **6 items** on it, lifting the stick hands it to the next customer automatically, and you get a fresh stick.
 
-Works with a mouse or a touch screen. The dots next to **呢串** show how many items are on the current stick and how each one went on: gold with a glow for a centre hit, orange and nudged to one side for an off-centre hit (篤歪咗), red for a wrong item.
+Works with a mouse or a touch screen. The dots next to **呢串** show how many items are on the current stick and how each one went on: gold with a glow for a centre hit, orange for an off-centre hit (篤歪咗), red for a wrong item.
 
 ---
 
