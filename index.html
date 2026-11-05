@@ -251,6 +251,11 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
 .champ .pts small { display: inline; color: #f6d9cf; }
 .record-line { font-size: 14px; color: var(--sign-deep); background: #f6ece0; border-radius: 6px; padding: 6px 10px; }
 .share-text { font: inherit; font-size: 13px; width: 100%; box-sizing: border-box; border: 2px solid var(--line); border-radius: 6px; padding: 8px; resize: none; }
+.legend { background: #f6ece0; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.legend-title { font-weight: 700; color: var(--sign-deep); }
+.legend svg { width: 100%; max-width: 300px; height: auto; align-self: center; }
+.legend-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px; text-align: center; color: var(--muted); line-height: 1.35; }
+.legend-cols b { display: block; font-size: 14px; color: var(--ink); }
 .toast { font-size: 13px; color: #1f6b3a; min-height: 1em; }
 @media (max-width: 420px) {
   .hud { gap: 10px; }
@@ -274,6 +279,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   </header>
 
   <div class="meter">
+    <span>呢串</span>
+    <div class="dots" id="dots" aria-label="呢串魚蛋數量"></div>
     <div class="timebar" aria-hidden="true"><i id="timebar"></i></div>
     <button class="chip" id="open-board" type="button">排行榜</button>
     <button class="chip" id="open-history" type="button">我嘅紀錄</button>
@@ -289,9 +296,30 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         <ol class="steps">
           <li>對準魚蛋，㩒落去篤<small>Press down on a fishball to poke it</small></li>
           <li>放手提起竹籤，再篤下一粒<small>Release to lift, then poke the next one</small></li>
-          <li>一串要六粒。自己數，數夠就將竹籤拉上去客人度放手<small>Six per stick. Count them yourself, then drag the stick up to the customer and let go</small></li>
+          <li>一串六粒，自動交俾客人<small>Six per stick, handed to the customer automatically</small></li>
         </ol>
-        <p class="note">啱啱好六粒：每粒 1 分，再加 2 分。唔夠六粒，客人會嬲，冇獎分。多過六粒，多出嚟嘅當送，唔計分。篤得太邊，魚蛋會滑走。</p>
+        <div class="legend">
+          <p class="legend-title">篤邊度最好？篤中心！</p>
+          <svg viewBox="0 0 300 74" role="img" aria-label="篤正中心 2 分，篤偏咗 1 分，篤太邊會滑走 0 分">
+            <defs>
+              <radialGradient id="lg-ball" cx="0.38" cy="0.35" r="0.7">
+                <stop offset="0" stop-color="#fde9b0"/><stop offset="0.55" stop-color="#e5ac4a"/><stop offset="1" stop-color="#a8661d"/>
+              </radialGradient>
+            </defs>
+            <rect x="48" y="4" width="4" height="66" rx="2" fill="#c9a467"/>
+            <circle cx="50" cy="37" r="18" fill="url(#lg-ball)"/>
+            <rect x="148" y="4" width="4" height="66" rx="2" fill="#c9a467"/>
+            <circle cx="140" cy="37" r="18" fill="url(#lg-ball)"/>
+            <rect x="248" y="4" width="4" height="66" rx="2" fill="#c9a467"/>
+            <circle cx="276" cy="44" r="18" fill="url(#lg-ball)" opacity="0.75"/>
+            <path d="M258 30 l10 6" stroke="#a8231b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          </svg>
+          <div class="legend-cols">
+            <span><b>正中</b>每粒 2 分</span>
+            <span><b>篤偏咗</b>每粒 1 分，魚蛋會歪</span>
+            <span><b>篤太邊</b>滑走咗，0 分</span>
+          </div>
+        </div>
         <p class="record-line" id="intro-record" hidden></p>
         <label class="field" for="name-intro">排行榜用嘅名
           <input id="name-intro" type="text" maxlength="12" autocomplete="nickname" placeholder="例如：氹仔魚蛋王">
@@ -307,8 +335,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         <div class="big"><b id="r-score">0</b><span>分</span></div>
         <dl class="stats">
           <dt>交咗俾客人</dt><dd id="r-sticks">0 串</dd>
-          <dt>啱啱好六粒</dt><dd id="r-exact">0 串</dd>
-          <dt>賣出魚蛋</dt><dd id="r-served">0 粒</dd>
+          <dt>篤到魚蛋</dt><dd id="r-served">0 粒</dd>
           <dt>正中紅心</dt><dd id="r-perfect">0 次</dd>
           <dt>滑走咗</dt><dd id="r-slip">0 次</dd>
           <dt>你嘅最佳</dt><dd id="r-best">0 分</dd>
@@ -368,9 +395,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
 <script>
 (() => {
   const TAU = Math.PI * 2;
-  const STICK_CAP = 8;          // physical room on one bamboo stick
-  const ORDER = 6;              // what each customer wants
-  const EXACT_BONUS = 2;
+  const STICK_CAP = 6;          // fishballs per stick; a full stick is handed over automatically
+  const CENTER_BONUS = 1;       // extra point for a fishball poked dead centre
   const GAME_TIME = 60;
   const BALL_COUNT = 30;
   const REFILL_EVERY = 0.25;    // seconds between new fishballs dropped into the pot
@@ -384,6 +410,9 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   const stage = $('stage');
   const hudTime = $('hud-time'), hudScore = $('hud-score'), hudSticks = $('hud-sticks');
   const timebar = $('timebar');
+  const dotsEl = $('dots');
+  for (let i = 0; i < STICK_CAP; i++) { const d = document.createElement('span'); d.className = 'dot'; dotsEl.appendChild(d); }
+  const dotEls = [...dotsEl.children];
 
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -395,15 +424,13 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   const L = {};
   let balls = [], ripples = [], pops = [], steam = [], flyers = [], customers = [], leavers = [];
   let state = 'ready';
-  let timeLeft = GAME_TIME, score = 0, sticks = 0, exact = 0, served = 0, perfects = 0, slips = 0;
+  let timeLeft = GAME_TIME, score = 0, sticks = 0, served = 0, perfects = 0, slips = 0;
   let tNow = 0, refillTimer = 0;
   let bg = null, sprites = null;
   let lastRun = null;
   const stick = {
     balls: [], depth: 0, pressed: false, resolved: false, x: 0, y: 0, hasPointer: false,
     needLift: false,   // the stick must come back up before it can poke again
-    zonePress: false,  // pressed up at the counter, not in the pot
-    pressY: 0, vy: 0, lastT: 0,
   };
 
   // ---------- records: shared leaderboard + personal history ----------
@@ -461,8 +488,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         try {
           await this.db.doc('data/users/' + this.uid + '/history').set({ runs });
           const games = (this.mine && this.mine.games || 0) + 1;
-          const top = isNew ? { best: run.score, sticks: run.sticks, exact: run.exact, perfects: run.perfects, at: run.at }
-            : { best: prevBest, sticks: this.mine.sticks || 0, exact: this.mine.exact || 0, perfects: this.mine.perfects || 0, at: this.mine.at || run.at };
+          const top = isNew ? { best: run.score, sticks: run.sticks, served: run.served, perfects: run.perfects, at: run.at }
+            : { best: prevBest, sticks: this.mine.sticks || 0, served: this.mine.served || 0, perfects: this.mine.perfects || 0, at: this.mine.at || run.at };
           const doc = { ...top, games, name: this.name };
           await this.db.doc('scores/' + this.uid).set(doc);
           this.history = runs;
@@ -551,7 +578,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
           const who = document.createElement('span'); who.className = 'who';
           const nm = nameOf(r);
           who.textContent = r.id === Store.uid ? nm + '（你）' : nm;
-          const sub = document.createElement('small'); sub.textContent = `${r.sticks || 0} 串 · 啱啱好 ${r.exact || 0} 串`; who.appendChild(sub);
+          const sub = document.createElement('small'); sub.textContent = `${r.sticks || 0} 串 · 正中 ${r.perfects || 0} 次`; who.appendChild(sub);
           const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = r.best;
           const u = document.createElement('small'); u.textContent = '分'; pts.appendChild(u);
           row.append(pos, who, pts);
@@ -587,7 +614,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       const who = document.createElement('span'); who.className = 'who';
       who.textContent = fmtDate(r.at);
       const sub = document.createElement('small');
-      sub.textContent = r.exact != null ? `${r.sticks} 串（啱啱好 ${r.exact}）· 正中 ${r.perfects} · 滑走 ${r.slips}` : `${r.sticks} 串 · 正中 ${r.perfects} · 滑走 ${r.slips}`;
+      sub.textContent = `${r.served != null ? r.served + ' 粒 · ' : ''}${r.sticks} 串 · 正中 ${r.perfects} · 滑走 ${r.slips}`;
       who.appendChild(sub);
       const bar = document.createElement('div'); bar.className = 'bar'; bar.style.width = `${best ? Math.max(4, (r.score / best) * 100) : 0}%`; who.appendChild(bar);
       const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = r.score;
@@ -633,7 +660,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   }
   function shareText(r) {
     const who = Store.name ? `${Store.name}喺` : '我喺';
-    return `${who}「篤魚蛋」一分鐘攞咗 ${r.score} 分！交咗 ${r.sticks} 串（啱啱好六粒 ${r.exact} 串），正中 ${r.perfects} 次。你破唔破到？\n${SHARE_URL}`;
+    return `${who}「篤魚蛋」一分鐘攞咗 ${r.score} 分！篤咗 ${r.served} 粒魚蛋，交咗 ${r.sticks} 串，正中 ${r.perfects} 次。你破唔破到？\n${SHARE_URL}`;
   }
   $('share').addEventListener('click', async () => {
     if (!lastRun) return;
@@ -668,7 +695,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     g.font = `900 260px ${fd}`; g.fillText(String(r.score), 540, 600);
     g.font = `700 48px ${fb}`; g.fillStyle = '#6d625a'; g.fillText('分', 540, 750);
     g.font = `400 40px ${fb}`;
-    g.fillText(`${r.sticks} 串 · 啱啱好 ${r.exact} 串 · 正中 ${r.perfects} 次`, 540, 830);
+    g.fillText(`${r.served} 粒 · ${r.sticks} 串 · 正中 ${r.perfects} 次`, 540, 830);
     g.fillStyle = '#a8231b'; g.font = `700 40px ${fb}`; g.fillText('你破唔破到？', 540, 920);
     // a little stick of fishballs
     g.fillStyle = '#d9b877'; g.fillRect(930, 340, 10, 260);
@@ -705,20 +732,10 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   })();
 
   // ---------- sound ----------
-  let ac = null, muted = false, bangBuf = null;
+  let ac = null, muted = false;
   function initAudio() {
     if (ac) return;
-    try {
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      // a sharp crack followed by a short metallic rumble: hitting the steel pot
-      const len = Math.floor(ac.sampleRate * 0.6);
-      bangBuf = ac.createBuffer(1, len, ac.sampleRate);
-      const d = bangBuf.getChannelData(0);
-      for (let i = 0; i < len; i++) {
-        const t = i / ac.sampleRate;
-        d[i] = (Math.random() * 2 - 1) * (Math.exp(-t / 0.025) + 0.35 * Math.exp(-t / 0.18));
-      }
-    } catch (e) { ac = null; }
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; }
   }
   function tone(type, f0, f1, dur, vol, delay = 0) {
     const t = ac.currentTime + delay;
@@ -731,27 +748,11 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     o.connect(g).connect(ac.destination);
     o.start(t); o.stop(t + dur + 0.02);
   }
-  function bang(vol, cutoff) {
-    const t = ac.currentTime;
-    const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
-    src.buffer = bangBuf;
-    f.type = 'lowpass';
-    f.frequency.setValueAtTime(cutoff, t);
-    f.frequency.exponentialRampToValueAtTime(300, t + 0.4);
-    g.gain.value = vol;
-    src.connect(f).connect(g).connect(ac.destination);
-    src.start(t);
-    tone('sine', 140, 40, 0.22, vol * 0.9);          // low thump
-    tone('triangle', 620, 560, 0.25, vol * 0.08);     // faint steel ring
-  }
   function sound(kind) {
     if (!ac || muted) return;
     if (kind === 'poke') tone('sine', 520, 160, 0.1, 0.3);
     else if (kind === 'perfect') { tone('sine', 520, 160, 0.1, 0.3); tone('triangle', 1400, 1800, 0.12, 0.08, 0.04); }
-    else if (kind === 'miss') bang(0.55, 5000);
-    else if (kind === 'slip') bang(0.3, 2500);
     else if (kind === 'ding') { tone('sine', 1320, 1320, 0.25, 0.12); tone('sine', 1760, 1760, 0.35, 0.1, 0.09); }
-    else if (kind === 'meh') { tone('sine', 660, 660, 0.18, 0.1); tone('sine', 520, 520, 0.25, 0.08, 0.1); }
     else if (kind === 'plop') tone('sine', 300, 120, 0.08, 0.08);
   }
   $('mute').addEventListener('click', () => {
@@ -959,12 +960,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   function resolvePoke() {
     const tx = stick.x, ty = stick.y;
     const fx = tx - L.cx, fy = (ty - L.cy) / L.sq;
-    if (!inCurry(tx, ty)) { sound('miss'); addPop('篤空氣', tx, ty - 24, '#3b3330', 15); return; }
-    if (stick.balls.length >= STICK_CAP) {
-      sound('miss'); impulse(fx, fy, L.r * 3, L.R * 0.4);
-      addPop('竹籤冇位喇！', tx, ty - 24, '#ffd0c4', 16);
-      return;
-    }
+    if (!inCurry(tx, ty)) { addPop('篤空氣', tx, ty - 24, '#3b3330', 15); return; }
+    if (stick.balls.length >= STICK_CAP) return;
     ripples.push({ x: fx, y: fy, t: 0 });
 
     let hit = null, hs = null;
@@ -975,7 +972,6 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     }
     if (!hit) {
       impulse(fx, fy, L.r * 4, L.R * 0.55);
-      sound('miss');
       addPop('冇中', tx, ty - 24, '#fff2d6', 16);
       return;
     }
@@ -984,18 +980,24 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       hit.vx += -Math.sign(off) * L.R * 1.1;
       impulse(fx, fy, L.r * 3.5, L.R * 0.6);
       slips++;
-      sound('slip');
       addPop('滑走咗！', tx, ty - 24, '#ffd0c4', 17);
       return;
     }
     balls.splice(balls.indexOf(hit), 1);
     stick.balls.push({ off, rel: hs.sy - ty, v: hit.v });
     impulse(fx, fy, L.r * 4.2, L.R * 0.75);
-    if (Math.abs(off) < 0.18) { perfects++; sound('perfect'); addPop('正中！', tx, ty - 30, '#ffe27a', 22); }
-    else sound('poke');
+    served++;
+    if (Math.abs(off) < 0.18) {
+      perfects++; score += 1 + CENTER_BONUS;
+      sound('perfect'); addPop(`正中！+${1 + CENTER_BONUS}`, tx, ty - 30, '#ffe27a', 22);
+    } else {
+      score += 1;
+      sound('poke'); addPop('+1', tx, ty - 30, '#fff', 18);
+    }
+    updateHUD();
   }
 
-  // The player hands the stick over: whatever is on it is what the customer gets.
+  // a full stick goes to the next customer; how neat it is decides their reaction
   function handOut() {
     const n = stick.balls.length;
     if (!n) return;
@@ -1003,31 +1005,13 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     if (!target) return;
     target.served = true;
     const avg = stick.balls.reduce((s, b) => s + Math.abs(b.off), 0) / n;
-    let gained, say, mood, popText, popColor;
-    if (n === ORDER) {
-      gained = ORDER + EXACT_BONUS; exact++;
-      say = avg < 0.25 ? pick(['正呀！', '好靚！']) : pick(['唔該！', '多謝！']);
-      mood = avg < 0.25 ? 2 : 1;
-      popText = `啱啱好！+${gained}`; popColor = '#ffe27a';
-    } else if (n < ORDER) {
-      gained = n;
-      say = pick(['唔夠喎！', '得咁少？', '呃秤呀！']);
-      mood = 0;
-      popText = `唔夠六粒 +${gained}`; popColor = '#ffd0c4';
-    } else {
-      gained = ORDER;
-      say = pick(['多咗喎，多謝晒！', '老闆好人！']);
-      mood = 2;
-      popText = `送咗 ${n - ORDER} 粒 +${gained}`; popColor = '#fff2d6';
-    }
-    score += gained;
-    served += Math.min(n, ORDER);
-    sticks++;
+    const say = avg < 0.2 ? pick(['正呀！', '好靚！']) : avg < 0.42 ? pick(['唔該！', '多謝！']) : pick(['咁歪嘅…', '歪咗喎']);
+    const mood = avg < 0.2 ? 2 : avg < 0.42 ? 1 : 0;
     const list = stick.balls.map((b, i, a) => ({ off: b.off, rel: slotRel(i, a.length), v: b.v }));
     flyers.push({ balls: list, x0: stick.x, y0: tipY(), t: 0, target, say, mood });
-    addPop(popText, clamp(stick.x, 70, W - 70), Math.max(30, stick.y - 20), popColor, 20);
     stick.balls = [];
-    sound(n === ORDER ? 'ding' : 'meh');
+    sticks++;
+    sound('ding');
     updateHUD();
   }
 
@@ -1224,21 +1208,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     ctx.clearRect(0, 0, W, H);
     if (bg) ctx.drawImage(bg, 0, 0, W, H);
     const people = customers.concat(leavers).sort((a, b) => a.x - b.x);
-    const next = customers.find((c) => !c.served);
-    if (state === 'play' && next && stick.balls.length && inCounter(stick.y)) {
-      // show who will receive the stick
-      const s = custScale(next);
-      ctx.fillStyle = 'rgba(244,197,90,0.45)';
-      ctx.beginPath(); ctx.ellipse(next.x, L.top - 50 * s, 34 * s, 62 * s, 0, 0, TAU); ctx.fill();
-    }
     for (const c of people) drawCustomer(c);
-    if (state === 'play' && next && stick.balls.length && inCounter(stick.y)) {
-      ctx.font = `900 ${Math.max(13, L.top * 0.1)}px ${fontBody()}`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(60,25,10,0.8)'; ctx.fillStyle = '#ffe27a';
-      ctx.strokeText('放手交俾佢', next.x, L.top * 0.1 + 8);
-      ctx.fillText('放手交俾佢', next.x, L.top * 0.1 + 8);
-    }
     drawPot();
     drawBalls();
     drawSteam();
@@ -1274,7 +1244,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     }
     // a new poke has to start from a lifted stick: down -> up -> down
     if (stick.needLift && stick.depth < 0.35) stick.needLift = false;
-    const plunging = stick.pressed && !stick.zonePress && !stick.needLift;
+    const plunging = stick.pressed && !stick.needLift;
     stick.depth += ((plunging ? 1 : 0) - stick.depth) * Math.min(1, dt * (plunging ? 22 : 14));
     if (plunging && !stick.resolved && stick.depth > 0.85) { stick.resolved = true; if (state === 'play') resolvePoke(); }
 
@@ -1331,6 +1301,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   function updateHUD() {
     hudScore.textContent = score;
     hudSticks.textContent = sticks;
+    dotEls.forEach((d, i) => d.classList.toggle('on', i < stick.balls.length));
   }
 
   // ---------- input ----------
@@ -1348,33 +1319,21 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         }
       }
     }
-    const now = e.timeStamp || performance.now();
-    const dtm = (now - stick.lastT) / 1000;
-    if (dtm > 0 && dtm < 0.2) stick.vy = stick.vy * 0.4 + ((ny - stick.y) / dtm) * 0.6;
-    stick.lastT = now;
     stick.x = nx; stick.y = ny; stick.hasPointer = true;
   }
-  const inCounter = (y) => y < L.top + 6;
   cv.addEventListener('pointermove', setPos);
   cv.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     setPos(e);
     if (state !== 'play' || stick.pressed) return;
-    stick.pressed = true; stick.resolved = false; stick.vy = 0;
-    stick.pressY = stick.y;
-    stick.zonePress = inCounter(stick.y);
-    if (!stick.zonePress && stick.depth >= 0.35) stick.needLift = true;
+    stick.pressed = true; stick.resolved = false;
+    if (stick.depth >= 0.35) stick.needLift = true;
   });
   function release() {
     if (!stick.pressed) return;
     stick.pressed = false;
-    if (state === 'play' && stick.balls.length) {
-      // hand over: let go up at the counter, or flick the stick upwards
-      const flick = stick.vy < -L.R * 6 && stick.pressY - stick.y > L.R * 0.35;
-      if (inCounter(stick.y) || flick) handOut();
-    }
-    stick.zonePress = false;
+    if (state === 'play' && stick.balls.length >= STICK_CAP) handOut();
     updateHUD();
   }
   cv.addEventListener('pointerup', release);
@@ -1387,8 +1346,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     initAudio();
     if (ac && ac.state === 'suspended') ac.resume();
     state = 'play';
-    timeLeft = GAME_TIME; score = 0; sticks = 0; exact = 0; served = 0; perfects = 0; slips = 0;
-    stick.balls = []; stick.pressed = false; stick.zonePress = false; stick.needLift = false;
+    timeLeft = GAME_TIME; score = 0; sticks = 0; served = 0; perfects = 0; slips = 0;
+    stick.balls = []; stick.pressed = false; stick.needLift = false;
     flyers = []; pops = [];
     seedBalls();
     $('intro').hidden = true; $('result').hidden = true; $('board').hidden = true;
@@ -1396,10 +1355,10 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     updateHUD();
   }
   function rankFor(n) {
-    if (n >= 200) return '傳說級魚蛋佬';
-    if (n >= 150) return '魚蛋師傅';
-    if (n >= 100) return '熟手學徒';
-    if (n >= 50) return '新嚟幫手';
+    if (n >= 320) return '傳說級魚蛋佬';
+    if (n >= 240) return '魚蛋師傅';
+    if (n >= 160) return '熟手學徒';
+    if (n >= 80) return '新嚟幫手';
     return '篤到手軟';
   }
   async function endGame() {
@@ -1407,7 +1366,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     stick.pressed = false;
     setChips(true);
     addPop('時間到！', W / 2, L.cy - L.R * 0.2, '#ffe27a', 30);
-    const run = { score, sticks, exact, served, perfects, slips, at: Date.now() };
+    const run = { score, sticks, served, perfects, slips, at: Date.now() };
     lastRun = run;
     $('share-text').hidden = true;
     $('toast').textContent = '';
@@ -1415,7 +1374,6 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     $('rank').textContent = rankFor(score);
     $('r-score').textContent = score;
     $('r-sticks').textContent = `${sticks} 串`;
-    $('r-exact').textContent = `${exact} 串`;
     $('r-served').textContent = `${served} 粒`;
     $('r-perfect').textContent = `${perfects} 次`;
     $('r-slip').textContent = `${slips} 次`;
