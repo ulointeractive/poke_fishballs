@@ -112,7 +112,7 @@ updateMuteButton();
 langListeners.push(updateMuteButton);
 
 // ---------- background music ----------
-// Five original tracks made in code; the player picks one on the start screen. Each keeps the same tempo
+// Five original arcade-style tracks made in code; the player picks one on the start screen. Each keeps the same tempo
 // for the whole game. As time runs out it gets more intense without speeding up: a key change up at 20 s
 // and again at 10 s, busier hi-hats from 20 s, and snare rolls and a ticking clock in the last 10 seconds.
 // Notes are semitones from A4 (440 Hz); null = rest. One step = a 16th note; 16 steps = one bar.
@@ -140,30 +140,38 @@ function drum(f0, f1, dur, vol, at) {
 }
 const kick = (at, vol = 0.9) => drum(160, 42, 0.22, vol, at);
 const snare = (at, vol = 0.4) => { noise('bandpass', 1900, 1500, 0.14, vol, 0, musicOut, at); drum(220, 180, 0.07, vol * 0.3, at); };
-const clap = (at, vol = 0.35) => { [0, 0.012, 0.024].forEach((d) => noise('bandpass', 1300, 1100, 0.09, vol, 0, musicOut, at + d)); };
 const hat = (at, vol) => noise('highpass', 8000, 8000, 0.025, vol, 0, musicOut, at);
-const chord = (type, notes, at, dur, vol, cutoff, twin, out) => notes.forEach((n) => synth(type, n, at, dur, vol, cutoff, twin, out));
-// a guitar-amp style distortion, shared by everything that goes through it (made once per audio context)
-function distortion() {
-  if (ac.fishDist) return ac.fishDist;
-  const ws = ac.createWaveShaper(), c = new Float32Array(1024), tone = ac.createBiquadFilter(), g = ac.createGain();
-  for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(6 * x); }
-  ws.curve = c; tone.type = 'lowpass'; tone.frequency.value = 3200; g.gain.value = 0.35;
-  ws.connect(tone).connect(g).connect(musicOut);
-  ac.fishDist = ws;
-  return ws;
-}
 const lead = (seq, step, at, len, fn) => {
   const n = seq[step % seq.length]; if (n === null) return;
   let hold = 1; while (hold < 4 && seq[(step + hold) % seq.length] === null) hold++;
   fn(n, len * hold * 0.95);
 };
 
+// Every track is an arcade-style synth tune built the same way: drums, a bass line, a 16th-note
+// arpeggio of the chord and a synth lead. Each theme sets its own key, chords, tempo, melody and sound.
+//   roots: one bass note per bar · arp: the chord notes for each bar · lead: 16 steps per bar
+//   bass: 'pump' (root and octave in 8ths), 'gate' (a pulsing 16th-note bass) or 'bounce' (off-beat octaves)
+//   kick: 'four' (every beat) or 'double' (every 8th note, for a pounding feel)
+function arcadeTheme(cfg) {
+  return Object.assign({ bass: 'pump', kick: 'four', leadWave: 'sawtooth', leadCut: 2600, arpWave: 'square', arpOrder: [0, 1, 2, 3, 2, 1, 2, 3] }, cfg, {
+    note(step, at, len, lift, tense) {
+      const s = step % 16, bar = Math.floor(step / 16) % this.roots.length, r = this.roots[bar] + lift;
+      if (this.kick === 'double' ? s % 2 === 0 : s % 4 === 0) kick(at, this.kick === 'double' && s % 4 ? 0.55 : 0.9);
+      if (s === 4 || s === 12) snare(at, 0.42);
+      hat(at, s % 2 ? 0.12 : 0.04);
+      if (this.bass === 'gate') synth('sawtooth', r + (s % 8 === 6 ? 12 : 0), at, len * 0.8, 0.2, 520);
+      else if (this.bass === 'bounce') { if (s % 2 === 0) synth('sawtooth', r + (s % 4 === 2 ? 12 : 0), at, len * 1.4, 0.24, 800); }
+      else if (s % 2 === 0) synth('sawtooth', r + (s % 4 === 2 ? 12 : 0), at, len * 1.7, 0.22, 650);
+      synth(this.arpWave, this.arp[bar][this.arpOrder[s % this.arpOrder.length]] + lift + (tense ? 12 : 0), at, len * 0.8, 0.035, 3200);
+      lead(this.lead, step, at, len, (n, d) => synth(this.leadWave, n + lift, at, d, 0.11, this.leadCut, true));
+    },
+  });
+}
 const MUSIC = {
-  // 1. 街機 / Arcade: driving synth track in A minor (Am - F - C - G)
-  arcade: {
+  // 1. 街機 / Arcade: driving and upbeat, A minor (Am - F - C - G)
+  arcade: arcadeTheme({
     bpm: 140,
-    bass: [-24, -28, -21, -26],
+    roots: [-24, -28, -21, -26],
     arp: [[12, 15, 19, 24], [8, 12, 15, 20], [15, 19, 22, 27], [10, 14, 17, 22]],
     lead: [
       12, null, null, 12, 15, null, 12, null, 19, null, 17, null, 15, null, 12, null,
@@ -175,103 +183,57 @@ const MUSIC = {
       19, null, null, 19, 22, null, 19, null, 15, null, 19, null, 22, null, 24, null,
       22, null, null, null, 19, null, null, null, 17, null, 14, null, 10, null, null, null,
     ],
-    note(step, at, len, lift, tense) {
-      const s = step % 16, bar = Math.floor(step / 16) % 4;
-      if (s % 4 === 0) kick(at);
-      if (s === 4 || s === 12) snare(at);
-      hat(at, s % 2 ? 0.12 : 0.04);
-      if (s % 2 === 0) synth('sawtooth', this.bass[bar] + lift + (s % 4 === 2 ? 12 : 0), at, len * 1.7, 0.22, 650);
-      synth('square', this.arp[bar][[0, 1, 2, 3, 2, 1, 2, 3][s % 8]] + lift + (tense ? 12 : 0), at, len * 0.8, 0.035, 3200);
-      lead(this.lead, step, at, len, (n, d) => synth('sawtooth', n + lift, at, d, 0.11, 2600, true));
-    },
-  },
-  // 2. 電音 / Dance: club house in G minor (Gm - F - Eb - F), off-beat bass, open hats, piano-like stabs, plucked lead
-  dance: {
-    bpm: 126,
-    bars: [
-      { root: -26, ch: [-2, 1, 5] }, { root: -28, ch: [-4, 0, 3] },
-      { root: -30, ch: [-6, -2, 1] }, { root: -28, ch: [-4, 0, 3] },
-    ],
+  }),
+  // 2. 霓虹 / Neon: night-time retro synthwave, C minor (Cm - Ab - Eb - Bb), pulsing bass and long, soaring lead notes
+  neon: arcadeTheme({
+    bpm: 128, bass: 'gate', leadWave: 'square', leadCut: 3000, arpOrder: [0, 1, 2, 3],
+    roots: [-21, -25, -18, -23],
+    arp: [[3, 6, 10, 15], [-1, 3, 6, 11], [6, 10, 13, 18], [1, 5, 8, 13]],
     lead: [
-      17, null, 17, null, 20, null, 22, null, null, 20, null, 17, null, 15, null, null,
-      17, null, null, 17, 18, null, 17, null, 15, null, null, 13, null, 15, null, null,
+      15, null, null, null, null, null, 13, null, 15, null, null, null, 18, null, 17, null,
+      15, null, null, null, null, null, 11, null, null, null, 10, null, 11, null, 13, null,
+      10, null, null, null, null, null, 13, null, 15, null, null, null, 17, null, 18, null,
+      17, null, null, null, 13, null, null, null, 10, null, null, null, null, null, null, null,
     ],
-    note(step, at, len, lift) {
-      const s = step % 16, b = this.bars[Math.floor(step / 16) % 4];
-      if (s % 4 === 0) kick(at, 0.95);
-      if (s === 4 || s === 12) clap(at, 0.4);
-      hat(at, 0.035);
-      if (s % 4 === 2) { noise('highpass', 7000, 7000, 0.14, 0.12, 0, musicOut, at); synth('sawtooth', b.root + 12 + lift, at, len * 1.8, 0.28, 520); }
-      if ([2, 5, 8, 11, 14].includes(s)) chord('sawtooth', b.ch.map((n) => n + 12 + lift), at, 0.12, 0.035, 2800, true);
-      lead(this.lead, step, at, len, (n, d) => { synth('triangle', n + lift, at, Math.min(d, 0.2), 0.16, 6000); synth('square', n + lift + 12, at, 0.05, 0.02, 5000); });
-    },
-  },
-  // 3. 搖滾 / Rock: driving rock in E minor (Em - C - D - B), distorted power chords and a guitar lead
-  rock: {
-    bpm: 152,
-    roots: [-17, -21, -19, -22],
+  }),
+  // 3. 魔王 / Boss: dark and urgent final-boss fight, E minor (Em - C - Am - B), pounding kick and a sharp lead
+  boss: arcadeTheme({
+    bpm: 165, kick: 'double', leadCut: 3400,
+    roots: [-29, -21, -24, -22],
+    arp: [[7, 10, 14, 19], [3, 7, 10, 15], [0, 3, 7, 12], [2, 6, 9, 14]],
     lead: [
-      19, null, null, null, 17, null, 14, null, 12, null, 14, null, 17, null, null, null,
-      15, null, null, null, 14, null, 12, null, 10, null, 12, null, 14, null, null, null,
-      17, null, null, null, 19, null, 17, null, 14, null, 12, null, 14, null, null, null,
-      14, null, null, null, 18, null, null, null, 21, null, null, null, 18, null, null, null,
+      19, null, 18, 19, null, null, 14, null, 15, null, 14, null, 12, null, 10, null,
+      15, null, 14, 15, null, null, 10, null, 12, null, 10, null, 7, null, null, null,
+      12, null, 14, 15, null, null, 19, null, 17, null, 15, null, 14, null, 12, null,
+      14, null, null, null, 18, null, null, null, 21, null, 18, null, 14, null, 18, null,
     ],
-    note(step, at, len, lift) {
-      const s = step % 16, r = this.roots[Math.floor(step / 16) % 4] + lift, dist = distortion();
-      if (s === 0 || s === 6 || s === 8 || s === 10) kick(at, 0.9);
-      if (s === 4 || s === 12) snare(at, 0.5);
-      if (s % 2 === 0) noise('highpass', 5000, 5000, 0.08, 0.07, 0, musicOut, at);   // ride
-      if (s % 2 === 0) synth('square', r - 12, at, len * 1.8, 0.2, 700);              // bass
-      if (s === 0 || s === 10) chord('sawtooth', [r, r + 7, r + 12], at, len * 5, 0.09, 4000, false, dist);
-      else if (s % 2 === 0) chord('sawtooth', [r, r + 7], at, len * 0.9, 0.07, 1400, false, dist);   // palm-muted chugs
-      if (Math.floor(step / 64) % 2 === 1) lead(this.lead, step, at, len, (n, d) => synth('sawtooth', n + lift, at, d, 0.06, 3500, true, dist));
-    },
-  },
-  // 4. 疾速 / Rush: drum and bass in D minor (Dm - Bb - C - A), fast breakbeat and a deep, growling bass
-  rush: {
-    bpm: 174,
-    roots: [-31, -35, -33, -36],
+  }),
+  // 4. 英雄 / Hero: bright and triumphant, D major (D - A - Bm - G), a heroic lead like a level-clear tune
+  hero: arcadeTheme({
+    bpm: 145, leadCut: 3600,
+    roots: [-19, -24, -22, -26],
+    arp: [[5, 9, 12, 17], [0, 4, 7, 12], [2, 5, 9, 14], [-2, 2, 5, 10]],
     lead: [
-      17, null, null, 15, null, null, 12, null, null, null, 10, null, 12, null, null, null,
-      13, null, null, 12, null, null, 10, null, null, null, 8, null, 10, null, null, null,
-      15, null, null, 13, null, null, 10, null, null, null, 8, null, 7, null, null, null,
-      16, null, null, 12, null, null, 7, null, null, null, 4, null, 7, null, null, null,
+      17, null, null, 17, 16, null, 14, null, 12, null, null, null, 9, null, 12, null,
+      16, null, null, 16, 14, null, 12, null, 7, null, null, null, 4, null, 7, null,
+      14, null, null, 14, 12, null, 9, null, 14, null, 17, null, 19, null, 17, null,
+      14, null, null, null, 12, null, null, null, 10, null, 9, null, 7, null, null, null,
     ],
-    note(step, at, len, lift) {
-      const s = step % 16, r = this.roots[Math.floor(step / 16) % 4] + lift;
-      if (s === 0 || s === 10) kick(at, 0.95);
-      if (s === 4 || s === 12) snare(at, 0.55);
-      if (s === 7 || s === 14) snare(at, 0.14);                                        // ghost snares
-      if (s % 2 === 0) hat(at, 0.08); else hat(at, 0.03);
-      if (s === 0 || s === 8) synth('sawtooth', r + 12, at, len * 7.5, 0.2, 380, true); // growling bass
-      lead(this.lead, step, at, len, (n, d) => synth('square', n + lift, at, d, 0.06, 4200, true));
-    },
-  },
-  // 5. 狂飆 / Turbo: Eurobeat in B minor (Bm - G - A - F#), bouncing octave bass and a bright, fast lead
-  turbo: {
-    bpm: 156,
-    bars: [
-      { root: -22, ch: [2, 5, 9] }, { root: -26, ch: [-2, 2, 5] },
-      { root: -24, ch: [0, 4, 7] }, { root: -27, ch: [-3, 1, 4] },
-    ],
+  }),
+  // 5. 賽車 / Racer: fast racing-game drive, F# minor (F#m - D - E - C#), bouncing off-beat bass
+  racer: arcadeTheme({
+    bpm: 152, bass: 'bounce', leadCut: 4200,
+    roots: [-27, -31, -29, -32],
+    arp: [[9, 12, 16, 21], [5, 9, 12, 17], [7, 11, 14, 19], [4, 8, 11, 16]],
     lead: [
-      14, null, 14, 12, 14, null, 17, null, 14, null, 12, null, 9, null, 12, null,
-      10, null, 10, 9, 10, null, 14, null, 10, null, 9, null, 5, null, 9, null,
-      12, null, 12, 10, 12, null, 16, null, 17, null, 16, null, 12, null, 16, null,
-      16, null, null, null, 13, null, null, null, 9, null, 13, null, 16, null, 21, null,
+      21, null, 19, null, 16, null, 19, null, 21, null, null, null, 24, null, 21, null,
+      17, null, 16, null, 12, null, 16, null, 17, null, null, null, 21, null, 17, null,
+      19, null, 16, null, 11, null, 16, null, 19, null, null, null, 23, null, 19, null,
+      20, null, null, null, 16, null, null, null, 11, null, 16, null, 20, null, 23, null,
     ],
-    note(step, at, len, lift) {
-      const s = step % 16, b = this.bars[Math.floor(step / 16) % 4];
-      if (s % 4 === 0) kick(at, 0.9);
-      if (s === 4 || s === 12) snare(at, 0.45);
-      if (s % 4 === 2) noise('highpass', 7000, 7000, 0.1, 0.1, 0, musicOut, at);
-      if (s % 2 === 0) synth('sawtooth', b.root + 12 + (s % 4 === 2 ? 12 : 0) + lift, at, len * 1.6, 0.22, 900);
-      if (s === 0 || s === 6 || s === 12) chord('sawtooth', b.ch.map((n) => n + 12 + lift), at, 0.1, 0.03, 3000, true);
-      lead(this.lead, step, at, len, (n, d) => synth('sawtooth', n + 12 + lift, at, d, 0.08, 5000, true));
-    },
-  },
+  }),
 };
-const MUSIC_STYLES = ['arcade', 'dance', 'rock', 'rush', 'turbo'];
+const MUSIC_STYLES = ['arcade', 'neon', 'boss', 'hero', 'racer'];
 let musicStyle = 'arcade';
 try { const m = localStorage.getItem('fishball-music'); if (MUSIC_STYLES.includes(m)) musicStyle = m; } catch (e) {}
 
