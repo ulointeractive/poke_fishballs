@@ -112,7 +112,7 @@ updateMuteButton();
 langListeners.push(updateMuteButton);
 
 // ---------- background music ----------
-// Five original arcade-style tracks made in code; the player picks one on the start screen. Each keeps the same tempo
+// Original music made in code (the track is chosen with MUSIC_TRACK in js/config.js). It keeps the same tempo
 // for the whole game. As time runs out it gets more intense without speeding up: a key change up at 20 s
 // and again at 10 s, busier hi-hats from 20 s, and snare rolls and a ticking clock in the last 10 seconds.
 // Notes are semitones from A4 (440 Hz); null = rest. One step = a 16th note; 16 steps = one bar.
@@ -147,97 +147,88 @@ const lead = (seq, step, at, len, fn) => {
   fn(n, len * hold * 0.95);
 };
 
-// Every track is an arcade-style synth tune built the same way: drums, a bass line, a 16th-note
-// arpeggio of the chord and a synth lead. Each theme sets its own key, chords, tempo, melody and sound.
-//   roots: one bass note per bar · arp: the chord notes for each bar · lead: 16 steps per bar
-//   bass: 'pump' (root and octave in 8ths), 'gate' (a pulsing 16th-note bass) or 'bounce' (off-beat octaves)
-//   kick: 'four' (every beat) or 'double' (every 8th note, for a pounding feel)
-function arcadeTheme(cfg) {
-  return Object.assign({ bass: 'pump', kick: 'four', leadWave: 'sawtooth', leadCut: 2600, arpWave: 'sawtooth', arpOrder: [0, 1, 2, 3, 2, 1, 2, 3] }, cfg, {
+// Every track is built from the same parts; each one turns parts on or off and sets its own key, chords,
+// tempo, melody and sound. Melodies use the full major or minor scale with half-steps and leading notes,
+// over chords with 7ths: the sound of Western pop and game music.
+//   roots: one bass note per bar · chords: the chord notes for each bar · lead: 16 steps per bar (or null)
+//   bass: 'pump' (root and octave in 8ths), 'soft' (round notes on the beat) or a 16-step pattern of offsets
+//   kicks / snares: which 16th steps they play on · arp: a 16th-note arpeggio · pad: held chords
+//   keys: steps for short chord stabs · leadHalf: the melody only plays every other 4 bars
+function track(cfg) {
+  return Object.assign({
+    bass: 'pump', kicks: [0, 4, 8, 12], snares: [4, 12], hats: 0.12, arp: false, pad: false, keys: null,
+    keysWave: 'square', keysCut: 2200, lead: null, leadHalf: false, leadWave: 'sawtooth', leadCut: 2600, leadVol: 0.1,
+  }, cfg, {
     note(step, at, len, lift, tense) {
-      const s = step % 16, bar = Math.floor(step / 16) % this.roots.length, r = this.roots[bar] + lift;
-      if (this.kick === 'double' ? s % 2 === 0 : s % 4 === 0) kick(at, this.kick === 'double' && s % 4 ? 0.55 : 0.9);
-      if (s === 4 || s === 12) snare(at, 0.42);
-      hat(at, s % 2 ? 0.12 : 0.04);
-      if (this.bass === 'gate') synth('sawtooth', r + (s % 8 === 6 ? 12 : 0), at, len * 0.8, 0.2, 520);
-      else if (this.bass === 'bounce') { if (s % 2 === 0) synth('sawtooth', r + (s % 4 === 2 ? 12 : 0), at, len * 1.4, 0.24, 800); }
+      const s = step % 16, bar = Math.floor(step / 16) % this.roots.length, r = this.roots[bar] + lift, ch = this.chords[bar];
+      if (this.kicks.includes(s)) kick(at, 0.9);
+      if (this.snares.includes(s)) snare(at, 0.42);
+      hat(at, s % 2 ? this.hats : this.hats * 0.35);
+      if (Array.isArray(this.bass)) { const o = this.bass[s]; if (o !== null) synth('square', r + 12 + o, at, len * 1.4, 0.2, 900); }
+      else if (this.bass === 'soft') { if (s % 4 === 0 || s === 7 || s === 10) synth('triangle', r + 12, at, len * 2.5, 0.35, 1200); }
       else if (s % 2 === 0) synth('sawtooth', r + (s % 4 === 2 ? 12 : 0), at, len * 1.7, 0.22, 650);
-      synth(this.arpWave, this.arp[bar][this.arpOrder[s % this.arpOrder.length]] + lift + (tense ? 12 : 0), at, len * 0.8, 0.04, 2200);
-      lead(this.lead, step, at, len, (n, d) => synth(this.leadWave, n + lift, at, d, 0.11, this.leadCut, true));
+      if (this.pad && s === 0) ch.forEach((n) => synth('triangle', n + lift, at, len * 16, 0.05, 2000));
+      if (this.keys && this.keys.includes(s)) ch.forEach((n) => synth(this.keysWave, n + 12 + lift, at, len * 1.2, 0.03, this.keysCut));
+      if (this.arp) synth('sawtooth', ch[[0, 1, 2, 3, 2, 1, 2, 3][s % 8]] + 12 + lift + (tense ? 12 : 0), at, len * 0.8, 0.03, 2200);
+      if (this.lead && (!this.leadHalf || Math.floor(step / 64) % 2 === 1))
+        lead(this.lead, step, at, len, (n, d) => synth(this.leadWave, n + lift, at, d, this.leadVol, this.leadCut, true));
     },
   });
 }
-// Melodies use the full major or minor scale and move by step, with half-steps and leading notes, over
-// chords with 7ths and a dominant chord that pulls back home: the sound of Western pop and game music.
 const MUSIC = {
-  // 1. 街機 / Arcade: driving and upbeat, A minor (Am7 - Fmaj7 - G7 - E7)
-  arcade: arcadeTheme({
-    bpm: 140,
+  // A. Groove: just drums and a driving bass under soft held chords, no melody. A minor (Am7 - Fmaj7 - G7 - E7)
+  groove: track({
+    bpm: 124, pad: true,
     roots: [-24, -28, -26, -29],
-    arp: [[12, 15, 19, 22], [8, 12, 15, 19], [10, 14, 17, 20], [7, 11, 14, 17]],
+    chords: [[0, 3, 7, 10], [-4, 0, 3, 7], [-2, 2, 5, 8], [-5, -1, 2, 5]],
+  }),
+  // B. Chill: a relaxed, warm beat with soft keys and a light melody that comes and goes. C major (Fmaj7 - Em7 - Dm7 - Cmaj7)
+  chill: track({
+    bpm: 96, bass: 'soft', kicks: [0, 10], snares: [4, 12], hats: 0.07, keys: [0, 6, 10], keysWave: 'triangle', keysCut: 2600,
+    leadHalf: true, leadWave: 'triangle', leadCut: 5000, leadVol: 0.16,
+    roots: [-28, -29, -31, -33],
+    chords: [[-4, 0, 3, 7], [-5, -2, 2, 5], [-7, -4, 0, 3], [-9, -5, -2, 2]],
+    lead: [
+      12, null, null, null, 10, null, 8, null, 7, null, null, null, null, null, null, null,
+      7, null, 8, null, 10, null, null, null, 14, null, null, 12, null, null, null, null,
+      12, null, null, null, 8, null, 5, null, 8, null, null, null, 10, null, null, null,
+      7, null, null, null, 3, null, 2, null, 3, null, null, null, null, null, null, null,
+    ],
+  }),
+  // C. Synth-pop: four-on-the-floor dance-pop with warm chords and a catchy hook every other phrase. C major (Cmaj7 - G - Am7 - Fmaj7)
+  pop: track({
+    bpm: 118, pad: true, keys: [3, 6, 11, 14], keysWave: 'sawtooth', keysCut: 1800, leadHalf: true,
+    roots: [-21, -26, -24, -28],
+    chords: [[3, 7, 10, 14], [-2, 2, 5, 10], [0, 3, 7, 10], [-4, 0, 3, 7]],
+    lead: [
+      15, null, 14, 15, 17, null, 15, null, 14, null, 10, null, null, null, null, null,
+      14, null, 12, 14, 15, null, 14, null, 10, null, null, null, null, null, null, null,
+      12, null, 10, 12, 15, null, 14, 12, 10, null, 7, null, null, null, null, null,
+      8, null, 10, 12, 15, null, 14, null, 12, null, 10, null, null, null, null, null,
+    ],
+  }),
+  // D. Funk: a groovy bass line and short keyboard stabs, no melody. D minor funk (Dm7 - G7 - Dm7 - A7)
+  funk: track({
+    bpm: 110, kicks: [0, 7, 10], snares: [4, 12], hats: 0.09, keys: [3, 6, 11, 14], keysCut: 2000,
+    bass: [0, null, null, 12, null, null, 0, null, 10, null, 0, null, null, 12, null, 7],
+    roots: [-31, -26, -31, -24],
+    chords: [[5, 8, 12, 15], [-2, 2, 5, 8], [5, 8, 12, 15], [0, 4, 7, 10]],
+  }),
+  // E. Arcade, toned down: the earlier arcade track with a quieter arpeggio and the melody only every other phrase. A minor
+  arcade: track({
+    bpm: 140, arp: true, leadHalf: true,
+    roots: [-24, -28, -26, -29],
+    chords: [[0, 3, 7, 10], [-4, 0, 3, 7], [-2, 2, 5, 8], [-5, -1, 2, 5]],
     lead: [
       12, null, 14, 15, 17, null, 19, null, 17, null, 15, null, 14, null, 15, null,
       8, null, 10, 12, 15, null, 14, null, 12, null, 10, null, 8, null, null, null,
       14, null, 15, 17, 19, null, 17, null, 15, null, 14, null, 17, null, null, null,
       14, null, 11, null, 7, null, 11, null, 14, null, null, null, 11, null, null, null,
-      24, null, 22, 19, 17, null, 19, null, 22, null, 19, null, 15, null, null, null,
-      20, null, 19, null, 15, null, 12, null, 15, null, 19, null, 20, null, 19, null,
-      22, null, null, 20, 19, null, 17, null, 14, null, 17, null, 19, null, 20, null,
-      23, null, null, null, 19, null, null, null, 17, null, 14, null, 11, null, null, null,
-    ],
-  }),
-  // 2. 霓虹 / Neon: night-time retro synthwave, C minor (Cm7 - Abmaj7 - Fm7 - G7), pulsing bass and long lead notes
-  neon: arcadeTheme({
-    bpm: 128, bass: 'gate', leadWave: 'square', leadCut: 3000, arpOrder: [0, 1, 2, 3],
-    roots: [-21, -25, -28, -26],
-    arp: [[3, 6, 10, 13], [-1, 3, 6, 10], [8, 11, 15, 18], [10, 14, 17, 20]],
-    lead: [
-      15, null, null, null, 17, null, null, null, 18, null, 17, null, 15, null, 14, null,
-      15, null, null, null, 13, null, null, null, 11, null, 10, null, 11, null, null, null,
-      8, null, 10, 11, 15, null, null, null, 13, null, 11, null, 10, null, 8, null,
-      14, null, null, null, 17, null, null, null, 20, null, null, null, 17, null, 14, null,
-    ],
-  }),
-  // 3. 魔王 / Boss: dark and urgent final-boss fight, E harmonic minor (Em - Cmaj7 - Am7 - B7), pounding kick, fast runs
-  boss: arcadeTheme({
-    bpm: 165, kick: 'double', leadCut: 3400,
-    roots: [-29, -21, -24, -22],
-    arp: [[7, 10, 14, 19], [3, 7, 10, 14], [0, 3, 7, 10], [2, 6, 9, 12]],
-    lead: [
-      19, 18, 19, null, 14, null, 15, 14, 12, null, 10, null, 7, null, null, null,
-      15, 14, 15, null, 10, null, 12, 10, 9, null, 7, null, 3, null, null, null,
-      12, 14, 15, 17, 19, null, 17, 15, 14, null, 15, null, 12, null, null, null,
-      18, null, null, null, 14, null, 18, null, 21, null, 18, null, 14, null, 12, null,
-    ],
-  }),
-  // 4. 英雄 / Hero: bright and triumphant, D major (D - Bm7 - Gmaj7 - A7), like a level-clear tune
-  hero: arcadeTheme({
-    bpm: 145, leadCut: 3600,
-    roots: [-19, -22, -26, -24],
-    arp: [[5, 9, 12, 17], [2, 5, 9, 12], [10, 14, 17, 21], [12, 16, 19, 22]],
-    lead: [
-      17, null, 16, 17, 21, null, 19, null, 17, null, 16, null, 14, null, null, null,
-      14, null, 12, 14, 17, null, 16, null, 14, null, 12, null, 9, null, null, null,
-      10, null, 9, 10, 14, null, 12, null, 10, null, 9, null, 7, null, null, null,
-      4, null, 7, null, 10, null, 12, null, 16, null, null, null, 17, null, null, null,
-    ],
-  }),
-  // 5. 賽車 / Racer: fast racing-game drive, F# harmonic minor (F#m7 - Dmaj7 - E - C#7), bouncing off-beat bass
-  racer: arcadeTheme({
-    bpm: 152, bass: 'bounce', leadCut: 4200,
-    roots: [-27, -31, -29, -32],
-    arp: [[9, 12, 16, 19], [5, 9, 12, 16], [7, 11, 14, 19], [4, 8, 11, 14]],
-    lead: [
-      21, null, 20, 21, 24, null, 21, null, 19, null, 17, null, 16, null, null, null,
-      17, null, 16, 17, 21, null, 17, null, 16, null, 14, null, 12, null, null, null,
-      14, null, 16, 19, 23, null, 19, null, 16, null, 14, null, 11, null, null, null,
-      20, null, null, null, 16, null, null, null, 11, null, 16, null, 20, null, 23, null,
     ],
   }),
 };
-const MUSIC_STYLES = ['arcade', 'neon', 'boss', 'hero', 'racer'];
-let musicStyle = 'arcade';
-try { const m = localStorage.getItem('fishball-music'); if (MUSIC_STYLES.includes(m)) musicStyle = m; } catch (e) {}
+// the track the game plays (one of the keys above)
+const musicStyle = MUSIC_TRACK in MUSIC ? MUSIC_TRACK : 'groove';
 
 function musicNote(step, at, len) {
   const left = state === 'play' || state === 'paused' ? timeLeft : GAME_TIME;
@@ -255,29 +246,13 @@ function musicNote(step, at, len) {
     o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.05);
   }
 }
-let previewTimer = 0;
 function startMusic() {
   if (!ac || musicTimer) return;
-  clearTimeout(previewTimer);
   musicNext = ac.currentTime + 0.1; musicStep = 0;
   musicTimer = setInterval(() => {
     const len = 60 / MUSIC[musicStyle].bpm / 4;   // the same tempo all game
     while (musicNext < ac.currentTime + 0.15) { musicNote(musicStep++, musicNext, len); musicNext += len; }
   }, 25);
 }
-function stopMusic() { clearInterval(musicTimer); musicTimer = 0; clearTimeout(previewTimer); }
+function stopMusic() { clearInterval(musicTimer); musicTimer = 0; }
 
-// the music picker on the start screen: tapping a track plays a short preview of it
-function setMusicStyle(m, preview) {
-  musicStyle = m;
-  try { localStorage.setItem('fishball-music', m); } catch (e) {}
-  MUSIC_STYLES.forEach((k) => $('mu-' + k).setAttribute('aria-checked', String(k === m)));
-  if (!preview) return;
-  initAudio();
-  if (!ac) return;
-  if (ac.state === 'suspended') ac.resume();
-  stopMusic(); startMusic();
-  previewTimer = setTimeout(() => { if (state !== 'play') stopMusic(); }, 6000);
-}
-MUSIC_STYLES.forEach((k) => $('mu-' + k).addEventListener('click', () => setMusicStyle(k, true)));
-setMusicStyle(musicStyle, false);

@@ -213,7 +213,7 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 
 | Moment | Sound |
 |---|---|
-| Background music | Pick one of five original arcade-style synth tracks on the start screen (tapping one plays a short preview; the choice is remembered): **街機 / Arcade** (driving and upbeat, A minor, 140 bpm), **霓虹 / Neon** (night-time synthwave, C minor, 128 bpm), **魔王 / Boss** (dark final-boss fight, E minor, 165 bpm), **英雄 / Hero** (bright and triumphant, D major, 145 bpm) or **賽車 / Racer** (racing-game drive, F# minor, 152 bpm). During a game only, at the same tempo throughout. It gets more intense as time runs out: a key change up at 20 seconds and again at 10, busier hi-hats and a higher arpeggio from 20 seconds, snare rolls and a ticking clock in the last 10. It stops on pause and at the end. |
+| Background music | An original track made in code, chosen with `MUSIC_TRACK` in `js/config.js`: `groove` (drums, bass and soft chords, no melody), `chill` (relaxed beat, soft keys, light melody), `pop` (dance-pop with a hook every other phrase), `funk` (bass line and keyboard stabs, no melody) or `arcade` (synth arcade track, toned down). During a game only, at the same tempo throughout. It gets more intense as time runs out: a key change up at 20 seconds and again at 10, busier hi-hats from 20 seconds, snare rolls and a ticking clock in the last 10. It stops on pause and at the end. |
 | Centre hit | A clean poke and a bright, rising "ting-ting!", and a gold **正中！+2** |
 | Off-centre hit | A dull, wobbly "bonk" with no chime, and an orange **篤歪咗 +1** |
 | Slipped off (篤太邊) | A wet sliding "shhhwip" and a little splash |

@@ -281,10 +281,6 @@ html.playing, html.playing body, html.playing .app, html.playing .stage { touch-
 .legend-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px; text-align: center; color: var(--muted); line-height: 1.35; }
 .legend-cols b { display: block; font-size: 14px; color: var(--ink); }
 .levels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.music-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.music-lbl { font-size: 13px; font-weight: 700; color: var(--muted); margin-right: 2px; }
-.music-pick .chip { padding: 4px 10px; min-height: 30px; }
-.music-pick .chip[aria-checked="true"] { background: var(--sign); color: #fff; }
 .level {
   font: inherit; text-align: left; cursor: pointer;
   background: #fff; color: var(--ink);
