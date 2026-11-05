@@ -2,7 +2,8 @@
 
 // ---------- sound ----------
 let ac = null, muted = false;
-let splashBuf = null, noiseBuf = null, sfxOut = null, musicOut = null, musicBus = null;
+let splashBuf = null, noiseBuf = null, sfxOut = null, pokeOut = null, musicOut = null, musicBus = null;
+const POKE_VOL = 2;   // poking and missing sounds play this many times louder than the other effects
 function initAudio() {
   if (ac) return;
   try {
@@ -17,6 +18,7 @@ function initAudio() {
     clip.curve = curve;
     limiter.connect(master).connect(clip).connect(ac.destination);
     sfxOut = ac.createGain(); sfxOut.connect(limiter);
+    pokeOut = ac.createGain(); pokeOut.gain.value = POKE_VOL; pokeOut.connect(limiter);
     musicBus = limiter;
     newMusicOut();
     const nl = Math.floor(ac.sampleRate * 0.5);
@@ -37,13 +39,13 @@ function droplet() {
   o.frequency.setValueAtTime(f, t);
   o.frequency.exponentialRampToValueAtTime(f * 2.4, t + 0.06);
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.16, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.4, t + 0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
   o.connect(g).connect(sfxOut);
   o.start(t); o.stop(t + 0.1);
   if (splashBuf) {
     const src = ac.createBufferSource(), bp = ac.createBiquadFilter(), ng = ac.createGain();
-    src.buffer = splashBuf; bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.8; ng.gain.value = 0.06;
+    src.buffer = splashBuf; bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.8; ng.gain.value = 0.15;
     src.connect(bp).connect(ng).connect(sfxOut); src.start(t);
   }
 }
@@ -84,15 +86,19 @@ function serveSound(mood) {
     tone('triangle', 330, 262, 0.4, 0.16, 0.22);
   }
 }
+// poking and missing sounds go through the louder pokeOut instead of sfxOut
+function loud(fn) { const keep = sfxOut; sfxOut = pokeOut; try { fn(); } finally { sfxOut = keep; } }
+const POKE_SOUNDS = ['poke', 'perfect', 'off', 'slip', 'wrong', 'drip'];
 function sound(kind) {
   if (!ac || muted) return;
+  if (POKE_SOUNDS.includes(kind) && sfxOut !== pokeOut) { loud(() => sound(kind)); return; }
   if (kind === 'poke') tone('sine', 520, 160, 0.1, 0.3);
   // dead centre: a clean poke and a bright, rising "ting-ting!"
   else if (kind === 'perfect') { tone('sine', 620, 200, 0.08, 0.3); bell(1568, 0.2, 0.03); bell(2349, 0.18, 0.1); }
   // off-centre: a dull, wobbly "bonk" with no chime
-  else if (kind === 'off') { tone('square', 150, 105, 0.16, 0.1); tone('sine', 210, 120, 0.2, 0.3); noise('lowpass', 500, 150, 0.1, 0.12); }
+  else if (kind === 'off') { tone('square', 150, 105, 0.16, 0.2); tone('sine', 210, 120, 0.2, 0.6); noise('lowpass', 500, 150, 0.1, 0.25); }
   // slipped off: a wet slide down the side of the fishball and a little splash
-  else if (kind === 'slip') { noise('bandpass', 2600, 380, 0.38, 0.22); tone('sine', 900, 260, 0.3, 0.12); setTimeout(() => { if (ac && !muted) droplet(); }, 300); }
+  else if (kind === 'slip') { noise('bandpass', 2600, 380, 0.38, 0.22); tone('sine', 900, 260, 0.3, 0.12); setTimeout(() => { if (ac && !muted) loud(droplet); }, 300); }
   // poked the wrong item: a buzzer, "eh-eh"
   else if (kind === 'wrong') { tone('sawtooth', 180, 170, 0.13, 0.12); tone('sawtooth', 180, 165, 0.2, 0.12, 0.17); tone('sine', 140, 90, 0.25, 0.25); }
   else if (kind === 'whoosh') noise('bandpass', 500, 2400, 0.28, 0.14);
