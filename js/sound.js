@@ -137,8 +137,15 @@ function drum(f0, f1, dur, vol, at) {
   g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
   o.connect(g).connect(musicOut); o.start(at); o.stop(at + dur + 0.02);
 }
-const kick = (at, vol = 0.9) => drum(160, 42, 0.22, vol, at);
-const snare = (at, vol = 0.4) => { noise('bandpass', 1900, 1500, 0.14, vol, 0, musicOut, at); drum(220, 180, 0.07, vol * 0.3, at); };
+// kick: the pitch drops almost at once to a low C (65 Hz, the key's root), so it thumps instead of sliding through other notes
+const kick = (at, vol = 0.9) => {
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.frequency.setValueAtTime(150, at); o.frequency.exponentialRampToValueAtTime(65.4, at + 0.03);
+  g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.2);
+  o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.22);
+};
+// snare: noise plus a short body on a fixed G (196 Hz), a note in the key
+const snare = (at, vol = 0.4) => { noise('bandpass', 1900, 1500, 0.14, vol, 0, musicOut, at); drum(196, 196, 0.06, vol * 0.3, at); };
 const hat = (at, vol) => noise('highpass', 8000, 8000, 0.025, vol, 0, musicOut, at);
 const lead = (seq, step, at, len, fn) => {
   const n = seq[step % seq.length]; if (n === null) return;
@@ -196,7 +203,7 @@ function musicNote(step, at, len) {
   if (final && s % 4 === 0) {
     // the last 10 seconds: a ticking clock
     const o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'square'; o.frequency.setValueAtTime(s === 0 ? 2000 : 1500, at);
+    o.type = 'square'; o.frequency.setValueAtTime(s === 0 ? 2093 : 1568, at);   // C and G, in the key
     g.gain.setValueAtTime(0.06, at); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.04);
     o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.05);
   }
