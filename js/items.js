@@ -139,6 +139,7 @@ function makeBall(x, y, drop = 0) {
   return { x, y, vx: 0, vy: 0, phase: Math.random() * TAU, v: Math.floor(Math.random() * VARIANTS), drop, kind: pickKind() };
 }
 function seedBalls() {
+  flowSeed = Math.random() * 100;   // every game's currents start somewhere different
   balls = [];
   for (let i = 0; i < LEVELS[playLevel].count; i++) {
     const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * L.rin;
@@ -186,6 +187,26 @@ function collide() {
     }
   }
 }
+// The curry's current: a few eddies that turn both ways and drift around the pot, plus a gentle
+// whole-pot swirl that slowly changes direction, so fishballs wander in every direction instead of
+// all circling one way. Each part is a swirl (no spot where items pile up or get pushed away).
+let flowSeed = 0;
+function flowAt(x, y) {
+  const u = x / L.rin, v = y / L.rin, t = tNow + flowSeed;
+  // big eddies, side by side, turning opposite ways and drifting
+  const a1 = 2.4, p1 = t * 0.23, q1 = t * 0.17 + 1.3;
+  let vx = Math.sin(a1 * u + p1) * Math.cos(a1 * v + q1);
+  let vy = -Math.cos(a1 * u + p1) * Math.sin(a1 * v + q1);
+  // smaller eddies on a slowly turning grid
+  const c = Math.cos(t * 0.05), s = Math.sin(t * 0.05), ru = c * u - s * v, rv = s * u + c * v;
+  const a2 = 3.7, p2 = 2 - t * 0.31, q2 = t * 0.27 + 0.5;
+  const ex = Math.sin(a2 * ru + p2) * Math.cos(a2 * rv + q2), ey = -Math.cos(a2 * ru + p2) * Math.sin(a2 * rv + q2);
+  vx += 0.6 * (c * ex + s * ey); vy += 0.6 * (-s * ex + c * ey);
+  // a light whole-pot swirl: clockwise for a few seconds, then anticlockwise
+  const sw = 0.18 * Math.sin(t * 0.29);
+  vx += -v * sw; vy += u * sw;
+  return [vx, vy];
+}
 // 1 at the start of a game, rising to BOIL_MAX as the clock runs down
 function boilLevel() {
   if (state !== 'play' && state !== 'paused') return 1;
@@ -201,10 +222,10 @@ function physics(dt) {
       if (b.drop === 0) { ripples.push({ x: b.x, y: b.y, t: 0 }); impulse(b.x, b.y, L.r * 3, L.R * 0.25); sound('plop'); }
       continue;
     }
-    const d = Math.hypot(b.x, b.y) || 1;
-    // a slow simmering swirl plus a wandering current
-    const tx = (-b.y / d) * flow * (d / L.rin) + Math.sin(tNow * 0.6 + b.phase * 3) * flow * 0.5;
-    const ty = (b.x / d) * flow * (d / L.rin) + Math.cos(tNow * 0.8 + b.phase * 2) * flow * 0.5;
+    // the curry's current where this item is, plus its own small wobble
+    const [fx, fy] = flowAt(b.x, b.y);
+    const tx = fx * flow * 1.1 + Math.sin(tNow * 0.6 + b.phase * 3) * flow * 0.45;
+    const ty = fy * flow * 1.1 + Math.cos(tNow * 0.8 + b.phase * 2) * flow * 0.45;
     const k = 1 - Math.exp(-1.1 * boil * dt);
     b.vx += (tx - b.vx) * k; b.vy += (ty - b.vy) * k;
     b.x += b.vx * dt; b.y += b.vy * dt;
