@@ -66,10 +66,11 @@ When items overlap, the poke hits the one in front.
 ### The pot
 
 - Fishballs float and drift in every direction: a few eddies turn both ways and wander around the pot, and the whole pot swirls gently clockwise, then anticlockwise. The pattern starts differently each game.
-- **Items don't stay forever.** After floating for a while (fishballs 10–18 seconds, other items 6–10 seconds), an item bobs lower for a second, then sinks out of sight and can no longer be poked. New items keep dropping in, so the pot is always changing.
+- **Items don't stay forever.** Every item, fishball or not, floats for 8–15 seconds, bobs lower for a second, then sinks out of sight and can no longer be poked.
+- **New items float up from the bottom of the pot**, anywhere in it, and can be poked once they reach the surface.
 - Every poke pushes nearby items away with a ripple. Dragging the stick while it's down in the pot stirs the items around it.
-- **The curry boils harder as time runs out.** It starts at a gentle simmer. Bubbles rise more and more often and bump the fishballs, and the current speeds up to 2.6× by the last second, so the last 20 seconds are the hardest. (The pot calms down again after the game.)
-- The stall keeps topping up the pot: a new item drops in about every 0.25 seconds whenever the pot is below its target.
+- **The curry boils harder as time runs out.** It starts at a gentle simmer. Bubbles rise more and more often and bump the fishballs, and the current speeds up to 3.4× by the last second, the eddies churn and switch direction faster, and the items get jostled in random directions, so the last 20 seconds are the hardest. (The pot calms down again after the game.)
+- The stall keeps topping up the pot: a new item rises up about every 0.25 seconds whenever the pot is below its target.
 
 ### Customers
 
@@ -106,7 +107,7 @@ XX is the item poked by mistake: 白蘿蔔, 牛丸, 墨魚丸 or 豬皮 (white r
 |---|---|---|
 | What's in the pot | Only fishballs | Fishballs mixed with 白蘿蔔 (white radish), 牛丸 (beef balls), 墨魚丸 (cuttlefish balls) and 豬皮 (pig skin) |
 | Items in the pot | 30 | Starts at 34 and grows by 1 per stick, up to 44 |
-| Share that isn't fishball | 0% | Starts at 40% and rises by 3% per stick, up to 70% |
+| Share that isn't fishball | 0% | 50%: half fishballs, half other items |
 | Extra drops | None | Every stick handed over drops 2 more non-fishball items into the pot |
 | Curry current | Normal | 35% faster |
 | Wrong items | Not possible | −2 points each, and it takes up a space on the stick |
@@ -212,15 +213,17 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 
 | Moment | Sound |
 |---|---|
-| Background music | An original, cheerful street-stall tune in a five-note scale, during a game only. It speeds up a little as the curry boils harder, and stops on pause and at the end. |
-| Centre hit | Pop plus a bright chime, and a gold **正中！+2** |
-| Off-centre hit | A duller, lower thunk, and an orange **篤歪咗 +1** |
+| Background music | An original, cheerful street-stall tune in a five-note scale, during a game only. It gets tense as time runs out: faster and faster (128 up to about 190 beats a minute), a key change up at 20 seconds and again at 10, a busier beat with a pulsing low note from 20 seconds, and a ticking clock in the last 10. It stops on pause and at the end. |
+| Centre hit | A clean poke and a bright, rising "ting-ting!", and a gold **正中！+2** |
+| Off-centre hit | A dull, wobbly "bonk" with no chime, and an orange **篤歪咗 +1** |
+| Slipped off (篤太邊) | A wet sliding "shhhwip" and a little splash |
+| Wrong item (挑戰) | A buzzer, "eh-eh" |
+| New item reaches the surface | A soft "bloop" |
 | Stick handed over | A whoosh as the stick flies over |
 | Customer gets a neat stick | Cash-drawer "ka-ching" and a rising run of bells (with a sparkle for a very neat stick) |
 | Customer gets a crooked stick or a wrong item | A sad "wah-wah" |
-| New item drops into the pot | Small "plop" |
 | Miss into the curry | Water-drop "plip" with a tiny splash |
-| Slip, wrong item, poking outside the pot | Silent |
+| Poking outside the pot | Silent |
 
 The **speaker** button turns all sound and music on or off; it shows a crossed-out speaker while muted. Sound starts after the first tap, as browsers require. On iPhone, the side silent switch also mutes the game.
 
@@ -364,9 +367,9 @@ All in `js/config.js`:
 | `CENTER_BONUS` | 1 | Extra point for a centre hit |
 | `WRONG_PENALTY` | 2 | Points lost for a non-fishball item |
 | `REFILL_EVERY` | 0.25 | Seconds between items dropped into the pot |
-| `BOIL_MAX` | 2.6 | How much faster the curry moves at the last second than at the start |
+| `BOIL_MAX` | 3.4 | How much faster the curry moves at the last second than at the start |
 | `LEVELS.normal` | 30 items, 0% other items | 普通 settings |
-| `LEVELS.hard` | 34→44 items, 40%→70% other items, 1.35× current, +2 items per stick | 挑戰 settings |
+| `LEVELS.hard` | 34→44 items, 50% other items, 1.35× current, +2 items per stick | 挑戰 settings |
 | `HISTORY_MAX` | 50 | Games kept in personal history |
 | `SHARE_URL` | GitHub Pages address | Link added to shared results |
 

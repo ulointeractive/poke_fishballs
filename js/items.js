@@ -135,12 +135,13 @@ function pickKind() {
   if (!othersShare()) return 'fish';
   return countKind(true) < wantFish() ? 'fish' : pick(OTHER_KINDS);
 }
-// how long an item floats before it sinks out of sight (seconds); the other stuff comes and goes faster
-function floatTime(kind) { return kind === 'fish' ? rand(10, 18) : rand(6, 10); }
+// how long an item floats before it sinks out of sight (seconds), the same for every kind of item
+function floatTime() { return rand(8, 15); }
+// drop: 1 = still under the curry, rising up from the bottom of the pot; 0 = floating at the surface
 function makeBall(x, y, drop = 0) {
   const kind = pickKind();
   return { x, y, vx: 0, vy: 0, phase: Math.random() * TAU, v: Math.floor(Math.random() * VARIANTS), drop, kind,
-    age: 0, life: floatTime(kind), sink: 0 };
+    age: 0, life: floatTime(), sink: 0 };
 }
 function seedBalls() {
   flowSeed = Math.random() * 100;   // every game's currents start somewhere different
@@ -157,7 +158,7 @@ function ballScreen(b) {
   const bob = Math.sin(tNow * 2.3 + b.phase) * L.r * 0.07;
   // in its last second an item bobs lower, then slides under the curry
   const warn = clamp((b.age - b.life + 1) / 1, 0, 1) * L.r * 0.18;
-  return { sx: L.cx + b.x, sy: L.cy + b.y * L.sq + bob - b.drop * b.drop * L.R * 0.9 + warn + (b.sink || 0) * L.r * 1.1 };
+  return { sx: L.cx + b.x, sy: L.cy + b.y * L.sq + bob + warn + ((b.sink || 0) + b.drop) * L.r * 1.1 };
 }
 function impulse(fx, fy, radius, strength) {
   for (const b of balls) {
@@ -198,9 +199,10 @@ function collide() {
 // The curry's current: a few eddies that turn both ways and drift around the pot, plus a gentle
 // whole-pot swirl that slowly changes direction, so fishballs wander in every direction instead of
 // all circling one way. Each part is a swirl (no spot where items pile up or get pushed away).
-let flowSeed = 0;
+let flowSeed = 0, flowClock = 0;
 function flowAt(x, y) {
-  const u = x / L.rin, v = y / L.rin, t = tNow + flowSeed;
+  // flowClock runs faster as the curry boils harder, so the eddies also churn and change direction faster
+  const u = x / L.rin, v = y / L.rin, t = flowClock + flowSeed;
   // big eddies, side by side, turning opposite ways and drifting
   const a1 = 2.4, p1 = t * 0.23, q1 = t * 0.17 + 1.3;
   let vx = Math.sin(a1 * u + p1) * Math.cos(a1 * v + q1);
@@ -224,10 +226,13 @@ function boilLevel() {
 function physics(dt) {
   const boil = boilLevel();
   const flow = L.R * 0.16 * LEVELS[playLevel].flow * boil;
+  flowClock += dt * (0.6 + 0.4 * boil * boil);
+  // the harder the boil, the more the items are jostled about in random directions
+  const jolt = L.R * 2.2 * (boil - 1) * LEVELS[playLevel].flow;
   for (const b of balls) {
     if (b.drop > 0) {
-      b.drop = Math.max(0, b.drop - dt * 2.4);
-      if (b.drop === 0) { ripples.push({ x: b.x, y: b.y, t: 0 }); impulse(b.x, b.y, L.r * 3, L.R * 0.25); sound('plop'); }
+      b.drop = Math.max(0, b.drop - dt * 1.6);
+      if (b.drop === 0) { ripples.push({ x: b.x, y: b.y, t: 0 }); impulse(b.x, b.y, L.r * 2.4, L.R * 0.15); sound('plop'); }
       continue;
     }
     // after floating for a while, an item sinks out of sight; the stall drops new ones in
@@ -242,6 +247,7 @@ function physics(dt) {
     const ty = fy * flow * 1.1 + Math.cos(tNow * 0.8 + b.phase * 2) * flow * 0.45;
     const k = 1 - Math.exp(-1.1 * boil * dt);
     b.vx += (tx - b.vx) * k; b.vy += (ty - b.vy) * k;
+    if (jolt > 0) { const ja = Math.random() * TAU; b.vx += Math.cos(ja) * jolt * dt; b.vy += Math.sin(ja) * jolt * dt; }
     b.x += b.vx * dt; b.y += b.vy * dt;
   }
   // rolling boil: bubbles rise at random spots, and each one bumps whatever is floating there

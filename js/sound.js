@@ -7,8 +7,11 @@ function initAudio() {
   if (ac) return;
   try {
     ac = new (window.AudioContext || window.webkitAudioContext)();
-    sfxOut = ac.createGain(); sfxOut.connect(ac.destination);
-    musicOut = ac.createGain(); musicOut.gain.value = muted ? 0 : MUSIC_VOL; musicOut.connect(ac.destination);
+    // everything goes through a limiter, so music and sound effects together never distort
+    const limiter = ac.createDynamicsCompressor();
+    limiter.threshold.value = -10; limiter.ratio.value = 8; limiter.connect(ac.destination);
+    sfxOut = ac.createGain(); sfxOut.connect(limiter);
+    musicOut = ac.createGain(); musicOut.gain.value = muted ? 0 : MUSIC_VOL; musicOut.connect(limiter);
     const nl = Math.floor(ac.sampleRate * 0.5);
     noiseBuf = ac.createBuffer(1, nl, ac.sampleRate);
     const nd = noiseBuf.getChannelData(0);
@@ -77,13 +80,19 @@ function serveSound(mood) {
 function sound(kind) {
   if (!ac || muted) return;
   if (kind === 'poke') tone('sine', 520, 160, 0.1, 0.3);
-  else if (kind === 'perfect') { tone('sine', 520, 160, 0.1, 0.3); tone('triangle', 1400, 1800, 0.12, 0.08, 0.04); }
-  else if (kind === 'off') { tone('sine', 360, 120, 0.12, 0.28); tone('triangle', 240, 200, 0.12, 0.06, 0.03); }
+  // dead centre: a clean poke and a bright, rising "ting-ting!"
+  else if (kind === 'perfect') { tone('sine', 620, 200, 0.08, 0.3); bell(1568, 0.2, 0.03); bell(2349, 0.18, 0.1); }
+  // off-centre: a dull, wobbly "bonk" with no chime
+  else if (kind === 'off') { tone('square', 150, 105, 0.16, 0.1); tone('sine', 210, 120, 0.2, 0.3); noise('lowpass', 500, 150, 0.1, 0.12); }
+  // slipped off: a wet slide down the side of the fishball and a little splash
+  else if (kind === 'slip') { noise('bandpass', 2600, 380, 0.38, 0.22); tone('sine', 900, 260, 0.3, 0.12); setTimeout(() => { if (ac && !muted) droplet(); }, 300); }
+  // poked the wrong item: a buzzer, "eh-eh"
+  else if (kind === 'wrong') { tone('sawtooth', 180, 170, 0.13, 0.12); tone('sawtooth', 180, 165, 0.2, 0.12, 0.17); tone('sine', 140, 90, 0.25, 0.25); }
   else if (kind === 'whoosh') noise('bandpass', 500, 2400, 0.28, 0.14);
   else if (kind === 'serve0') serveSound(0);
   else if (kind === 'serve1') serveSound(1);
   else if (kind === 'serve2') serveSound(2);
-  else if (kind === 'plop') tone('sine', 300, 120, 0.08, 0.08);
+  else if (kind === 'plop') tone('sine', 180, 320, 0.08, 0.05);   // an item bobbing up to the surface
   else if (kind === 'drip') droplet();
 }
 $('mute').addEventListener('click', () => {
@@ -98,8 +107,9 @@ langListeners.push(updateMuteButton);
 
 // ---------- background music ----------
 // An original, cheerful street-stall tune in a five-note (pentatonic) scale, played while a game runs.
-// It speeds up a little as the curry boils harder. Notes are semitones from A4 (440 Hz); null = rest.
-const MUSIC_VOL = 0.55;
+// As time runs out it gets tense: faster and faster, a key change up at 20 s and again at 10 s,
+// a busier beat, and a ticking clock in the last 10 seconds. Notes are semitones from A4 (440 Hz); null = rest.
+const MUSIC_VOL = 1;
 const TUNE = [
   5, null, 9, 12, 14, 12, 9, null,   14, null, 12, 9, 7, 9, 5, null,
   2, 5, 7, 9, 12, null, 9, 7,        5, 7, 9, 7, 5, null, 0, null,
@@ -110,7 +120,10 @@ const ROOTS = [-19, -22, -26, -24];   // one bass note per bar: D, B, G, A
 const hz = (n) => 440 * Math.pow(2, n / 12);
 let musicTimer = 0, musicStep = 0, musicNext = 0;
 function musicNote(step, at) {
-  const n = TUNE[step % TUNE.length], bar = Math.floor(step / 8) % ROOTS.length, beat = step % 8, root = ROOTS[bar];
+  const left = state === 'play' || state === 'paused' ? timeLeft : GAME_TIME;
+  const lift = left <= 10 ? 3 : left <= 20 ? 2 : 0;   // key change up as time runs out
+  const n0 = TUNE[step % TUNE.length], n = n0 === null ? null : n0 + lift;
+  const bar = Math.floor(step / 8) % ROOTS.length, beat = step % 8, root = ROOTS[bar] + lift;
   const play = (type, f, dur, vol) => {
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type; o.frequency.setValueAtTime(f, at);
@@ -118,19 +131,32 @@ function musicNote(step, at) {
     g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
     o.connect(g).connect(musicOut); o.start(at); o.stop(at + dur + 0.02);
   };
-  if (n !== null) { play('triangle', hz(n), 0.22, 0.11); play('square', hz(n + 12), 0.08, 0.012); }
-  if (beat === 0 || beat === 6) play('triangle', hz(root), 0.3, 0.14);
-  if (beat === 3) play('triangle', hz(root + 12), 0.15, 0.08);
-  if (beat === 4) play('triangle', hz(root + 7), 0.25, 0.12);
-  if (beat === 0 || beat === 4) noise('lowpass', 180, 60, 0.12, 0.25, 0, musicOut, at);        // pot thump
-  if (beat % 2 === 1) noise('highpass', 7000, 7000, 0.03, 0.05, 0, musicOut, at);             // tick
+  if (n !== null) { play('triangle', hz(n), 0.22, 0.2); play('square', hz(n + 12), 0.08, 0.03); }
+  if (beat === 0 || beat === 6) play('triangle', hz(root), 0.3, 0.26);
+  if (beat === 3) play('triangle', hz(root + 12), 0.15, 0.14);
+  if (beat === 4) play('triangle', hz(root + 7), 0.25, 0.22);
+  if (beat === 0 || beat === 4) noise('lowpass', 180, 60, 0.12, 0.45, 0, musicOut, at);        // pot thump
+  if (beat % 2 === 1) noise('highpass', 7000, 7000, 0.03, 0.09, 0, musicOut, at);             // tick
+  if (left <= 20) {
+    // getting tense: a thump on every beat and a pulsing low note underneath
+    if (beat === 2 || beat === 6) noise('lowpass', 200, 60, 0.1, 0.35, 0, musicOut, at);
+    play('sawtooth', hz(root - 12), 0.09, 0.05);
+  }
+  if (left <= 10 && beat % 4 === 0) {
+    // the last 10 seconds: a ticking clock
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(beat === 0 ? 2000 : 1500, at);
+    g.gain.setValueAtTime(0.06, at); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.04);
+    o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.05);
+  }
 }
 function startMusic() {
   if (!ac || musicTimer) return;
   musicNext = ac.currentTime + 0.1;
   musicTimer = setInterval(() => {
     const boil = typeof boilLevel === 'function' ? boilLevel() : 1;
-    const eighth = 60 / (128 * (1 + 0.18 * (boil - 1) / (BOIL_MAX - 1))) / 2;
+    // 128 beats a minute at the start, up to about 190 in the last seconds
+    const eighth = 60 / (128 * (1 + 0.5 * (boil - 1) / (BOIL_MAX - 1))) / 2;
     while (musicNext < ac.currentTime + 0.15) { musicNote(musicStep++, musicNext); musicNext += eighth; }
   }, 30);
 }

@@ -16,12 +16,12 @@ function update(dt) {
 
   physics(dt);
 
-  // the stall keeps topping up: fishballs first, then the other stuff up to its share
+  // the stall keeps topping up: new items float up from the bottom of the pot, anywhere in it
   if (countKind(true) < wantFish() || countKind(false) < wantOthers()) {
     refillTimer += dt;
     if (refillTimer > REFILL_EVERY) {
       refillTimer = 0;
-      const a = rand(Math.PI * 1.15, Math.PI * 1.85), d = rand(0.3, 0.9) * L.rin;
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * L.rin;
       balls.push(makeBall(Math.cos(a) * d, Math.sin(a) * d, 1));
     }
   } else refillTimer = 0;
