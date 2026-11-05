@@ -150,7 +150,6 @@ document.addEventListener('keydown', (e) => {
 });
 function startGame() {
   playLevel = level;
-  if (cleanName($('name-intro').value) !== Store.name) Store.setName($('name-intro').value);
   initAudio();
   if (ac && ac.state === 'suspended') ac.resume();
   state = 'play';
@@ -206,7 +205,6 @@ async function endGame() {
   lastRun = run;
   $('share-text').hidden = true;
   $('toast').textContent = '';
-  syncNameInputs();
   fillResult(run, null);
   $('r-new').hidden = true;
   $('r-save').textContent = '';

@@ -18,7 +18,7 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 - [Scoring](#scoring)
 - [Rank titles](#rank-titles)
 - [Pausing and restarting](#pausing-and-restarting)
-- [Names, my games and deleting data](#names-my-games-and-deleting-data)
+- [My games and deleting data](#my-games-and-deleting-data)
 - [Sharing results](#sharing-results)
 - [Sound](#sound)
 - [Language](#language)
@@ -33,7 +33,6 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 ## How to play
 
 1. Pick a level on the start screen: **普通** or **挑戰**.
-2. Optionally type your name, or tap **隨機** for a random one.
 3. Tap **開檔！ Start**. You have **60 seconds**.
 4. **Press** on a fishball in the pot to poke it with the bamboo stick.
 5. **Release** to lift the stick, then press again to poke the next one.
@@ -156,14 +155,9 @@ Shown at the end of each game:
 
 ---
 
-## Names, my games and deleting data
+## My games and deleting data
 
-### Names
-
-- Players can type a name of up to 24 characters, on the start screen or after a game. It's shown in **我嘅紀錄** and in shared results.
-- Anyone who leaves it blank gets a random name when their first game finishes, in the language they're playing in: for example 無影竹籤刺客 or 午夜咖喱忍者, or Shadow Curry Ninja or Iron Stick Samurai.
-- Tap **隨機** to roll a new random name at any time. It saves right away.
-- Names come only from what the player types or the random generator. No account names, device names or other personal details are used.
+It's a single-player game, so there are no names or accounts.
 
 ### My games (我嘅紀錄)
 
@@ -171,7 +165,7 @@ There's no leaderboard. **我嘅紀錄 / My games** (top-right button, or on the
 
 - Switch between 普通 and 挑戰.
 - Summary: games played, best score and average score for that level.
-- Each game shows its rank, date, name, fishballs, sticks, centre hits, slips (and wrong items in 挑戰), with a bar compared to the best.
+- Each game shows its rank and **score first**, then fishballs, sticks, centre hits, slips (and wrong items in 挑戰) in small text, with the date and time in tiny text on the right and a bar compared to the best.
 - The game just played is highlighted.
 - The result screen shows the new game's rank, e.g. 呢部機第 2 名 / #2 on this device.
 - To compare with friends, share the result text or image (see below).
@@ -182,8 +176,7 @@ There's no leaderboard. **我嘅紀錄 / My games** (top-right button, or on the
 
 | Stored on the device | What it holds |
 |---|---|
-| `fishball-history` | The last 50 games: level, score, stats, date, and the name used |
-| `fishball-name` | The player's name |
+| `fishball-history` | The last 50 games: level, score, stats and date |
 | `fishball-lang` | Cantonese or English |
 
 Records don't move between devices or browsers.
@@ -192,7 +185,7 @@ Records don't move between devices or browsers.
 
 Two ways, and both remove everything:
 
-1. **In the game:** open **我嘅紀錄**, tap **刪除呢部機嘅所有紀錄 / Delete all my data on this device**, then **確定刪除 / Delete** to confirm, or **取消 / Cancel**. Games, name and language choice are erased from the browser.
+1. **In the game:** open **我嘅紀錄**, tap **刪除所有紀錄 / Delete all records**, then **確定刪除 / Delete** to confirm, or **取消 / Cancel**. All games and the language choice are erased from the browser.
 2. **In the browser:** clear the site data for the game's address (for example, in Chrome: Settings → Privacy → Site data; on iPhone: Settings → Safari → Advanced → Website Data).
 
 Deleted data can't be recovered.
@@ -204,12 +197,12 @@ Deleted data can't be recovered.
 On the result screen:
 
 - **分享成績** opens the phone's share sheet, or copies a message like this, ready to paste into a chat:
-  > 無影竹籤刺客喺「篤魚蛋」挑戰關一分鐘攞咗 172 分！篤咗 103 粒魚蛋，交咗 18 串，正中 76 次。你破唔破到？
+  > 我喺「篤魚蛋」挑戰關一分鐘攞咗 172 分！篤咗 103 粒魚蛋，交咗 18 串，正中 76 次。你破唔破到？
   >
   > followed by the game link
 
   If copying isn't allowed, the text appears in a box to copy by hand.
-- **儲存成績圖** saves a square result image with your name, score, level and stats.
+- **儲存成績圖** saves a square result image with your score, level and stats.
 
 The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/config.js`). Anyone can open it; no account needed. When the link is pasted into most chat apps, it shows the thumbnail image as a preview.
 
@@ -234,7 +227,6 @@ The **speaker** button turns all sound on or off; it shows a crossed-out speaker
 
 - The **EN / 粵** button, at the top right of the instructions panel, switches the whole game between Cantonese (Traditional Chinese) and English: every screen, button, pop-up message, customer line, rank title, share message and result image.
 - On a player's first visit, the game picks Cantonese if their browser language is Chinese, and English otherwise. After that it remembers the player's choice on that device.
-- Random names come out in the current language. Names already saved stay as they are.
 - All text lives in `js/i18n.js`. To change a word, edit it there.
 
 ---
@@ -287,7 +279,7 @@ There are no analytics, ads, tracking pixels, cookies, accounts, API keys or pas
 
 ### What is stored
 
-Only the three items in the player's own browser listed under [Where records are kept](#where-records-are-kept). Nothing is sent anywhere. Names come only from what the player typed or the random generator.
+Only the two items in the player's own browser listed under [Where records are kept](#where-records-are-kept). Nothing is sent anywhere.
 
 ### Browser features used, only when the player taps
 
@@ -330,7 +322,7 @@ css/style.css     all colours, fonts and layout (including phone and sideways la
 js/config.js      game settings: time, scoring, levels, share link
 js/i18n.js        every on-screen text in Cantonese and English, and the language switch
 js/state.js       page elements, small helpers, live game state
-js/records.js     my games (ranked), deleting data, player names
+js/records.js     my games (ranked), deleting data
 js/share.js       share text and result image
 js/sound.js       sound effects
 js/layout.js      fitting the scene to the screen, street background
@@ -346,9 +338,9 @@ Where to look for common changes:
 | To change… | Edit |
 |---|---|
 | Game length, points, penalty, refill speed, boil strength, level settings, share link | `js/config.js` |
-| Any text in either language (screens, buttons, messages, customer lines, rank titles, random names) | `js/i18n.js` |
+| Any text in either language (screens, buttons, messages, customer lines, rank titles) | `js/i18n.js` |
 | Colours, fonts, button styles | `css/style.css` |
-| My games screen, deleting data, names | `js/records.js` |
+| My games screen, deleting data | `js/records.js` |
 | What customers say | `js/i18n.js` (`say.*`) |
 | When customers speak | `js/poke.js`, `js/game.js` (impatience), `js/customers.js` (`customerSay`) |
 | How customers look | `js/customers.js` |

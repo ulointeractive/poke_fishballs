@@ -8,7 +8,7 @@ function toast(msg) {
   toastTimer = setTimeout(() => { $('toast').textContent = ''; }, 4000);
 }
 function shareText(r) {
-  return `${t('share.text', Store.name, r, r.level === 'hard')}\n${SHARE_URL}`;
+  return `${t('share.text', r, r.level === 'hard')}\n${SHARE_URL}`;
 }
 $('share').addEventListener('click', async () => {
   if (!lastRun) return;
@@ -39,7 +39,7 @@ function resultImage(r) {
   g.font = `900 110px ${fd}`; g.fillText(t('sign.title'), 540, 185);
   g.fillStyle = '#fbfbf8'; g.fillRect(80, 320, 920, 680);
   g.fillStyle = '#2b1f17';
-  g.font = `700 48px ${fb}`; g.fillText((Store.name || t('img.subtitle')) + (r.level === 'hard' ? t('img.hard') : ''), 540, 410);
+  g.font = `700 48px ${fb}`; g.fillText(t('img.subtitle') + (r.level === 'hard' ? t('img.hard') : ''), 540, 410);
   g.font = `900 260px ${fd}`; g.fillText(String(r.score), 540, 600);
   g.font = `700 48px ${fb}`; g.fillStyle = '#6d625a'; g.fillText(t('unit.pts'), 540, 750);
   g.font = `400 40px ${fb}`;
