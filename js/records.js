@@ -67,14 +67,15 @@ function renderBoards() {
     const el = li(x === lastRun ? 'me' : '');
     el.classList.add('rec');
     const pos = document.createElement('span'); pos.className = 'pos'; pos.textContent = i + 1;
-    const body = document.createElement('span'); body.className = 'who';
+    // score top-left, rank title top-right, fishballs and sticks bottom-left, date and time bottom-right
+    const body = document.createElement('span'); body.className = 'rec-body';
     const score = document.createElement('span'); score.className = 'rec-score'; score.textContent = x.score;
     const u = document.createElement('small'); u.textContent = t('unit.pts'); score.appendChild(u);
-    const sub = document.createElement('small'); sub.textContent = t('hist.sub', x, recLevel === 'hard');
-    const bar = document.createElement('div'); bar.className = 'bar'; bar.style.width = `${best ? Math.max(4, (x.score / best) * 100) : 0}%`;
-    body.append(score, sub, bar);
+    const title = document.createElement('span'); title.className = 'rec-title'; title.textContent = rankFor(x.score, recLevel);
+    const sub = document.createElement('span'); sub.className = 'rec-sub'; sub.textContent = t('rec.sub', x);
     const when = document.createElement('span'); when.className = 'rec-when'; when.textContent = fmtDate(x.at);
-    el.append(pos, body, when);
+    body.append(score, title, sub, when);
+    el.append(pos, body);
     return el;
   }));
   const b = Store.localBest(level);

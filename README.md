@@ -165,7 +165,7 @@ There's no leaderboard. **我嘅紀錄 / My games** (top-right button, or on the
 
 - Switch between 普通 and 挑戰.
 - Summary: games played, best score and average score for that level.
-- Each game shows its rank and **score first**, then fishballs, sticks, centre hits, slips (and wrong items in 挑戰) in small text, with the date and time in tiny text on the right and a bar compared to the best.
+- Each game shows its rank, then its **score**, with its rank title (e.g. 魚蛋師傅) at the top right. Underneath, in tiny text: how many fishballs and sticks on the left, and the date and time in the bottom-right corner.
 - The game just played is highlighted.
 - The result screen shows the new game's rank, e.g. 呢部機第 2 名 / #2 on this device.
 - To compare with friends, share the result text or image (see below).
