@@ -176,18 +176,12 @@ function track(cfg) {
   });
 }
 const MUSIC = {
-  // The game's track: a driving beat (drums, pumping bass, soft held chords) with a catchy synth-pop hook
-  // every other phrase. C major (Cmaj7 - G - Am7 - Fmaj7), 124 bpm.
+  // The game's track: a driving beat (drums, pumping bass, soft held chords), no melody, in a bright major key.
+  // C major (Cmaj7 - G - Am7 - Fmaj7), 124 bpm.
   main: track({
-    bpm: 124, pad: true, leadHalf: true,
+    bpm: 124, pad: true,
     roots: [-21, -26, -24, -28],
     chords: [[3, 7, 10, 14], [-2, 2, 5, 10], [0, 3, 7, 10], [-4, 0, 3, 7]],
-    lead: [
-      15, null, 14, 15, 17, null, 15, null, 14, null, 10, null, null, null, null, null,
-      14, null, 12, 14, 15, null, 14, null, 10, null, null, null, null, null, null, null,
-      12, null, 10, 12, 15, null, 14, 12, 10, null, 7, null, null, null, null, null,
-      8, null, 10, 12, 15, null, 14, null, 12, null, 10, null, null, null, null, null,
-    ],
   }),
 };
 // the track the game plays (one of the keys above)

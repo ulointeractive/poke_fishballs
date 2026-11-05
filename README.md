@@ -213,7 +213,7 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 
 | Moment | Sound |
 |---|---|
-| Background music | An original track made in code: a driving beat (drums, pumping bass, soft held chords) with a catchy synth-pop hook every other phrase, C major, 124 bpm. During a game only, at the same tempo throughout. It gets more intense as time runs out: a key change up at 20 seconds and again at 10, busier hi-hats from 20 seconds, snare rolls and a ticking clock in the last 10. It stops on pause and at the end. |
+| Background music | An original track made in code: a driving beat (drums, pumping bass, soft held chords) with no melody, in a bright major key (C major, 124 bpm). During a game only, at the same tempo throughout. It gets more intense as time runs out: a key change up at 20 seconds and again at 10, busier hi-hats from 20 seconds, snare rolls and a ticking clock in the last 10. It stops on pause and at the end. |
 | Centre hit | A clean poke and a bright, rising "ting-ting!", and a gold **正中！+2** |
 | Off-centre hit | A dull, wobbly "bonk" with no chime, and an orange **篤歪咗 +1** |
 | Slipped off (篤太邊) | A wet sliding "shhhwip" and a little splash |
