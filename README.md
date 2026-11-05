@@ -66,7 +66,7 @@ When items overlap, the poke hits the one in front.
 ### The pot
 
 - Fishballs float and drift in every direction: a few eddies turn both ways and wander around the pot, and the whole pot swirls gently clockwise, then anticlockwise. The pattern starts differently each game.
-- **Items don't stay forever.** Every item, fishball or not, floats for 8–15 seconds, bobs lower for a second, then sinks out of sight and can no longer be poked.
+- **Items don't stay forever.** Every item, fishball or not, floats for 8–15 seconds, bobs lower for a second, then sinks out of sight over about 1.7 seconds. While it sinks and fades it can still be poked, until it has almost disappeared.
 - **New items float up from the bottom of the pot**, anywhere in it, and can be poked once they reach the surface.
 - Every poke pushes nearby items away with a ripple. Dragging the stick while it's down in the pot stirs the items around it.
 - **The curry boils harder as time runs out.** It starts at a gentle simmer. Bubbles rise more and more often and bump the fishballs, and the current speeds up to 3.4× by the last second, the eddies churn and switch direction faster, and the items get jostled in random directions, so the last 20 seconds are the hardest. (The pot calms down again after the game.)
@@ -216,7 +216,7 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 | Background music | An original track made in code: a driving beat (drums, pumping bass, soft held chords) with no melody, in a bright major key (C – G – Am – F twice, with the top notes running C G A F · E G A F; 124 bpm). During a game only, at the same tempo throughout. It stays in the same key throughout, and gets more intense as time runs out: busier hi-hats from 20 seconds, snare rolls and a ticking clock in the last 10. It fades out on pause. When time's up it finishes properly: a G chord resolving to a C chord with E on top, with a cymbal, ringing out for about 2.5 seconds. |
 | Centre hit | A clean poke and a bright, rising "ting-ting!", and a gold **正中！+2** |
 | Off-centre hit | A dull, wobbly "bonk" with no chime, and an orange **篤歪咗 +1** |
-| Slipped off (篤太邊) | A long, wet "shhhwoooop" slide (about 0.7 seconds) with a falling slide-whistle, then a splash |
+| Slipped off (篤太邊) | A slow, wet slide (about 0.7 seconds), then a little splash |
 | Wrong item (挑戰) | A buzzer, "eh-eh" |
 | New item reaches the surface | A soft "bloop" |
 | Stick handed over | A whoosh as the stick flies over |

@@ -19,7 +19,8 @@ function resolvePoke() {
   const reach = L.r * 1.25;
   let hit = null, hs = null, hd = Infinity;
   for (const b of balls) {
-    if (b.drop > 0.05 || b.sink > 0.35) continue;
+    // a sinking item still counts until it has almost disappeared
+    if (b.drop > 0.05 || b.sink > 0.85) continue;
     const s = ballScreen(b), dx = tx - s.sx, dy = ty - s.sy, d = dx * dx + dy * dy;
     if (d < reach * reach && d < hd) { hit = b; hs = s; hd = d; }
   }

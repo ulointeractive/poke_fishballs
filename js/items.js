@@ -239,7 +239,7 @@ function physics(dt) {
     b.age += dt;
     if (b.age > b.life) {
       if (!b.sink) ripples.push({ x: b.x, y: b.y, t: 0 });
-      b.sink = Math.min(1, b.sink + dt * 1.5);
+      b.sink = Math.min(1, b.sink + dt * 0.6);   // takes about 1.7 s to go under
     }
     // the curry's current where this item is, plus its own small wobble
     const [fx, fy] = flowAt(b.x, b.y);

@@ -32,20 +32,20 @@ function initAudio() {
   } catch (e) { ac = null; }
 }
 // a stick dipping into liquid: a soft wet "plip" that rises in pitch, over a tiny muffled splash
-function droplet() {
+function droplet(vol = 0.4, splashVol = 0.15) {
   const t = ac.currentTime, f = 650 + Math.random() * 250;
   const o = ac.createOscillator(), g = ac.createGain();
   o.type = 'sine';
   o.frequency.setValueAtTime(f, t);
   o.frequency.exponentialRampToValueAtTime(f * 2.4, t + 0.06);
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.4, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
   o.connect(g).connect(sfxOut);
   o.start(t); o.stop(t + 0.1);
   if (splashBuf) {
     const src = ac.createBufferSource(), bp = ac.createBiquadFilter(), ng = ac.createGain();
-    src.buffer = splashBuf; bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.8; ng.gain.value = 0.15;
+    src.buffer = splashBuf; bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.8; ng.gain.value = splashVol;
     src.connect(bp).connect(ng).connect(sfxOut); src.start(t);
   }
 }
@@ -70,6 +70,18 @@ function noise(type, f0, f1, dur, vol, delay = 0, out = sfxOut, at = null) {
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.03, dur / 3));
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   src.connect(f).connect(g).connect(out); src.start(t); src.stop(t + dur + 0.02);
+}
+// a wet slide: filtered noise and a tone that both fall in pitch, holding steady and then fading out
+function slide(dur) {
+  const t = ac.currentTime;
+  const env = (g, vol) => { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.04); g.gain.setValueAtTime(vol, t + dur * 0.65); g.gain.linearRampToValueAtTime(0.0001, t + dur); };
+  const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g1 = ac.createGain();
+  src.buffer = noiseBuf; src.loop = true; f.type = 'bandpass'; f.Q.value = 1.2;
+  f.frequency.setValueAtTime(2600, t); f.frequency.exponentialRampToValueAtTime(380, t + dur);
+  env(g1, 0.2); src.connect(f).connect(g1).connect(sfxOut); src.start(t); src.stop(t + dur + 0.02);
+  const o = ac.createOscillator(), g2 = ac.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(900, t); o.frequency.exponentialRampToValueAtTime(260, t + dur);
+  env(g2, 0.08); o.connect(g2).connect(sfxOut); o.start(t); o.stop(t + dur + 0.02);
 }
 // a bell: a bright tone with a ringing overtone
 function bell(f, vol, delay) { tone('sine', f, f, 0.5, vol, delay); tone('sine', f * 2.76, f * 2.76, 0.18, vol * 0.35, delay); }
@@ -97,15 +109,10 @@ function sound(kind) {
   else if (kind === 'perfect') { tone('sine', 620, 200, 0.08, 0.3); bell(1568, 0.2, 0.03); bell(2349, 0.18, 0.1); }
   // off-centre: a dull, wobbly "bonk" with no chime
   else if (kind === 'off') { tone('square', 150, 105, 0.16, 0.2); tone('sine', 210, 120, 0.2, 0.6); noise('lowpass', 500, 150, 0.1, 0.25); }
-  // slipped off: a long, wet "shhhwoooop" slide down the side of the fishball, then a splash
-  else if (kind === 'slip') {
-    noise('bandpass', 3200, 300, 0.75, 0.35);                 // the wet slide
-    tone('triangle', 1400, 330, 0.7, 0.22);                   // a falling slide-whistle
-    tone('sine', 1150, 280, 0.65, 0.12, 0.03);
-    setTimeout(() => { if (ac && !muted) loud(() => { droplet(); noise('lowpass', 1200, 300, 0.25, 0.25); }); }, 680);
-  }
+  // slipped off: a slow, wet slide down the side of the fishball, then a little splash
+  else if (kind === 'slip') { slide(0.7); setTimeout(() => { if (ac && !muted) loud(() => droplet(0.14, 0.06)); }, 680); }
   // poked the wrong item: a buzzer, "eh-eh"
-  else if (kind === 'wrong') { tone('sawtooth', 180, 170, 0.13, 0.12); tone('sawtooth', 180, 165, 0.2, 0.12, 0.17); tone('sine', 140, 90, 0.25, 0.25); }
+  else if (kind === 'wrong') { tone('sawtooth', 180, 170, 0.15, 0.3); tone('sawtooth', 180, 165, 0.22, 0.3, 0.18); tone('sine', 140, 90, 0.3, 0.5); tone('square', 360, 340, 0.15, 0.08); tone('square', 360, 330, 0.22, 0.08, 0.18); }
   else if (kind === 'whoosh') noise('bandpass', 500, 2400, 0.28, 0.14);
   else if (kind === 'serve0') serveSound(0);
   else if (kind === 'serve1') serveSound(1);
