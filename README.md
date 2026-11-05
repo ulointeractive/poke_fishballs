@@ -38,7 +38,7 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 5. **Release** to lift the stick, then press again to poke the next one.
 6. When a stick has **6 items** on it, lifting the stick hands it to the next customer automatically, and you get a fresh stick.
 
-Works with a mouse or a touch screen. The dots next to **呢串** show how many items are on the current stick.
+Works with a mouse or a touch screen. The dots next to **呢串** show how many items are on the current stick and how each one went on: gold with a glow for a centre hit, orange for an off-centre hit (篤歪咗), red for a wrong item.
 
 ---
 
@@ -65,10 +65,12 @@ When items overlap, the poke hits the one in front.
 
 ### The pot
 
-- Fishballs float and drift in a slow swirl of simmering curry.
+- Fishballs float and drift in every direction: a few eddies turn both ways and wander around the pot, and the whole pot swirls gently clockwise, then anticlockwise. The pattern starts differently each game.
+- **Items don't stay forever.** Every item, fishball or not, floats for 8–15 seconds, bobs lower for a second, then sinks out of sight over about 1.7 seconds. While it sinks and fades it can still be poked, until it has almost disappeared.
+- **New items float up from the bottom of the pot**, anywhere in it, and can be poked once they reach the surface.
 - Every poke pushes nearby items away with a ripple. Dragging the stick while it's down in the pot stirs the items around it.
-- **The curry boils harder as time runs out.** It starts at a gentle simmer. Bubbles rise more and more often and bump the fishballs, and the current speeds up to 2.6× by the last second, so the last 20 seconds are the hardest. (The pot calms down again after the game.)
-- The stall keeps topping up the pot: a new item drops in about every 0.25 seconds whenever the pot is below its target.
+- **The curry boils harder as time runs out.** It starts at a gentle simmer. Bubbles rise more and more often and bump the fishballs, and the current speeds up to 3.4× by the last second, the eddies churn and switch direction faster, and the items get jostled in random directions, so the last 20 seconds are the hardest. (The pot calms down again after the game.)
+- The stall keeps topping up the pot: a new item rises up about every 0.25 seconds whenever the pot is below its target.
 
 ### Customers
 
@@ -105,7 +107,7 @@ XX is the item poked by mistake: 白蘿蔔, 牛丸, 墨魚丸 or 豬皮 (white r
 |---|---|---|
 | What's in the pot | Only fishballs | Fishballs mixed with 白蘿蔔 (white radish), 牛丸 (beef balls), 墨魚丸 (cuttlefish balls) and 豬皮 (pig skin) |
 | Items in the pot | 30 | Starts at 34 and grows by 1 per stick, up to 44 |
-| Share that isn't fishball | 0% | Starts at 40% and rises by 3% per stick, up to 70% |
+| Share that isn't fishball | 0% | 50%: half fishballs, half other items |
 | Extra drops | None | Every stick handed over drops 2 more non-fishball items into the pot |
 | Curry current | Normal | 35% faster |
 | Wrong items | Not possible | −2 points each, and it takes up a space on the stick |
@@ -211,14 +213,19 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 
 | Moment | Sound |
 |---|---|
-| Fishball poked | Soft "pop" |
-| Centre hit | Pop plus a bright chime |
-| Stick handed over | Two-note "ding" |
-| New item drops into the pot | Small "plop" |
+| Background music | An original track made in code: a driving beat (drums, pumping bass, soft held chords) with no melody, in a bright major key (C – G – Am – F twice, with the top notes running C G A F · E G A F; 124 bpm). During a game only, at the same tempo throughout. It stays in the same key throughout, and gets more intense as time runs out: busier hi-hats from 20 seconds, snare rolls and a ticking clock in the last 10. It fades out on pause. When time's up it finishes properly: a G chord resolving to a C chord with E on top, with a cymbal, ringing out for about 2.5 seconds. |
+| Centre hit | A clean poke and a bright, rising "ting-ting!", and a gold **正中！+2** |
+| Off-centre hit | A dull, wobbly "bonk" with no chime, and an orange **篤歪咗 +1** |
+| Slipped off (篤太邊) | A slow, wet slide (about 0.7 seconds), then a little splash |
+| Wrong item (挑戰) | "Uh-oh": two falling notes |
+| New item reaches the surface | A soft "bloop" |
+| Stick handed over | A whoosh as the stick flies over |
+| Customer gets a neat stick | Cash-drawer "ka-ching" and a rising run of bells (with a sparkle for a very neat stick) |
+| Customer gets a crooked stick or a wrong item | A sad "wah-wah" |
 | Miss into the curry | Water-drop "plip" with a tiny splash |
-| Slip, wrong item, poking outside the pot | Silent |
+| Poking outside the pot | Silent |
 
-The **speaker** button turns all sound on or off; it shows a crossed-out speaker while muted. Sound starts after the first tap, as browsers require. On iPhone, the side silent switch also mutes the game.
+The **speaker** button turns all sound and music on or off; it shows a crossed-out speaker while muted. Sound starts after the first tap, as browsers require. On iPhone, the side silent switch also mutes the game.
 
 ---
 
@@ -323,7 +330,7 @@ js/i18n.js        every on-screen text in Cantonese and English, and the languag
 js/state.js       page elements, small helpers, live game state
 js/records.js     my games (ranked), deleting data
 js/share.js       share text and result image
-js/sound.js       sound effects
+js/sound.js       sound effects and background music
 js/layout.js      fitting the scene to the screen, street background
 js/items.js       what's in the pot: item artwork, which items appear, floating physics
 js/poke.js        poking, hits and misses, scoring, handing sticks to customers
@@ -360,9 +367,9 @@ All in `js/config.js`:
 | `CENTER_BONUS` | 1 | Extra point for a centre hit |
 | `WRONG_PENALTY` | 2 | Points lost for a non-fishball item |
 | `REFILL_EVERY` | 0.25 | Seconds between items dropped into the pot |
-| `BOIL_MAX` | 2.6 | How much faster the curry moves at the last second than at the start |
+| `BOIL_MAX` | 3.4 | How much faster the curry moves at the last second than at the start |
 | `LEVELS.normal` | 30 items, 0% other items | 普通 settings |
-| `LEVELS.hard` | 34→44 items, 40%→70% other items, 1.35× current, +2 items per stick | 挑戰 settings |
+| `LEVELS.hard` | 34→44 items, 50% other items, 1.35× current, +2 items per stick | 挑戰 settings |
 | `HISTORY_MAX` | 50 | Games kept in personal history |
 | `SHARE_URL` | GitHub Pages address | Link added to shared results |
 

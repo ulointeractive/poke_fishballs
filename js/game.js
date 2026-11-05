@@ -16,12 +16,12 @@ function update(dt) {
 
   physics(dt);
 
-  // the stall keeps topping up: fishballs first, then the other stuff up to its share
+  // the stall keeps topping up: new items float up from the bottom of the pot, anywhere in it
   if (countKind(true) < wantFish() || countKind(false) < wantOthers()) {
     refillTimer += dt;
     if (refillTimer > REFILL_EVERY) {
       refillTimer = 0;
-      const a = rand(Math.PI * 1.15, Math.PI * 1.85), d = rand(0.3, 0.9) * L.rin;
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * L.rin;
       balls.push(makeBall(Math.cos(a) * d, Math.sin(a) * d, 1));
     }
   } else refillTimer = 0;
@@ -41,6 +41,7 @@ function update(dt) {
       const c = f.target;
       customers.splice(customers.indexOf(c), 1);
       Object.assign(c, { leaving: true, wait: 0.55, bubble: f.say, bubbleT: 1.5, held: f.balls, mood: f.mood });
+      sound('serve' + f.mood);
       leavers.push(c);
       spawnCustomer(-40);
     }
@@ -72,7 +73,11 @@ function update(dt) {
 function updateHUD() {
   hudScore.textContent = score;
   hudSticks.textContent = sticks;
-  dotEls.forEach((d, i) => d.classList.toggle('on', i < stick.balls.length));
+  // each dot shows how that item went on: centre (gold), off-centre (orange, lopsided), wrong item (red)
+  dotEls.forEach((d, i) => {
+    const b = stick.balls[i];
+    d.className = 'dot' + (!b ? '' : b.kind && b.kind !== 'fish' ? ' on bad' : Math.abs(b.off) < 0.18 ? ' on perfect' : ' on off');
+  });
 }
 
 // ---------- input ----------
@@ -165,6 +170,7 @@ function pauseGame() {
   if (state !== 'play') return;
   state = 'paused';
   stick.pressed = false; stick.poking = false;
+  stopMusic();
   showPauseInfo();
   $('paused').hidden = false;
   updatePauseButton();
@@ -173,6 +179,7 @@ function resumeGame() {
   if (state !== 'paused') return;
   $('paused').hidden = true;
   state = 'play';
+  startMusic();
   updatePauseButton();
 }
 function updatePauseButton() { setIconButton($('pause'), state === 'paused' ? 'play' : 'pause', t(state === 'paused' ? 'btn.resume' : 'btn.pause')); }
@@ -183,6 +190,7 @@ $('restart').addEventListener('click', () => { $('paused').hidden = true; level 
 $('quit').addEventListener('click', () => {
   // leave without saving this game
   $('paused').hidden = true;
+  stopMusic();
   state = 'ready'; stick.balls = []; score = 0; sticks = 0; timeLeft = GAME_TIME;
   updateHUD(); setChips(true); updatePauseButton();
   $('intro').hidden = false; setLevel(playLevel);
@@ -196,6 +204,7 @@ function startGame() {
   playLevel = level;
   initAudio();
   if (ac && ac.state === 'suspended') ac.resume();
+  stopMusic(); startMusic();
   state = 'play';
   timeLeft = GAME_TIME; score = 0; sticks = 0; served = 0; perfects = 0; slips = 0; wrong = 0;
   stick.balls = []; stick.pressed = false; stick.poking = false;
@@ -241,6 +250,7 @@ function rankFor(n, lv) {
 }
 async function endGame() {
   state = 'over';
+  endMusic();
   stick.pressed = false; stick.poking = false;
   setChips(true);
   addPop(t('pop.timeUp'), W / 2, L.cy - L.R * 0.2, '#ffe27a', 30);

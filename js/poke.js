@@ -19,7 +19,8 @@ function resolvePoke() {
   const reach = L.r * 1.25;
   let hit = null, hs = null, hd = Infinity;
   for (const b of balls) {
-    if (b.drop > 0.05) continue;
+    // a sinking item still counts until it has almost disappeared
+    if (b.drop > 0.05 || b.sink > 0.85) continue;
     const s = ballScreen(b), dx = tx - s.sx, dy = ty - s.sy, d = dx * dx + dy * dy;
     if (d < reach * reach && d < hd) { hit = b; hs = s; hd = d; }
   }
@@ -35,6 +36,7 @@ function resolvePoke() {
     hit.vx += -Math.sign(off) * L.R * 1.1;
     impulse(fx, fy, L.r * 3.5, L.R * 0.6);
     slips++;
+    sound('slip');
     addPop(t('pop.slip'), tx, ty - 24, '#ffd0c4', 17);
     return;
   }
@@ -46,6 +48,7 @@ function resolvePoke() {
     // wrong item: lose points, and it still takes a place on the stick
     wrong++;
     score = Math.max(0, score - WRONG_PENALTY);
+    sound('wrong');
     addPop(t('pop.wrong', kindName(hit.kind), WRONG_PENALTY), tx, ty - 30, '#ff9b8a', 20);
   } else {
     served++;
@@ -53,8 +56,9 @@ function resolvePoke() {
       perfects++; score += 1 + CENTER_BONUS;
       sound('perfect'); addPop(t('pop.perfect', 1 + CENTER_BONUS), tx, ty - 30, '#ffe27a', 22);
     } else {
+      // off-centre: worth 1, and it should be obvious that it wasn't a centre hit
       score += 1;
-      sound('poke'); addPop('+1', tx, ty - 30, '#fff', 18);
+      sound('off'); addPop(t('pop.off'), tx, ty - 30, '#ffb36b', 19);
     }
   }
   updateHUD();
@@ -79,12 +83,12 @@ function handOut() {
   flyers.push({ balls: list, x0: stick.x, y0: tipY(), t: 0, target, say, mood });
   stick.balls = [];
   sticks++;
-  sound('ding');
+  sound('whoosh');
   const cfg = LEVELS[playLevel];
   if (cfg.dropPerStick && state === 'play') {
-    // every finished stick drops more of the other stuff into the pot
+    // every finished stick brings more of the other stuff up into the pot
     for (let i = 0; i < cfg.dropPerStick && countKind(false) < wantOthers(); i++) {
-      const a = rand(Math.PI * 1.1, Math.PI * 1.9), d = rand(0.2, 0.9) * L.rin;
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * L.rin;
       const b = makeBall(Math.cos(a) * d, Math.sin(a) * d, 1);
       b.kind = pick(OTHER_KINDS);
       balls.push(b);

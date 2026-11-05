@@ -87,10 +87,11 @@ function drawBalls() {
   ctx.ellipse(cx, cy, L.lrx, L.lry, 0, 0, TAU);
   ctx.clip();
   for (const { b, s } of list) {
-    if (b.drop > 0.02) {
-      ctx.fillStyle = `rgba(60,25,0,${0.25 * (1 - b.drop)})`;
-      ctx.beginPath(); ctx.ellipse(cx + b.x, cy + b.y * sq + L.r * 0.3, L.r * 0.8, L.r * 0.8 * sq, 0, 0, TAU); ctx.fill();
-      drawItem(s.sx, s.sy, b.kind, b.v, 'plain');
+    if (b.drop > 0 || b.sink > 0) {
+      // rising up from under the curry, or sinking back down: shows through the curry, faded
+      ctx.globalAlpha = Math.max(0, 1 - Math.max(b.drop, b.sink));
+      drawItem(s.sx, s.sy, b.kind, b.v, 'pot');
+      ctx.globalAlpha = 1;
     } else {
       drawItem(s.sx, s.sy, b.kind, b.v, 'pot');
     }
