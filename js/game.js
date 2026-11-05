@@ -250,7 +250,7 @@ function rankFor(n, lv) {
 }
 async function endGame() {
   state = 'over';
-  stopMusic();
+  endMusic();
   stick.pressed = false; stick.poking = false;
   setChips(true);
   addPop(t('pop.timeUp'), W / 2, L.cy - L.R * 0.2, '#ffe27a', 30);

@@ -2,7 +2,7 @@
 
 // ---------- sound ----------
 let ac = null, muted = false;
-let splashBuf = null, noiseBuf = null, sfxOut = null, musicOut = null;
+let splashBuf = null, noiseBuf = null, sfxOut = null, musicOut = null, musicBus = null;
 function initAudio() {
   if (ac) return;
   try {
@@ -17,7 +17,8 @@ function initAudio() {
     clip.curve = curve;
     limiter.connect(master).connect(clip).connect(ac.destination);
     sfxOut = ac.createGain(); sfxOut.connect(limiter);
-    musicOut = ac.createGain(); musicOut.gain.value = muted ? 0 : MUSIC_VOL; musicOut.connect(limiter);
+    musicBus = limiter;
+    newMusicOut();
     const nl = Math.floor(ac.sampleRate * 0.5);
     noiseBuf = ac.createBuffer(1, nl, ac.sampleRate);
     const nd = noiseBuf.getChannelData(0);
@@ -212,13 +213,47 @@ function musicNote(step, at, len) {
     o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.05);
   }
 }
+// each stretch of music gets its own volume control, so the old one can fade out while a new one starts
+function newMusicOut() {
+  musicOut = ac.createGain(); musicOut.gain.value = muted ? 0 : MUSIC_VOL; musicOut.connect(musicBus);
+}
+function fadeMusicOut(secs) {
+  if (!musicOut) return;
+  const g = musicOut.gain, t = ac.currentTime;
+  g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0, t + secs);
+}
 function startMusic() {
   if (!ac || musicTimer) return;
+  newMusicOut();
   musicNext = ac.currentTime + 0.1; musicStep = 0;
   musicTimer = setInterval(() => {
     const len = 60 / MUSIC[musicStyle].bpm / 4;   // the same tempo all game
     while (musicNext < ac.currentTime + 0.15) { musicNote(musicStep++, musicNext, len); musicNext += len; }
   }, 25);
 }
-function stopMusic() { clearInterval(musicTimer); musicTimer = 0; }
+function stopMusic() {
+  if (!musicTimer) return;
+  clearInterval(musicTimer); musicTimer = 0;
+  fadeMusicOut(0.08);   // a very short fade instead of a click
+}
+// time's up: the loop fades out and the music finishes properly, a G chord (top note G) resolving to a
+// C chord with E on top, with a cymbal, ringing out for about 2.5 seconds
+function playEnding(at) {
+  const beat = 60 / MUSIC[musicStyle].bpm, end = at + beat * 2;
+  kick(at, 0.8, hz(-38));
+  [2, 5, 10].forEach((n) => synth('triangle', n, at, beat * 2, 0.07, 2000));        // G (B D G)
+  synth('sawtooth', -26, at, beat * 2, 0.22, 650);                                  // bass G
+  kick(end, 0.9, hz(-45));
+  [-2, 3, 7].forEach((n) => synth('triangle', n, end, 2.8, 0.08, 2400));            // C (G C E)
+  synth('sawtooth', -21, end, 2.6, 0.24, 650);                                      // bass C
+  synth('sawtooth', -33, end, 2.6, 0.12, 400);                                      // and the C below it
+  noise('highpass', 5000, 3000, 2.2, 0.16, 0, musicOut, end);                         // cymbal
+}
+function endMusic() {
+  if (!musicTimer) return;
+  clearInterval(musicTimer); musicTimer = 0;
+  fadeMusicOut(0.25);
+  newMusicOut();
+  playEnding(ac.currentTime + 0.05);
+}
 
