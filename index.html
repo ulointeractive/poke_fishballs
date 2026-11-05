@@ -355,9 +355,13 @@ body {
           </div>
         </div>
         <p class="record-line" id="intro-record" hidden></p>
-        <label class="field" for="name-intro">排行榜用嘅名
-          <input id="name-intro" type="text" maxlength="12" autocomplete="off" placeholder="唔填就幫你改個名">
-        </label>
+        <div class="field">
+          <label for="name-intro">排行榜用嘅名</label>
+          <div class="field-row">
+            <input id="name-intro" type="text" maxlength="12" autocomplete="off" placeholder="唔填就幫你改個名">
+            <button class="btn small ghost" id="roll-intro" type="button">隨機</button>
+          </div>
+        </div>
         <button class="btn" id="start" type="button">開檔！ Start</button>
       </div>
     </div>
@@ -382,6 +386,7 @@ body {
           <label for="name-result">排行榜用嘅名</label>
           <div class="field-row">
             <input id="name-result" type="text" maxlength="12" autocomplete="off" placeholder="唔填就幫你改個名">
+            <button class="btn small ghost" id="roll-result" type="button">隨機</button>
             <button class="btn small" id="save-name" type="button">儲存</button>
           </div>
         </div>
@@ -612,9 +617,10 @@ body {
 
   // a random stall-style name for players who don't type one (no places or personal details)
   function randomName() {
-    const moods = ['神速', '快手', '穩陣', '醒目', '大胃', '飛快', '眼利', '無敵', '新手', '夜貓'];
-    const titles = ['魚蛋俠', '篤蛋王', '竹籤手', '咖喱仔', '咖喱妹', '篤神', '魚蛋精', '串串仔', '魚蛋迷'];
-    return pick(moods) + pick(titles) + String(Math.floor(Math.random() * 90) + 10);
+    const epithets = ['無影', '閃電', '傳說', '暗黑', '爆裂', '究極', '神級', '隱世', '狂熱', '超速', '鐵腕', '天才', '一擊', '午夜'];
+    const roles = ['篤蛋手', '竹籤刺客', '魚蛋獵人', '咖喱忍者', '魚蛋狙擊手', '竹籤武士', '魚蛋怪盜', '篤篤教主',
+      '魚蛋特務', '咖喱魔術師', '魚蛋收割機', '串燒大將', '咖喱旋風', '魚蛋終結者', '竹籤劍聖'];
+    return pick(epithets) + pick(roles);
   }
   function cleanName(s) {
     return String(s || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
@@ -751,6 +757,8 @@ body {
     toast(ok ? (Store.name ? `已儲存：${Store.name}` : '已清除名') : '儲存唔到名：你冇權限寫入排行榜。');
   }
   $('save-name').addEventListener('click', saveResultName);
+  $('roll-intro').addEventListener('click', () => { Store.setName(randomName()); });
+  $('roll-result').addEventListener('click', () => { $('name-result').value = randomName(); saveResultName(); });
   $('name-result').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveResultName(); } });
 
   // ---------- sharing ----------
