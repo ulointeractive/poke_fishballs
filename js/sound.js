@@ -183,12 +183,16 @@ function track(cfg) {
 }
 const MUSIC = {
   // The game's track: a driving beat (drums, pumping bass, soft held chords), no melody, in a bright major key.
-  // C major, plain three-note chords voiced so their top (most audible) notes make the line E - G - A - F:
-  // C (G C E) - G (B D G) - Am (C E A) - F (A C F), 124 bpm.
+  // C major, 124 bpm. The chords C - G - Am - F three times (12 bars), voiced so their top (most audible)
+  // notes make the line G E A F · C G A F · E G A F. Bar 2 is G with an added E on top (G6).
   main: track({
     bpm: 124, pad: true,
-    roots: [-21, -26, -24, -28],
-    chords: [[-2, 3, 7], [2, 5, 10], [3, 7, 12], [0, 3, 8]],
+    roots: [-21, -26, -24, -28, -21, -26, -24, -28, -21, -26, -24, -28],
+    chords: [
+      [3, 7, 10], [2, 5, 7], [3, 7, 12], [0, 3, 8],      // C (C E G) · G6 (B D E) · Am (C E A) · F (A C F)
+      [7, 10, 15], [2, 5, 10], [3, 7, 12], [0, 3, 8],    // C (E G C) · G (B D G) · Am · F
+      [-2, 3, 7], [2, 5, 10], [3, 7, 12], [0, 3, 8],     // C (G C E) · G · Am · F
+    ],
   }),
 };
 // the track the game plays (one of the keys above)
