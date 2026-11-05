@@ -54,27 +54,14 @@ function resultImage(r) {
   }
   return new Promise((res) => c.toBlob((b) => res(b), 'image/png'));
 }
-let downloads = null;
+// save the result image as a PNG file on the player's device
 $('save-img').addEventListener('click', async () => {
   if (!lastRun) return;
   const blob = await resultImage(lastRun);
   if (!blob) return;
-  if (downloads) {
-    try { await downloads.save({ filename: t('img.file', lastRun.score), data: blob }); toast(t('toast.imgSaved')); }
-    catch (e) { toast(t('toast.imgSkipped')); }
-  } else {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = t('img.file', lastRun.score);
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = t('img.file', lastRun.score);
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast(t('toast.imgSaved'));
 });
-(async () => {
-  const inClaude = !!(window.claude && typeof window.claude.use === 'function');
-  if (inClaude) {
-    try { downloads = await window.claude.use('downloads'); } catch (e) { downloads = null; }
-    $('save-img').hidden = !downloads;
-  } else {
-    $('save-img').hidden = false;
-  }
-})();

@@ -3,14 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head>
-<body>
-<title>篤魚蛋</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<title>篤魚蛋 Poke Fishballs</title>
+<meta name="description" content="一分鐘，你篤得到幾多粒咖喱魚蛋？ How many curry fishballs can you poke in one minute?">
+<meta name="theme-color" content="#a8231b">
+<!-- link preview when the game's address is shared in chat apps -->
+<meta property="og:title" content="篤魚蛋 Poke Fishballs">
+<meta property="og:description" content="一分鐘，你篤得到幾多粒？ How many curry fishballs can you poke in one minute?">
+<meta property="og:image" content="https://ulouwm.github.io/poke_fishballs/assets/thumbnail.png">
+<meta property="og:url" content="https://ulouwm.github.io/poke_fishballs/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='30' y='2' width='4' height='60' rx='2' fill='%23c9a467'/%3E%3Ccircle cx='32' cy='22' r='12' fill='%23e5ac4a'/%3E%3Ccircle cx='32' cy='44' r='12' fill='%23d8962f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+Hei+HK:wght@400;700;900&family=Chiron+Sung+HK:wght@700;900&display=swap">
 <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
 
 <div class="app">
   <div class="side">
@@ -126,11 +134,9 @@
             <button class="btn small" id="save-name" type="button" data-i18n="name.save"></button>
           </div>
         </div>
-        <button class="btn" id="upload" type="button" hidden data-i18n="btn.upload"></button>
-        <p class="note" id="upload-note" hidden data-i18n="upload.note"></p>
         <div class="row">
           <button class="btn ghost" id="share" type="button" data-i18n="btn.share"></button>
-          <button class="btn ghost" id="save-img" type="button" hidden data-i18n="btn.saveImg"></button>
+          <button class="btn ghost" id="save-img" type="button" data-i18n="btn.saveImg"></button>
         </div>
         <textarea class="share-text" id="share-text" rows="3" readonly hidden data-i18n-aria="share.aria"></textarea>
         <p class="toast" id="toast" aria-live="polite"></p>
@@ -171,7 +177,6 @@
           </div>
           <ol class="list" id="lb-list"></ol>
           <p class="note" id="lb-note"></p>
-          <button class="btn small ghost" id="remove-mine" type="button" hidden data-i18n="lb.removeMine"></button>
         </section>
         <section id="pane-hist" hidden>
           <div class="summary">

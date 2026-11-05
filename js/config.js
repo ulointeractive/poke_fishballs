@@ -1,4 +1,4 @@
-// config.js: Game settings: timings, scoring, levels, item names, leaderboard switch.
+// config.js: Game settings: timings, scoring, levels, item names, share link.
 
 const TAU = Math.PI * 2;
 const STICK_CAP = 6;          // fishballs per stick; a full stick is handed over automatically
@@ -16,10 +16,7 @@ const LEVELS = {
 // the items that can be in the pot (their names, in both languages, are in js/i18n.js)
 const KINDS = { fish: 'fish', radish: 'radish', beef: 'beef', cuttle: 'cuttle', skin: 'skin' };
 const OTHER_KINDS = ['radish', 'beef', 'cuttle', 'skin'];
-const COLLECTION = { normal: 'scores', hard: 'scoresHard' };
 const HISTORY_MAX = 50;
-const SHARE_URL = 'https://claude.ai/artifact/Q3pvQLryEHuyTrhSmoiqeC';
-// Test mode switch. false = scores are NOT written to the shared leaderboard (personal history still saves).
-// Change to true when the game is published.
-const SAVE_RANKING = false;
+// the link added to shared results (the GitHub Pages address once Pages is turned on)
+const SHARE_URL = 'https://ulouwm.github.io/poke_fishballs/';
 const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

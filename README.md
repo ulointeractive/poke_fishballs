@@ -24,7 +24,7 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 - [Language](#language)
 - [Devices and screen sizes](#devices-and-screen-sizes)
 - [Privacy, data and security](#privacy-data-and-security)
-- [Running the game](#running-the-game) and [sharing it](#sharing-the-game-with-other-people)
+- [Running the game](#running-the-game) and [putting it online](#putting-the-game-online-with-github-pages)
 - [For developers](#for-developers)
 - [Score benchmarks](#score-benchmarks)
 
@@ -150,36 +150,34 @@ Shown at the end of each game:
 
 ### Names
 
-- Players can type a name of up to 24 characters, on the start screen or after a game.
+- Players can type a name of up to 24 characters, on the start screen or after a game. It's shown on their device's leaderboard and in shared results.
 - Anyone who leaves it blank gets a random name when their first game finishes, in the language they're playing in: for example 無影竹籤刺客 or 午夜咖喱忍者, or Shadow Curry Ninja or Iron Stick Samurai.
 - Tap **隨機** to roll a new random name at any time. It saves right away.
 - Names come only from what the player types or the random generator. No account names, device names or other personal details are used.
 
 ### Leaderboard (排行榜)
 
-- **Nothing goes on the leaderboard unless the player chooses to.** After a game, **上傳到排行榜 / Upload to leaderboard** sends only their **name and score**. Everything else stays on their device.
-- If they already have a higher score on the leaderboard, it stays. Uploading again with a new name just updates the name.
-- Each level has its own **all-time** leaderboard showing the top 50. Use the 普通 / 挑戰 buttons to switch between them. Each player appears once per level.
-- The **record holder** (紀錄保持者) is shown in a red banner at the top until someone beats them. The start screen also shows the current record.
-- Players can take their score off at any time with **移除我喺呢關嘅分數 / Remove my score for this level** on the leaderboard screen.
-- The shared leaderboard only exists in the claude.ai version. Anywhere else (GitHub Pages, or `index.html` opened directly), the leaderboard screen shows that device's own best scores and there's no upload button.
+- Each device has its own leaderboard: the **top 10 games played on that device**, per level. Use the 普通 / 挑戰 buttons to switch. If several people share a phone, each game is listed under the name used at the time.
+- The **record holder** (紀錄保持者) is shown in a red banner at the top until a better game is played on that device. The start screen also shows the device's best score.
+- The result screen shows where the game ranks on the device, e.g. 呢部機第 2 名 / #2 on this device.
+- To compare with friends, share the result text or image (see below).
 
 ### Personal history (我嘅紀錄)
 
 - Your last 50 games, each tagged 普通 or 挑戰, with date, score, fishballs, sticks, centre hits, slips and wrong items.
 - Summary: games played, best 普通 score, best 挑戰 score.
-- Always stored only in your browser on this device. It's never uploaded, and nobody else can see it.
 
 ### Where records are kept
 
-| | On the player's device | Online (claude.ai version only) |
-|---|---|---|
-| Every game (history, best scores) | ✔ always | ✘ never |
-| Leaderboard name | ✔ | Only if the player uploads a score |
-| Score | ✔ | Only the one the player uploads |
-| Language choice | ✔ | ✘ |
+**Everything stays in the browser on the player's device.** Nothing is ever uploaded: there's no server, no account and no online database.
 
-To upload, a player needs at least **Contributor** access to the artifact. Anyone with less access can still play and see the leaderboard; the upload just won't go through, and they're told why.
+| Stored on the device | What it holds |
+|---|---|
+| `fishball-history` | The last 50 games: level, score, stats, date, and the name used |
+| `fishball-name` | The player's name |
+| `fishball-lang` | Cantonese or English |
+
+Clearing the browser's site data for the game deletes all of it. Records don't move between devices or browsers.
 
 ---
 
@@ -195,7 +193,7 @@ On the result screen:
   If copying isn't allowed, the text appears in a box to copy by hand.
 - **儲存成績圖** saves a square result image with your name, score, level and stats.
 
-Anyone opening the shared link needs access to the artifact. Set its sharing (organisation, or a public link) from the artifact's Share menu.
+The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/config.js`). Anyone can open it; no account needed. When the link is pasted into most chat apps, it shows the thumbnail image as a preview.
 
 ---
 
@@ -264,21 +262,14 @@ Not yet tested on real Safari, the browser engine used on every iPhone and iPad.
 | Service | Why | What it receives |
 |---|---|---|
 | Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`) | Downloads the two Chinese fonts | The player's IP address and browser details, as with any web font. No game data. |
-| claude.ai artifact services (only when played as the artifact) | Reading the leaderboard; uploading `{name, score}` when the player taps Upload; saving the result image | See "What is stored" below |
 
-There are no analytics, ads, tracking pixels, cookies, API keys or passwords anywhere in the code. The game doesn't use the camera, microphone, location, contacts or photos.
+Google Fonts is the only outside service. GitHub Pages hosts the files, and GitHub sees normal web traffic, like any website host.
 
-The claude.ai artifact link appears in the code only as text in the share message.
+There are no analytics, ads, tracking pixels, cookies, accounts, API keys or passwords anywhere in the code. The game doesn't use the camera, microphone, location, contacts or photos.
 
 ### What is stored
 
-| Where | What | Who can see it |
-|---|---|---|
-| The player's browser (local storage) | `fishball-history` (last 50 games), `fishball-name` (leaderboard name), `fishball-lang` (language) | Only that browser. Clearing the browser's site data deletes it. |
-| Online leaderboard (`scores`, `scoresHard`), only after the player taps Upload | `{ name, score }`, nothing else | Everyone who can open the artifact |
-
-- **Player identity:** each uploaded entry is filed under an anonymous claude.ai player code, so only that player can change or remove it. The code is used as the entry's address, not stored inside it. The game never asks for names, photos or email addresses.
-- **Names:** come only from what the player typed or the random generator.
+Only the three items in the player's own browser listed under [Where records are kept](#where-records-are-kept). Nothing is sent anywhere. Names come only from what the player typed or the random generator.
 
 ### Browser features used, only when the player taps
 
@@ -288,40 +279,25 @@ The claude.ai artifact link appears in the code only as text in the share messag
 
 ### Things to be aware of
 
-- **Scores can be faked.** The game runs entirely in the player's browser, so a technically skilled player could upload a fake score for themselves. They can't change anyone else's. The artifact owner can delete any entry, which Claude can do on request.
-- **Names aren't moderated.** A player could type something rude. The owner can remove it the same way.
-- **The leaderboard depends on claude.ai.** If the artifact is deleted or becomes unavailable, the shared leaderboard (names and scores only) goes with it. The game itself, and every player's own records, keep working anywhere, because they live on each device.
-- **Google Fonts:** if you'd rather the game contacted no outside service, the fonts can be bundled with the game instead.
+- **Records are per device.** A new phone, another browser, or clearing site data starts from zero.
+- **Private browsing:** some browsers forget local storage when a private window closes, so those games aren't kept.
+- **Google Fonts:** if you'd rather the game contacted no outside service at all, the fonts can be bundled with the game instead.
 
 ---
 
 ## Running the game
 
-- **As a claude.ai artifact:** open the artifact link. It's private until shared from its Share menu.
+- **Online:** the game's GitHub Pages address, `https://ulouwm.github.io/poke_fishballs/`, once Pages is turned on (below). Anyone can play; no account needed.
 - **Locally:** open `index.html` in any modern browser on desktop or phone. There's no build step and nothing to install. Fonts load from Google Fonts, with system fonts as a fallback.
 
-### Sharing the game with other people
+### Putting the game online with GitHub Pages
 
-**Option 1: the claude.ai artifact link (has the shared online leaderboard)**
+1. Make sure the game is on the `main` branch.
+2. On GitHub, open the repository's **Settings → Pages**.
+3. Under "Build and deployment", choose **Deploy from a branch**, branch `main`, folder `/ (root)`, and save.
+4. After a minute or two the game is live at `https://ulouwm.github.io/poke_fishballs/`. Share that address with anyone.
 
-1. Open the artifact and use its **Share** menu.
-2. Choose who can open it: people in your organisation, specific people by email, or anyone with the link.
-3. Give players **Contributor** access if their scores should go on the shared leaderboard.
-4. Set `SAVE_RANKING` to `true` in `js/config.js` and republish, otherwise scores stay off the leaderboard (test mode).
-
-| Who opens the link | Can play | Scores on the shared leaderboard |
-|---|---|---|
-| Contributor or higher | Yes | Yes |
-| Viewer, or someone outside your organisation | Yes | No, saved on their own device only |
-| Not signed in to claude.ai (public link) | Yes | No, saved on their own device only |
-
-**Option 2: GitHub Pages (anyone can play, no account needed)**
-
-1. On GitHub, open the repository's **Settings → Pages**.
-2. Under "Build and deployment", choose **Deploy from a branch**, branch `main`, folder `/ (root)`, and save.
-3. After a minute the game is live at `https://ulouwm.github.io/poke_fishballs/`.
-
-On GitHub Pages there's no shared leaderboard: each player's records stay in their own browser. Free GitHub Pages needs a public repository. If you share this way, change `SHARE_URL` in `js/config.js` to the Pages address so the in-game share button points there.
+Free GitHub Pages needs the repository to be **public**. Updates go live automatically a minute or so after each change is merged into `main`.
 
 ---
 
@@ -333,7 +309,7 @@ On GitHub Pages there's no shared leaderboard: each player's records stay in the
 assets/thumbnail.png  image at the top of this README (also usable as the GitHub social preview)
 index.html        page structure: top bar, start / result / pause / leaderboard screens
 css/style.css     all colours, fonts and layout (including phone and sideways layouts)
-js/config.js      game settings: time, scoring, levels, SAVE_RANKING switch
+js/config.js      game settings: time, scoring, levels, share link
 js/i18n.js        every on-screen text in Cantonese and English, and the language switch
 js/state.js       page elements, small helpers, live game state
 js/records.js     leaderboard, personal history, player names
@@ -351,10 +327,10 @@ Where to look for common changes:
 
 | To change… | Edit |
 |---|---|
-| Game length, points, penalty, refill speed, level settings, the leaderboard switch | `js/config.js` |
+| Game length, points, penalty, refill speed, boil strength, level settings, share link | `js/config.js` |
 | Any text in either language (screens, buttons, messages, customer lines, rank titles, random names) | `js/i18n.js` |
 | Colours, fonts, button styles | `css/style.css` |
-| Random names, leaderboard behaviour | `js/records.js` |
+| Leaderboard, history, names | `js/records.js` |
 | When customers say each line | `js/poke.js` (`handOut`) |
 | How customers look | `js/customers.js` |
 | How fishballs and other items look | `js/items.js` (`paintItem`) |
@@ -362,17 +338,6 @@ Where to look for common changes:
 | Rank title score thresholds | `js/game.js` (`rankFor`) |
 
 The scripts are plain scripts, not modules, so the game works when you double-click `index.html`. They load in the order listed in `index.html`. Each file can use anything the files before it defined, so keep that order when adding files.
-
-### Test mode: `SAVE_RANKING`
-
-In `js/config.js`:
-
-```js
-const SAVE_RANKING = false;
-```
-
-- **`false` (current):** test mode. Games still go into each player's personal history, but **nothing is written to the shared leaderboard**. The result screen shows "測試模式：呢局冇上排行榜。"
-- **`true`:** scores go onto the leaderboard. Switch to this when the game is published.
 
 ### Tuning values
 
@@ -389,21 +354,7 @@ All in `js/config.js`:
 | `LEVELS.normal` | 30 items, 0% other items | 普通 settings |
 | `LEVELS.hard` | 34→44 items, 40%→70% other items, 1.35× current, +2 items per stick | 挑戰 settings |
 | `HISTORY_MAX` | 50 | Games kept in personal history |
-
-### Online data (claude.ai artifact)
-
-| Path | Contents | Who can write |
-|---|---|---|
-| `scores/<player code>` | 普通 entry: `name`, `score` | Only that player, or the owner |
-| `scoresHard/<player code>` | 挑戰 entry: `name`, `score` | Only that player, or the owner |
-
-Everyone who can open the artifact can read both leaderboards. Nothing else is stored online: no history, no stats, no dates.
-
-### Publishing checklist
-
-1. Set `SAVE_RANKING` to `true` in `js/config.js`.
-2. Publish the updated page.
-3. Share the artifact so players can open it and save scores: organisation access or a public link, with at least Contributor access.
+| `SHARE_URL` | GitHub Pages address | Link added to shared results |
 
 ---
 

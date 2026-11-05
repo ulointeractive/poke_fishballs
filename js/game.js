@@ -174,8 +174,7 @@ function fillResult(run, res) {
   $('r-wrong').hidden = $('r-wrong-l').hidden = lv !== 'hard';
   if (!res) return;
   $('r-best').textContent = t('n.pts', Math.max(run.score, Store.localBest(lv)));
-  const place = Store.place(lv);
-  $('r-place').textContent = Store.mode !== 'cloud' ? t('r.localOnly') : place ? t('r.rank', place) : t('r.notUploaded');
+  $('r-place').textContent = t('r.rank', Store.place(run));
   $('r-save').textContent = t('r.privacy');
 }
 function showPauseInfo() {
@@ -204,7 +203,6 @@ async function endGame() {
   syncNameInputs();
   fillResult(run, null);
   $('r-new').hidden = true;
-  $('r-place').textContent = t('r.saving');
   $('r-save').textContent = '';
   const shown = new Promise((res) => setTimeout(res, 900));
   let res = { isNew: false };
@@ -215,18 +213,12 @@ async function endGame() {
   fillResult(run, res);
   $('result').hidden = false;
   renderBoards();
-  updateUploadUI();
 }
 $('start').addEventListener('click', startGame);
 $('again').addEventListener('click', () => { level = playLevel; startGame(); });
 
 // ---------- boot ----------
-// The claude.ai viewer can swap in a new version of this page while it is open;
-// booting through its update hook makes the new version start cleanly.
-let booted = false;
 function start() {
-  if (booted) return;
-  booted = true;
   resize();
   for (let i = 0; i < 4; i++) spawnCustomer(slotX(i));
   updateHUD();
@@ -242,11 +234,4 @@ function start() {
   }
   requestAnimationFrame(frame);
 }
-const hot = window.claude && window.claude.hot;
-try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ name: Store.name })); } catch (e) {}
-try {
-  if (hot && typeof hot.ready === 'function') hot.ready(start);
-  else start();
-} catch (e) { start(); }
-// fallback in case the viewer's hook never calls back
-setTimeout(start, 1500);
+start();
