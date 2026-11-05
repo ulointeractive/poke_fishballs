@@ -4,6 +4,8 @@ const TAU = Math.PI * 2;
 const STICK_CAP = 6;          // fishballs per stick; a full stick is handed over automatically
 const CENTER_BONUS = 1;       // extra point for a fishball poked dead centre
 const GAME_TIME = 60;
+// the curry boils harder as time runs out: at the last second, the current is this many times faster
+const BOIL_MAX = 2.6;
 const REFILL_EVERY = 0.25;    // seconds between new items dropped into the pot
 const WRONG_PENALTY = 2;      // challenge level: poking anything that isn't a fishball
 const LEVELS = {

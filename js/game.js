@@ -29,7 +29,7 @@ function update(dt) {
   ripples.forEach((r) => (r.t += dt)); ripples = ripples.filter((r) => r.t < 0.7);
   pops.forEach((p) => (p.t += dt)); pops = pops.filter((p) => p.t < 0.9);
 
-  if (!reduceMotion && Math.random() < dt * 8) {
+  if (!reduceMotion && Math.random() < dt * 8 * Math.sqrt(boilLevel())) {
     steam.push({ x: L.cx + rand(-0.7, 0.7) * L.R, y: L.cy + rand(-0.3, 0.3) * L.R * L.sq, t: 0, life: rand(1.6, 2.6), s: rand(0.8, 1.4), vx: rand(-8, 8) });
   }
   steam.forEach((p) => { p.t += dt; p.y -= dt * L.R * 0.28; p.x += p.vx * dt; });
@@ -152,7 +152,7 @@ function startGame() {
   state = 'play';
   timeLeft = GAME_TIME; score = 0; sticks = 0; served = 0; perfects = 0; slips = 0; wrong = 0;
   stick.balls = []; stick.pressed = false; stick.needLift = false;
-  flyers = []; pops = [];
+  flyers = []; pops = []; bubbles = [];
   seedBalls();
   $('intro').hidden = true; $('result').hidden = true; $('board').hidden = true;
   setChips(false);

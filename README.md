@@ -1,6 +1,6 @@
 # 篤魚蛋 Poke Fishballs
 
-![篤魚蛋 Poke Fishballs: a stick of six curry fishballs pointing up over a pot of curry at the stall](assets/thumbnail.png)
+![篤魚蛋 Poke Fishballs: a stick of poked curry fishballs over a simmering pot at the stall](assets/thumbnail.png)
 
 **Mini games to poke the most fishballs in one minute.**
 
@@ -68,6 +68,7 @@ When items overlap, the poke hits the one in front.
 
 - Fishballs float and drift in a slow swirl of simmering curry.
 - Every poke pushes nearby items away with a ripple. Dragging the stick while it's down in the pot stirs the items around it.
+- **The curry boils harder as time runs out.** It starts at a gentle simmer. Bubbles rise more and more often and bump the fishballs, and the current speeds up to 2.6× by the last second, so the last 20 seconds are the hardest. (The pot calms down again after the game.)
 - The stall keeps topping up the pot: a new item drops in about every 0.25 seconds whenever the pot is below its target.
 
 ### Customers
@@ -380,6 +381,7 @@ All in `js/config.js`:
 | `CENTER_BONUS` | 1 | Extra point for a centre hit |
 | `WRONG_PENALTY` | 2 | Points lost for a non-fishball item |
 | `REFILL_EVERY` | 0.25 | Seconds between items dropped into the pot |
+| `BOIL_MAX` | 2.6 | How much faster the curry moves at the last second than at the start |
 | `LEVELS.normal` | 30 items, 0% other items | 普通 settings |
 | `LEVELS.hard` | 34→44 items, 40%→70% other items, 1.35× current, +2 items per stick | 挑戰 settings |
 | `HISTORY_MAX` | 50 | Games kept in personal history |

@@ -55,6 +55,20 @@ function drawPot() {
     ctx.fillStyle = `rgba(255,${190 + i * 6},90,0.10)`;
     ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * d, cy + Math.sin(a) * d * sq, R * 0.18, R * 0.05, a * 0.5, 0, TAU); ctx.fill();
   }
+  // boiling bubbles: swell, then pop into a little ring
+  for (const q of bubbles) {
+    const k = q.t / q.life, bx = cx + q.x, by = cy + q.y * sq, rr0 = L.r * q.s;
+    if (k < 0.75) {
+      const rad = rr0 * (0.4 + k);
+      ctx.fillStyle = 'rgba(255,214,150,0.35)';
+      ctx.strokeStyle = 'rgba(255,236,200,0.75)'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.ellipse(bx, by, rad, rad * 0.8, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    } else {
+      const p = (k - 0.75) / 0.25, rad = rr0 * (1.2 + p * 1.6);
+      ctx.strokeStyle = `rgba(255,236,200,${0.6 * (1 - p)})`; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.ellipse(bx, by, rad, rad * sq, 0, 0, TAU); ctx.stroke();
+    }
+  }
   for (const rp of ripples) {
     const k = rp.t / 0.7, rad = L.r * (0.6 + k * 3.2);
     ctx.strokeStyle = `rgba(255,225,170,${0.55 * (1 - k)})`;

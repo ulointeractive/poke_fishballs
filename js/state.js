@@ -36,6 +36,7 @@ let state = 'ready';
 let timeLeft = GAME_TIME, score = 0, sticks = 0, served = 0, perfects = 0, slips = 0, wrong = 0;
 let level = 'normal', playLevel = 'normal', lbLevel = 'normal';
 let tNow = 0, refillTimer = 0;
+let bubbles = [];   // boiling bubbles on the curry surface
 let bg = null, sprites = null;
 let lastRun = null;
 const stick = {
