@@ -212,14 +212,41 @@ Anyone opening the shared link needs access to the artifact. Set its sharing (or
 
 ### Files
 
-| File | What it is |
+```
+index.html        page structure: top bar, start / result / pause / leaderboard screens
+css/style.css     all colours, fonts and layout
+js/config.js      game settings: time, scoring, levels, item names, SAVE_RANKING switch
+js/state.js       page elements, small helpers, live game state
+js/records.js     leaderboard, personal history, player names
+js/share.js       share text and result image
+js/sound.js       sound effects
+js/layout.js      fitting the scene to the screen, street background
+js/items.js       what's in the pot: item artwork, which items appear, floating physics
+js/poke.js        poking, hits and misses, scoring, handing sticks to customers
+js/customers.js   the queue of customers: looks and reactions
+js/draw.js        drawing each frame: stick, pot, items, steam
+js/game.js        main loop, controls, start / pause / end of a game, start-up
+```
+
+Where to look for common changes:
+
+| To change… | Edit |
 |---|---|
-| `index.html` | The whole game: markup, styles and script in one file |
-| `README.md` | This document |
+| Game length, points, penalty, refill speed, level settings, the leaderboard switch | `js/config.js` |
+| Any text on the start, result or pause screens | `index.html` |
+| Colours, fonts, button styles | `css/style.css` |
+| Random names, leaderboard behaviour | `js/records.js` |
+| What customers say | `js/poke.js` (`handOut`) |
+| How customers look | `js/customers.js` |
+| How fishballs and other items look | `js/items.js` (`paintItem`) |
+| Sounds | `js/sound.js` |
+| Rank titles and their score thresholds | `js/game.js` (`rankFor`) |
+
+The scripts are plain scripts, not modules, so the game works when you double-click `index.html`. They load in the order listed in `index.html`. Each file can use anything the files before it defined, so keep that order when adding files.
 
 ### Test mode: `SAVE_RANKING`
 
-Near the top of the script in `index.html`:
+In `js/config.js`:
 
 ```js
 const SAVE_RANKING = false;
@@ -230,7 +257,7 @@ const SAVE_RANKING = false;
 
 ### Tuning values
 
-All in `index.html`, near the top of the script:
+All in `js/config.js`:
 
 | Constant | Value | Meaning |
 |---|---|---|
@@ -255,7 +282,7 @@ Everyone who can open the artifact can read both leaderboards. The player id is 
 
 ### Publishing checklist
 
-1. Set `SAVE_RANKING` to `true`.
+1. Set `SAVE_RANKING` to `true` in `js/config.js`.
 2. Publish the updated page.
 3. Share the artifact so players can open it and save scores: organisation access or a public link, with at least Contributor access.
 
