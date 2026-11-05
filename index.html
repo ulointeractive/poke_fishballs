@@ -17,7 +17,6 @@
     <header class="stall">
       <div class="sign">
         <span class="sign-zh" data-i18n="sign.title">咖喱魚蛋</span>
-        <span class="sign-sub" data-i18n="sign.sub">篤魚蛋 · 一分鐘</span>
       </div>
       <div class="hud">
         <div class="hud-item"><span class="lbl" data-i18n="hud.time">時間</span><span class="val" id="hud-time">60.0</span></div>
@@ -26,18 +25,18 @@
       </div>
     </header>
 
-    <div class="meter">
-      <span class="stick-lbl" data-i18n="meter.stick">呢串</span>
-      <div class="dots" id="dots" data-i18n-aria="meter.dotsAria"></div>
-      <div class="timebar" aria-hidden="true"><i id="timebar"></i></div>
-    </div>
-
-    <div class="tools">
-      <button class="chip" id="pause" type="button" disabled data-i18n="btn.pause">暫停</button>
-      <button class="chip" id="mute" type="button" aria-pressed="false" data-i18n="btn.soundOn">聲音 開</button>
-      <button class="chip" id="lang" type="button">EN</button>
-      <button class="chip" id="open-board" type="button" data-i18n="btn.board">排行榜</button>
-      <button class="chip" id="open-history" type="button" data-i18n="btn.history">我嘅紀錄</button>
+    <div class="controls">
+      <div class="meter">
+        <span class="stick-lbl" data-i18n="meter.stick">呢串</span>
+        <div class="dots" id="dots" data-i18n-aria="meter.dotsAria"></div>
+        <div class="timebar" aria-hidden="true"><i id="timebar"></i></div>
+      </div>
+      <div class="tools">
+        <button class="chip" id="pause" type="button" disabled data-i18n="btn.pause">暫停</button>
+        <button class="chip" id="mute" type="button" aria-pressed="false" data-i18n="btn.soundOn">聲音 開</button>
+        <button class="chip" id="open-board" type="button" data-i18n="btn.board">排行榜</button>
+        <button class="chip" id="open-history" type="button" data-i18n="btn.history">我嘅紀錄</button>
+      </div>
     </div>
   </div>
 
@@ -46,7 +45,10 @@
 
     <div class="overlay" id="intro">
       <div class="card">
-        <h1 data-i18n="intro.title">篤魚蛋</h1>
+        <div class="card-top">
+          <h1 data-i18n="intro.title">篤魚蛋</h1>
+          <button class="chip lang" id="lang" type="button">EN</button>
+        </div>
         <p data-i18n="intro.lead"></p>
         <ol class="steps">
           <li data-i18n="intro.step1"></li>

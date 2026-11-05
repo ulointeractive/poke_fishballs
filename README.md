@@ -206,7 +206,7 @@ Anyone opening the shared link needs access to the artifact. Set its sharing (or
 
 ## Language
 
-- The **EN / 粵** button switches the whole game between Cantonese (Traditional Chinese) and English: every screen, button, pop-up message, customer line, rank title, share message and result image.
+- The **EN / 粵** button, at the top right of the instructions panel, switches the whole game between Cantonese (Traditional Chinese) and English: every screen, button, pop-up message, customer line, rank title, share message and result image.
 - On a player's first visit, the game picks Cantonese if their browser language is Chinese, and English otherwise. After that it remembers the player's choice on that device.
 - Random names come out in the current language. Names already saved stay as they are.
 - All text lives in `js/i18n.js`. To change a word, edit it there.
@@ -227,7 +227,8 @@ Works with touch, mouse or pen. On a keyboard, Esc or P pauses.
 
 **Screen layouts**
 
-- **Phones held upright:** the top bar and buttons sit above the pot. On narrow phones (320 px wide, like iPhone SE), the buttons wrap onto two lines and the subtitle is hidden.
+- **All layouts:** the title is on the left, with time, score and sticks always in the top-right corner. The buttons (pause, sound, leaderboard, my games) line up on the right.
+- **Phones held upright:** the top bar and buttons sit above the pot. On narrow phones (320 px wide, like iPhone SE), the buttons wrap onto a second line, still aligned right.
 - **Phones held sideways:** the score and buttons move into a column on the left, and the pot fills the rest of the screen.
 - **Tablets and desktops:** the game sits in a centred column up to 760 px wide.
 - The pot, items and customers redraw to fit whenever the screen size or orientation changes.

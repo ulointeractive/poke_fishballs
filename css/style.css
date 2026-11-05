@@ -43,10 +43,15 @@ body {
   padding-block: 12px;
 }
 .side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.controls .meter { flex: 1 1 180px; min-width: 0; }
+.tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-left: auto; }
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.card-top h1 { min-width: 0; }
+.chip.lang { flex-shrink: 0; margin-top: 4px; }
 .stall {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;              /* title on the left, time / score / sticks always top right */
   align-items: center;
   justify-content: space-between;
   gap: 10px 16px;
@@ -56,18 +61,17 @@ body {
   padding: 10px 14px;
   box-shadow: 0 3px 0 var(--sign-deep);
 }
-.sign { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sign { min-width: 0; }
 .sign-zh {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(26px, 6vw, 36px);
-  letter-spacing: 0.12em;
+  font-size: clamp(20px, 6vw, 36px);
+  letter-spacing: 0.08em;
   color: var(--gold);
   text-shadow: 0 2px 0 var(--sign-deep);
   line-height: 1;
 }
-.sign-sub { color: #f6d9cf; font-size: 13px; letter-spacing: 0.08em; }
-.hud { display: flex; align-items: center; gap: 14px; }
+.hud { display: flex; align-items: center; gap: 14px; flex-shrink: 0; margin-left: auto; }
 .hud-item { display: flex; flex-direction: column; align-items: center; min-width: 44px; }
 .lbl { font-size: 11px; color: #f6d9cf; letter-spacing: 0.1em; }
 .val {
@@ -285,7 +289,6 @@ body {
 }
 @media (max-width: 360px) {
   .app { gap: 8px; padding-block: 8px; }
-  .sign-sub { display: none; }
   .hud-item { min-width: 36px; }
   .val { font-size: 17px; }
   .chip { font-size: 12px; padding: 4px 9px; }
@@ -304,8 +307,7 @@ body {
   .side { overflow-y: auto; }
   .stall { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 10px; }
   .sign-zh { font-size: 22px; }
-  .sign-sub { display: none; }
-  .hud { justify-content: space-between; gap: 6px; }
+  .hud { justify-content: space-between; gap: 6px; margin-left: 0; }
   .val { font-size: 18px; }
   .meter { flex-wrap: wrap; gap: 6px; }
   .timebar { flex-basis: 100%; }

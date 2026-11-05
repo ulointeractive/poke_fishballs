@@ -8,7 +8,6 @@ const STRINGS = {
   zh: {
     'doc.title': '篤魚蛋',
     'sign.title': '咖喱魚蛋',
-    'sign.sub': '篤魚蛋 · 一分鐘',
     'hud.time': '時間', 'hud.score': '分數', 'hud.sticks': '串',
     'btn.pause': '暫停', 'btn.paused': '暫停中',
     'btn.soundOn': '聲音 開', 'btn.soundOff': '聲音 關',
@@ -85,7 +84,6 @@ const STRINGS = {
   en: {
     'doc.title': 'Poke Fishballs',
     'sign.title': 'Curry Fishballs',
-    'sign.sub': 'Poke Fishballs · 1 minute',
     'hud.time': 'Time', 'hud.score': 'Score', 'hud.sticks': 'Sticks',
     'btn.pause': 'Pause', 'btn.paused': 'Paused',
     'btn.soundOn': 'Sound on', 'btn.soundOff': 'Sound off',
