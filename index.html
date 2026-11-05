@@ -96,6 +96,7 @@ body {
   padding: 6px 8px;
   cursor: pointer;
 }
+.mute:disabled { opacity: 0.45; cursor: default; }
 .mute:focus-visible, .btn:focus-visible, .chip:focus-visible, .tab:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .meter {
   display: flex;
@@ -296,6 +297,7 @@ body {
       <div class="hud-item"><span class="lbl">時間</span><span class="val" id="hud-time">60.0</span></div>
       <div class="hud-item"><span class="lbl">分數</span><span class="val" id="hud-score">0</span></div>
       <div class="hud-item"><span class="lbl">串</span><span class="val" id="hud-sticks">0</span></div>
+      <button class="mute" id="pause" type="button" disabled>暫停</button>
       <button class="mute" id="mute" type="button" aria-pressed="false">聲音 開</button>
     </div>
   </header>
@@ -330,7 +332,7 @@ body {
           <div class="legend-cols four">
             <span><b>白蘿蔔</b></span><span><b>牛丸</b></span><span><b>墨魚丸</b></span><span><b>豬皮</b></span>
           </div>
-          <p class="note">篤到其他嘢：扣 2 分，仲會佔咗竹籤一個位。煲裡面嘅湯都滾得快啲。</p>
+          <p class="note">篤到其他嘢：扣 2 分，仲會佔咗竹籤一個位。每交一串，煲裡面嘅雜嘢就會多啲，湯都滾得快啲。</p>
         </div>
         <div class="legend">
           <p class="legend-title">篤邊度最好？篤中心！</p>
@@ -404,6 +406,18 @@ body {
       </div>
     </div>
 
+    <div class="overlay" id="paused" hidden>
+      <div class="card">
+        <h2>暫停咗</h2>
+        <p class="note" id="pause-info"></p>
+        <button class="btn" id="resume" type="button">繼續</button>
+        <div class="row">
+          <button class="btn ghost" id="restart" type="button">重新開始</button>
+          <button class="btn ghost" id="quit" type="button">返主頁</button>
+        </div>
+      </div>
+    </div>
+
     <div class="overlay" id="board" hidden>
       <div class="card">
         <div class="tabs" role="tablist">
@@ -448,7 +462,8 @@ body {
   const WRONG_PENALTY = 2;      // challenge level: poking anything that isn't a fishball
   const LEVELS = {
     normal: { label: '普通', count: 30, others: 0, flow: 1 },
-    hard:   { label: '挑戰', count: 34, others: 0.4, flow: 1.35 },
+    // 挑戰 gets harder with every stick: more non-fishball items join the pot
+    hard:   { label: '挑戰', count: 34, others: 0.4, flow: 1.35, rampOthers: 0.03, maxOthers: 0.7, rampCount: 1, maxExtra: 10, dropPerStick: 2 },
   };
   const KINDS = { fish: '魚蛋', radish: '白蘿蔔', beef: '牛丸', cuttle: '墨魚丸', skin: '豬皮' };
   const OTHER_KINDS = ['radish', 'beef', 'cuttle', 'skin'];
@@ -843,9 +858,34 @@ body {
 
   // ---------- sound ----------
   let ac = null, muted = false;
+  let splashBuf = null;
   function initAudio() {
     if (ac) return;
-    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; }
+    try {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      const len = Math.floor(ac.sampleRate * 0.12);
+      splashBuf = ac.createBuffer(1, len, ac.sampleRate);
+      const d = splashBuf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ac.sampleRate * 0.025));
+    } catch (e) { ac = null; }
+  }
+  // a stick dipping into liquid: a soft wet "plip" that rises in pitch, over a tiny muffled splash
+  function droplet() {
+    const t = ac.currentTime, f = 650 + Math.random() * 250;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 2.4, t + 0.06);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.1);
+    if (splashBuf) {
+      const src = ac.createBufferSource(), bp = ac.createBiquadFilter(), ng = ac.createGain();
+      src.buffer = splashBuf; bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.8; ng.gain.value = 0.06;
+      src.connect(bp).connect(ng).connect(ac.destination); src.start(t);
+    }
   }
   function tone(type, f0, f1, dur, vol, delay = 0) {
     const t = ac.currentTime + delay;
@@ -864,6 +904,7 @@ body {
     else if (kind === 'perfect') { tone('sine', 520, 160, 0.1, 0.3); tone('triangle', 1400, 1800, 0.12, 0.08, 0.04); }
     else if (kind === 'ding') { tone('sine', 1320, 1320, 0.25, 0.12); tone('sine', 1760, 1760, 0.35, 0.1, 0.09); }
     else if (kind === 'plop') tone('sine', 300, 120, 0.08, 0.08);
+    else if (kind === 'drip') droplet();
   }
   $('mute').addEventListener('click', () => {
     muted = !muted;
@@ -1054,12 +1095,20 @@ body {
   }
 
   // ---------- pot items ----------
-  function pickKind() {
+  function potCount() {
     const cfg = LEVELS[playLevel];
-    if (!cfg.others) return 'fish';
-    const fish = balls.filter((b) => b.kind === 'fish').length;
-    const wantFish = Math.round(cfg.count * (1 - cfg.others));
-    return fish < wantFish ? 'fish' : pick(OTHER_KINDS);
+    return cfg.count + (cfg.rampCount ? Math.min(cfg.maxExtra, sticks * cfg.rampCount) : 0);
+  }
+  function othersShare() {
+    const cfg = LEVELS[playLevel];
+    return cfg.rampOthers ? Math.min(cfg.maxOthers, cfg.others + sticks * cfg.rampOthers) : cfg.others;
+  }
+  function wantFish() { return Math.round(potCount() * (1 - othersShare())); }
+  function wantOthers() { return potCount() - wantFish(); }
+  function countKind(fish) { return balls.filter((b) => (b.kind === 'fish') === fish).length; }
+  function pickKind() {
+    if (!othersShare()) return 'fish';
+    return countKind(true) < wantFish() ? 'fish' : pick(OTHER_KINDS);
   }
   function makeBall(x, y, drop = 0) {
     return { x, y, vx: 0, vy: 0, phase: Math.random() * TAU, v: Math.floor(Math.random() * VARIANTS), drop, kind: pickKind() };
@@ -1153,6 +1202,7 @@ body {
     }
     if (!hit) {
       impulse(fx, fy, L.r * 4, L.R * 0.55);
+      sound('drip');
       addPop('冇中', tx, ty - 24, '#fff2d6', 16);
       return;
     }
@@ -1205,6 +1255,17 @@ body {
     stick.balls = [];
     sticks++;
     sound('ding');
+    const cfg = LEVELS[playLevel];
+    if (cfg.dropPerStick && state === 'play') {
+      // every finished stick drops more of the other stuff into the pot
+      for (let i = 0; i < cfg.dropPerStick && countKind(false) < wantOthers(); i++) {
+        const a = rand(Math.PI * 1.1, Math.PI * 1.9), d = rand(0.2, 0.9) * L.rin;
+        const b = makeBall(Math.cos(a) * d, Math.sin(a) * d, 1);
+        b.kind = pick(OTHER_KINDS);
+        balls.push(b);
+      }
+      addPop('加料！雜嘢多咗', L.cx, L.cy - L.R * L.sq * 0.6, '#ffd0c4', 18);
+    }
     updateHUD();
   }
 
@@ -1469,7 +1530,8 @@ body {
 
     physics(dt);
 
-    if (balls.length < LEVELS[playLevel].count) {
+    // the stall keeps topping up: fishballs first, then the other stuff up to its share
+    if (countKind(true) < wantFish() || countKind(false) < wantOthers()) {
       refillTimer += dt;
       if (refillTimer > REFILL_EVERY) {
         refillTimer = 0;
@@ -1558,7 +1620,39 @@ body {
   cv.addEventListener('pointercancel', release);
 
   // ---------- game flow ----------
-  function setChips(enabled) { $('open-board').disabled = !enabled; $('open-history').disabled = !enabled; }
+  function setChips(enabled) {
+    $('open-board').disabled = !enabled; $('open-history').disabled = !enabled;
+    $('pause').disabled = enabled;
+  }
+  function pauseGame() {
+    if (state !== 'play') return;
+    state = 'paused';
+    stick.pressed = false; stick.needLift = false;
+    $('pause-info').textContent = `${LEVELS[playLevel].label}關 · 仲有 ${timeLeft.toFixed(1)} 秒 · ${score} 分`;
+    $('paused').hidden = false;
+    $('pause').textContent = '暫停中';
+  }
+  function resumeGame() {
+    if (state !== 'paused') return;
+    $('paused').hidden = true;
+    $('pause').textContent = '暫停';
+    state = 'play';
+  }
+  $('pause').addEventListener('click', () => { if (state === 'play') pauseGame(); else resumeGame(); });
+  $('resume').addEventListener('click', resumeGame);
+  $('restart').addEventListener('click', () => { $('paused').hidden = true; $('pause').textContent = '暫停'; level = playLevel; startGame(); });
+  $('quit').addEventListener('click', () => {
+    // leave without saving this game
+    $('paused').hidden = true; $('pause').textContent = '暫停';
+    state = 'ready'; stick.balls = []; score = 0; sticks = 0; timeLeft = GAME_TIME;
+    updateHUD(); setChips(true);
+    $('intro').hidden = false; setLevel(playLevel);
+  });
+  // pause by itself if the player switches away mid-game
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') { if (state === 'play') pauseGame(); else if (state === 'paused') resumeGame(); }
+  });
   function startGame() {
     playLevel = level;
     if (cleanName($('name-intro').value) !== Store.name) Store.setName($('name-intro').value);
@@ -1636,7 +1730,7 @@ body {
       const dt = clamp((now - last) / 1000, 0, 0.05);
       last = now; tNow += dt;
       // one bad frame must never stop the game loop
-      if (L.R) { try { update(dt); draw(); } catch (e) { console.error(e); } }
+      if (L.R) { try { if (state !== 'paused') update(dt); draw(); } catch (e) { console.error(e); } }
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
