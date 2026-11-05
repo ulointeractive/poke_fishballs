@@ -10,7 +10,12 @@ function initAudio() {
     // everything goes through a limiter, so music and sound effects together never distort
     const limiter = ac.createDynamicsCompressor();
     limiter.threshold.value = -12; limiter.ratio.value = 12; limiter.attack.value = 0.002; limiter.release.value = 0.1;
-    const master = ac.createGain(); master.gain.value = 0.85; limiter.connect(master).connect(ac.destination);
+    const master = ac.createGain(); master.gain.value = 0.85;
+    // and a soft clipper: any peak the limiter is too slow for is rounded off instead of crackling
+    const clip = ac.createWaveShaper(), curve = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1, m = Math.abs(x); curve[i] = m <= 0.8 ? x : Math.sign(x) * (0.8 + 0.2 * Math.tanh((m - 0.8) / 0.2)); }
+    clip.curve = curve;
+    limiter.connect(master).connect(clip).connect(ac.destination);
     sfxOut = ac.createGain(); sfxOut.connect(limiter);
     musicOut = ac.createGain(); musicOut.gain.value = muted ? 0 : MUSIC_VOL; musicOut.connect(limiter);
     const nl = Math.floor(ac.sampleRate * 0.5);
@@ -107,27 +112,13 @@ updateMuteButton();
 langListeners.push(updateMuteButton);
 
 // ---------- background music ----------
-// An original, high-energy arcade track in A minor (chords Am - F - C - G), made in code: four-on-the-floor
-// kick, snare on 2 and 4, fast hi-hats, a pumping bass, a quick synth arpeggio and a synth lead.
-// As time runs out it gets more intense: faster and faster, a key change up at 20 s and again at 10 s,
-// busier drums and an octave-up arpeggio from 20 s, and a ticking clock in the last 10 seconds.
+// Four original tracks made in code; the player picks one on the start screen. Each keeps the same tempo
+// for the whole game. As time runs out it gets more intense without speeding up: a key change up at 20 s
+// and again at 10 s, busier hi-hats from 20 s, and snare rolls and a ticking clock in the last 10 seconds.
 // Notes are semitones from A4 (440 Hz); null = rest. One step = a 16th note; 16 steps = one bar.
 const MUSIC_VOL = 1;
-const LEAD = [
-  12, null, null, 12, 15, null, 12, null, 19, null, 17, null, 15, null, 12, null,
-  null, null, 8, null, 12, null, 15, null, 17, null, 15, null, 12, null, null, null,
-  15, null, null, 15, 19, null, 15, null, 22, null, 19, null, 15, null, 19, null,
-  17, null, null, null, 14, null, null, null, 10, null, 14, null, 17, null, 19, null,
-  24, null, 22, null, 19, null, 22, null, 24, null, null, 19, null, null, 15, null,
-  17, null, 15, null, 12, null, 15, null, 17, null, 19, null, 20, null, null, null,
-  19, null, null, 19, 22, null, 19, null, 15, null, 19, null, 22, null, 24, null,
-  22, null, null, null, 19, null, null, null, 17, null, 14, null, 10, null, null, null,
-];
-const BASS = [-24, -28, -21, -26];                                   // A, F, C, G
-const ARP = [[12, 15, 19, 24], [8, 12, 15, 20], [15, 19, 22, 27], [10, 14, 17, 22]];
-const ARP_ORDER = [0, 1, 2, 3, 2, 1, 2, 3];
 const hz = (n) => 440 * Math.pow(2, n / 12);
-let musicTimer = 0, musicStep = 0, musicNext = 0, musicStepLen = 0.1;
+let musicTimer = 0, musicStep = 0, musicNext = 0;
 // one synth note: an oscillator (plus a slightly detuned twin when asked) through a low-pass filter
 function synth(type, n, at, dur, vol, cutoff = 8000, twin = false) {
   const f = ac.createBiquadFilter(), g = ac.createGain();
@@ -141,49 +132,161 @@ function synth(type, n, at, dur, vol, cutoff = 8000, twin = false) {
     o.connect(f); o.start(at); o.stop(at + dur + 0.02);
   }
 }
-function kick(at, vol) {
+function drum(f0, f1, dur, vol, at) {
   const o = ac.createOscillator(), g = ac.createGain();
-  o.frequency.setValueAtTime(160, at); o.frequency.exponentialRampToValueAtTime(42, at + 0.12);
-  g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.22);
-  o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.24);
+  o.frequency.setValueAtTime(f0, at); o.frequency.exponentialRampToValueAtTime(f1, at + dur * 0.6);
+  g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  o.connect(g).connect(musicOut); o.start(at); o.stop(at + dur + 0.02);
 }
-function musicNote(step, at) {
+const kick = (at, vol = 0.9) => drum(160, 42, 0.22, vol, at);
+const snare = (at, vol = 0.4) => { noise('bandpass', 1900, 1500, 0.14, vol, 0, musicOut, at); drum(220, 180, 0.07, vol * 0.3, at); };
+const clap = (at, vol = 0.35) => { [0, 0.012, 0.024].forEach((d) => noise('bandpass', 1300, 1100, 0.09, vol, 0, musicOut, at + d)); };
+const hat = (at, vol) => noise('highpass', 8000, 8000, 0.025, vol, 0, musicOut, at);
+const chord = (type, notes, at, dur, vol, cutoff, twin) => notes.forEach((n) => synth(type, n, at, dur, vol, cutoff, twin));
+const lead = (seq, step, at, len, fn) => {
+  const n = seq[step % seq.length]; if (n === null) return;
+  let hold = 1; while (hold < 4 && seq[(step + hold) % seq.length] === null) hold++;
+  fn(n, len * hold * 0.95);
+};
+
+const MUSIC = {
+  // 1. 街機 / Arcade: driving synth track in A minor (Am - F - C - G)
+  arcade: {
+    bpm: 140,
+    bass: [-24, -28, -21, -26],
+    arp: [[12, 15, 19, 24], [8, 12, 15, 20], [15, 19, 22, 27], [10, 14, 17, 22]],
+    lead: [
+      12, null, null, 12, 15, null, 12, null, 19, null, 17, null, 15, null, 12, null,
+      null, null, 8, null, 12, null, 15, null, 17, null, 15, null, 12, null, null, null,
+      15, null, null, 15, 19, null, 15, null, 22, null, 19, null, 15, null, 19, null,
+      17, null, null, null, 14, null, null, null, 10, null, 14, null, 17, null, 19, null,
+      24, null, 22, null, 19, null, 22, null, 24, null, null, 19, null, null, 15, null,
+      17, null, 15, null, 12, null, 15, null, 17, null, 19, null, 20, null, null, null,
+      19, null, null, 19, 22, null, 19, null, 15, null, 19, null, 22, null, 24, null,
+      22, null, null, null, 19, null, null, null, 17, null, 14, null, 10, null, null, null,
+    ],
+    note(step, at, len, lift, tense) {
+      const s = step % 16, bar = Math.floor(step / 16) % 4;
+      if (s % 4 === 0) kick(at);
+      if (s === 4 || s === 12) snare(at);
+      hat(at, s % 2 ? 0.12 : 0.04);
+      if (s % 2 === 0) synth('sawtooth', this.bass[bar] + lift + (s % 4 === 2 ? 12 : 0), at, len * 1.7, 0.22, 650);
+      synth('square', this.arp[bar][[0, 1, 2, 3, 2, 1, 2, 3][s % 8]] + lift + (tense ? 12 : 0), at, len * 0.8, 0.035, 3200);
+      lead(this.lead, step, at, len, (n, d) => synth('sawtooth', n + lift, at, d, 0.11, 2600, true));
+    },
+  },
+  // 2. 放克 / Funky: groovy street funk in E (Em7 - A7 - Em7 - Cmaj7 - B7), slap bass and guitar-like stabs
+  funk: {
+    bpm: 108,
+    bars: [
+      { root: -29, ch: [-5, -2, 2, 5] }, { root: -24, ch: [0, 4, 7, 10] },
+      { root: -29, ch: [-5, -2, 2, 5] }, { root: -24, ch: [0, 4, 7, 10] },
+      { root: -29, ch: [-5, -2, 2, 5] }, { root: -24, ch: [0, 4, 7, 10] },
+      { root: -21, ch: [3, 7, 10, 14] }, { root: -22, ch: [2, 6, 9, 12] },
+    ],
+    bassline: [0, null, null, 12, null, null, 0, null, 10, null, 0, null, null, 12, null, 7],
+    lead: [
+      19, null, 17, 19, null, 22, null, 19, null, 17, null, 14, null, null, 12, null,
+      null, null, null, null, 14, null, 16, null, 19, null, null, null, 16, null, 14, null,
+    ],
+    note(step, at, len, lift) {
+      const s = step % 16, b = this.bars[Math.floor(step / 16) % this.bars.length];
+      if (s === 0 || s === 7 || s === 10) kick(at, 0.85);
+      if (s === 4 || s === 12) clap(at);
+      if (s === 15) snare(at, 0.12);                         // ghost note
+      hat(at, s % 2 ? 0.05 : 0.1);
+      const bn = this.bassline[s];
+      if (bn !== null) synth('square', b.root + 12 + bn + lift, at, len * 1.4, 0.2, 900);
+      if (s === 3 || s === 6 || s === 11 || s === 14) chord('sawtooth', b.ch.map((n) => n + 12 + lift), at, 0.07, 0.035, 2400);
+      if (Math.floor(step / 16) % 2 === 1 || step % 64 >= 32)
+        lead(this.lead, step, at, len, (n, d) => synth('square', n + lift, at, d, 0.07, 3000));
+    },
+  },
+  // 3. 倒數 / Countdown: dramatic game-show tension in D minor (Dm - Bb - Gm - A), string ostinato and brass hits
+  countdown: {
+    bpm: 126,
+    bars: [
+      { root: -19, os: [-7, -4, 0, 5], top: 12 }, { root: -23, os: [-11, -7, -4, 1], top: 13 },
+      { root: -26, os: [-14, -11, -7, -2], top: 10 }, { root: -24, os: [-12, -8, -5, 0], top: 16 },
+    ],
+    note(step, at, len, lift) {
+      const s = step % 16, b = this.bars[Math.floor(step / 16) % 4];
+      if (s === 0 || s === 8) kick(at, 0.8);
+      if (s === 0 || s === 3 || s === 6) drum(130, 70, 0.3, 0.45, at);   // timpani-like toms
+      if (s === 12) snare(at, 0.35);
+      if (s % 2 === 0) hat(at, 0.06);
+      synth('sawtooth', b.os[[0, 2, 1, 3, 2, 1, 3, 2][s % 8]] + lift, at, len * 0.7, 0.08, 1800, true);
+      if (s === 0) { chord('sawtooth', [b.os[0], b.os[1] + 12, b.os[2] + 12].map((n) => n + lift), at, 0.4, 0.06, 1500, true); synth('triangle', b.root + lift, at, len * 14, 0.25, 500); }
+      if (s === 0) synth('triangle', b.top + lift, at, len * 15, 0.06, 4000);
+    },
+  },
+  // 4. 8-bit: bright, happy chiptune in C major (C - G - Am - F)
+  chip: {
+    bpm: 150,
+    bars: [
+      { root: -21, ch: [3, 7, 10, 15] }, { root: -26, ch: [-2, 2, 5, 10] },
+      { root: -24, ch: [0, 3, 7, 12] }, { root: -28, ch: [-4, 0, 3, 8] },
+    ],
+    lead: [
+      10, null, 15, null, 14, null, 10, null, 7, null, 10, null, 12, null, 10, null,
+      7, null, null, 7, 5, null, 7, null, 10, null, null, null, 5, null, 2, null,
+      3, null, 7, null, 12, null, 10, null, 7, null, 3, null, 7, null, 10, null,
+      8, null, 12, null, 15, null, 14, null, 12, null, 10, null, 8, null, 7, null,
+    ],
+    note(step, at, len, lift) {
+      const s = step % 16, b = this.bars[Math.floor(step / 16) % 4];
+      if (s === 0 || s === 8 || s === 10) drum(120, 50, 0.12, 0.7, at);
+      if (s === 4 || s === 12) noise('highpass', 1500, 1500, 0.09, 0.3, 0, musicOut, at);
+      if (s % 2 === 0) hat(at, 0.06);
+      if (s % 2 === 0) synth('triangle', b.root + 12 + (s % 4 === 2 ? 7 : 0) + lift, at, len * 1.6, 0.3, 4000);
+      synth('square', b.ch[s % 4] + 12 + lift, at, len * 0.6, 0.025, 6000);
+      lead(this.lead, step, at, len, (n, d) => synth('square', n + 12 + lift, at, d, 0.07, 7000));
+    },
+  },
+};
+const MUSIC_STYLES = ['arcade', 'funk', 'countdown', 'chip'];
+let musicStyle = 'arcade';
+try { const m = localStorage.getItem('fishball-music'); if (MUSIC_STYLES.includes(m)) musicStyle = m; } catch (e) {}
+
+function musicNote(step, at, len) {
   const left = state === 'play' || state === 'paused' ? timeLeft : GAME_TIME;
   const tense = left <= 20, final = left <= 10;
   const lift = final ? 3 : tense ? 2 : 0;               // key change up as time runs out
-  const s16 = step % 16, bar = Math.floor(step / 16) % 4, len = musicStepLen;
-  // drums
-  if (s16 % 4 === 0) kick(at, 0.9);
-  if (s16 === 4 || s16 === 12) { noise('bandpass', 1900, 1500, 0.14, 0.4, 0, musicOut, at); synth('triangle', -21, at, 0.06, 0.12); }
-  if (final && s16 >= 12) noise('bandpass', 2200, 1800, 0.06, 0.22, 0, musicOut, at);   // snare roll into each bar
-  noise('highpass', 8000, 8000, 0.025, s16 % 2 ? 0.12 : (tense ? 0.08 : 0.04), 0, musicOut, at);
-  if (tense && s16 % 4 === 2) noise('highpass', 6000, 6000, 0.12, 0.08, 0, musicOut, at); // open hat
-  // pumping bass: 8th notes, root and octave
-  if (s16 % 2 === 0) synth('sawtooth', BASS[bar] + lift + (s16 % 4 === 2 ? 12 : 0), at, len * 1.7, 0.22, 650);
-  // 16th-note arpeggio, an octave higher once it gets tense
-  synth('square', ARP[bar][ARP_ORDER[s16 % 8]] + lift + (tense ? 12 : 0), at, len * 0.8, 0.035, 3200);
-  // lead: held until the next note (at most a quarter note)
-  const n = LEAD[step % LEAD.length];
-  if (n !== null) {
-    let hold = 1; while (hold < 4 && LEAD[(step + hold) % LEAD.length] === null) hold++;
-    synth('sawtooth', n + lift, at, len * hold * 0.95, 0.11, 2600, true);
-  }
-  if (final && s16 % 4 === 0) {
+  MUSIC[musicStyle].note(step, at, len, lift, tense);
+  const s = step % 16;
+  if (tense && s % 2 === 1) hat(at, 0.08);                // busier hi-hats
+  if (final && s >= 12) noise('bandpass', 2200, 1800, 0.06, 0.2, 0, musicOut, at);   // snare roll into each bar
+  if (final && s % 4 === 0) {
     // the last 10 seconds: a ticking clock
     const o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'square'; o.frequency.setValueAtTime(s16 === 0 ? 2000 : 1500, at);
+    o.type = 'square'; o.frequency.setValueAtTime(s === 0 ? 2000 : 1500, at);
     g.gain.setValueAtTime(0.06, at); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.04);
     o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.05);
   }
 }
+let previewTimer = 0;
 function startMusic() {
   if (!ac || musicTimer) return;
+  clearTimeout(previewTimer);
   musicNext = ac.currentTime + 0.1; musicStep = 0;
   musicTimer = setInterval(() => {
-    const boil = typeof boilLevel === 'function' ? boilLevel() : 1;
-    // 140 beats a minute at the start, up to about 200 in the last seconds
-    musicStepLen = 60 / (140 * (1 + 0.43 * (boil - 1) / (BOIL_MAX - 1))) / 4;
-    while (musicNext < ac.currentTime + 0.15) { musicNote(musicStep++, musicNext); musicNext += musicStepLen; }
+    const len = 60 / MUSIC[musicStyle].bpm / 4;   // the same tempo all game
+    while (musicNext < ac.currentTime + 0.15) { musicNote(musicStep++, musicNext, len); musicNext += len; }
   }, 25);
 }
-function stopMusic() { clearInterval(musicTimer); musicTimer = 0; }
+function stopMusic() { clearInterval(musicTimer); musicTimer = 0; clearTimeout(previewTimer); }
+
+// the music picker on the start screen: tapping a track plays a short preview of it
+function setMusicStyle(m, preview) {
+  musicStyle = m;
+  try { localStorage.setItem('fishball-music', m); } catch (e) {}
+  MUSIC_STYLES.forEach((k) => $('mu-' + k).setAttribute('aria-checked', String(k === m)));
+  if (!preview) return;
+  initAudio();
+  if (!ac) return;
+  if (ac.state === 'suspended') ac.resume();
+  stopMusic(); startMusic();
+  previewTimer = setTimeout(() => { if (state !== 'play') stopMusic(); }, 6000);
+}
+MUSIC_STYLES.forEach((k) => $('mu-' + k).addEventListener('click', () => setMusicStyle(k, true)));
+setMusicStyle(musicStyle, false);

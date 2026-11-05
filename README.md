@@ -213,7 +213,7 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 
 | Moment | Sound |
 |---|---|
-| Background music | An original, high-energy arcade track in A minor: driving kick and snare, fast hi-hats, a pumping bass, a quick synth arpeggio and a synth lead. During a game only. It gets more intense as time runs out: faster and faster (140 up to about 200 beats a minute), a key change up at 20 seconds and again at 10, busier drums and a higher arpeggio from 20 seconds, snare rolls and a ticking clock in the last 10. It stops on pause and at the end. |
+| Background music | Pick one of four original tracks on the start screen (tapping one plays a short preview; the choice is remembered): **街機 / Arcade** (driving synth, A minor, 140 bpm), **Funky** (street funk, E, 108 bpm), **倒數 / Countdown** (dramatic game-show tension, D minor, 126 bpm) or **8-bit** (happy chiptune, C major, 150 bpm). During a game only, at the same tempo throughout. It gets more intense as time runs out: a key change up at 20 seconds and again at 10, busier hi-hats from 20 seconds, snare rolls and a ticking clock in the last 10. It stops on pause and at the end. |
 | Centre hit | A clean poke and a bright, rising "ting-ting!", and a gold **正中！+2** |
 | Off-centre hit | A dull, wobbly "bonk" with no chime, and an orange **篤歪咗 +1** |
 | Slipped off (篤太邊) | A wet sliding "shhhwip" and a little splash |
