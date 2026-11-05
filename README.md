@@ -216,7 +216,7 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 | Background music | An original track made in code: a driving beat (drums, pumping bass, soft held chords) with no melody, in a bright major key (C – G – Am – F twice, with the top notes running C G A F · E G A F; 124 bpm). During a game only, at the same tempo throughout. It stays in the same key throughout, and gets more intense as time runs out: busier hi-hats from 20 seconds, snare rolls and a ticking clock in the last 10. It fades out on pause. When time's up it finishes properly: a G chord resolving to a C chord with E on top, with a cymbal, ringing out for about 2.5 seconds. |
 | Centre hit | A clean poke and a bright, rising "ting-ting!", and a gold **正中！+2** |
 | Off-centre hit | A dull, wobbly "bonk" with no chime, and an orange **篤歪咗 +1** |
-| Slipped off (篤太邊) | A wet sliding "shhhwip" and a little splash |
+| Slipped off (篤太邊) | A long, wet "shhhwoooop" slide (about 0.7 seconds) with a falling slide-whistle, then a splash |
 | Wrong item (挑戰) | A buzzer, "eh-eh" |
 | New item reaches the surface | A soft "bloop" |
 | Stick handed over | A whoosh as the stick flies over |

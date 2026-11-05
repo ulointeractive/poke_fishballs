@@ -97,8 +97,13 @@ function sound(kind) {
   else if (kind === 'perfect') { tone('sine', 620, 200, 0.08, 0.3); bell(1568, 0.2, 0.03); bell(2349, 0.18, 0.1); }
   // off-centre: a dull, wobbly "bonk" with no chime
   else if (kind === 'off') { tone('square', 150, 105, 0.16, 0.2); tone('sine', 210, 120, 0.2, 0.6); noise('lowpass', 500, 150, 0.1, 0.25); }
-  // slipped off: a wet slide down the side of the fishball and a little splash
-  else if (kind === 'slip') { noise('bandpass', 2600, 380, 0.38, 0.22); tone('sine', 900, 260, 0.3, 0.12); setTimeout(() => { if (ac && !muted) loud(droplet); }, 300); }
+  // slipped off: a long, wet "shhhwoooop" slide down the side of the fishball, then a splash
+  else if (kind === 'slip') {
+    noise('bandpass', 3200, 300, 0.75, 0.35);                 // the wet slide
+    tone('triangle', 1400, 330, 0.7, 0.22);                   // a falling slide-whistle
+    tone('sine', 1150, 280, 0.65, 0.12, 0.03);
+    setTimeout(() => { if (ac && !muted) loud(() => { droplet(); noise('lowpass', 1200, 300, 0.25, 0.25); }); }, 680);
+  }
   // poked the wrong item: a buzzer, "eh-eh"
   else if (kind === 'wrong') { tone('sawtooth', 180, 170, 0.13, 0.12); tone('sawtooth', 180, 165, 0.2, 0.12, 0.17); tone('sine', 140, 90, 0.25, 0.25); }
   else if (kind === 'whoosh') noise('bandpass', 500, 2400, 0.28, 0.14);
