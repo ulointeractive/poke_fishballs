@@ -1,5 +1,7 @@
 # 篤魚蛋 Poke Fishballs
 
+![篤魚蛋 Poke Fishballs: a bamboo stick of six curry fishballs](assets/thumbnail.png)
+
 **Mini games to poke the most fishballs in one minute.**
 
 A one-minute browser game about a street-stall favourite: curry fishballs (咖喱魚蛋) on a bamboo stick. You run the stall. Poke as many fishballs as you can, fill each stick with six, and serve the queue before time runs out.
@@ -22,7 +24,7 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 - [Language](#language)
 - [Devices and screen sizes](#devices-and-screen-sizes)
 - [Privacy, data and security](#privacy-data-and-security)
-- [Running the game](#running-the-game)
+- [Running the game](#running-the-game) and [sharing it](#sharing-the-game-with-other-people)
 - [For developers](#for-developers)
 - [Score benchmarks](#score-benchmarks)
 
@@ -293,6 +295,29 @@ The claude.ai artifact link appears in the code only as text in the share messag
 - **As a claude.ai artifact:** open the artifact link. It's private until shared from its Share menu.
 - **Locally:** open `index.html` in any modern browser on desktop or phone. There's no build step and nothing to install. Fonts load from Google Fonts, with system fonts as a fallback.
 
+### Sharing the game with other people
+
+**Option 1: the claude.ai artifact link (has the shared online leaderboard)**
+
+1. Open the artifact and use its **Share** menu.
+2. Choose who can open it: people in your organisation, specific people by email, or anyone with the link.
+3. Give players **Contributor** access if their scores should go on the shared leaderboard.
+4. Set `SAVE_RANKING` to `true` in `js/config.js` and republish, otherwise scores stay off the leaderboard (test mode).
+
+| Who opens the link | Can play | Scores on the shared leaderboard |
+|---|---|---|
+| Contributor or higher | Yes | Yes |
+| Viewer, or someone outside your organisation | Yes | No, saved on their own device only |
+| Not signed in to claude.ai (public link) | Yes | No, saved on their own device only |
+
+**Option 2: GitHub Pages (anyone can play, no account needed)**
+
+1. On GitHub, open the repository's **Settings → Pages**.
+2. Under "Build and deployment", choose **Deploy from a branch**, branch `main`, folder `/ (root)`, and save.
+3. After a minute the game is live at `https://ulouwm.github.io/poke_fishballs/`.
+
+On GitHub Pages there's no shared leaderboard: each player's records stay in their own browser. Free GitHub Pages needs a public repository. If you share this way, change `SHARE_URL` in `js/config.js` to the Pages address so the in-game share button points there.
+
 ---
 
 ## For developers
@@ -300,6 +325,7 @@ The claude.ai artifact link appears in the code only as text in the share messag
 ### Files
 
 ```
+assets/thumbnail.png  image at the top of this README (also usable as the GitHub social preview)
 index.html        page structure: top bar, start / result / pause / leaderboard screens
 css/style.css     all colours, fonts and layout (including phone and sideways layouts)
 js/config.js      game settings: time, scoring, levels, SAVE_RANKING switch
