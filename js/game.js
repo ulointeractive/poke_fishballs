@@ -52,6 +52,10 @@ function update(dt) {
     const d = c.tx - c.x;
     c.x += Math.sign(d) * Math.min(Math.abs(d), walk);
   }
+  for (const c of customers) if (c.bubbleT > 0) c.bubbleT -= dt;
+  // nobody poked anything for a while: the customer gets impatient
+  const front = customers.find((q) => !q.served);
+  if (state === 'play' && tNow - lastHitT > 3.5 && front && !(front.bubbleT > 0)) customerSay('say.slow', { nag: true });
   for (const c of leavers) {
     c.bubbleT -= dt;
     if (c.wait > 0) c.wait -= dt; else c.x += walk * 0.9;
@@ -110,7 +114,7 @@ cv.addEventListener('pointercancel', release);
 
 // ---------- game flow ----------
 function setChips(enabled) {
-  $('open-board').disabled = !enabled; $('open-history').disabled = !enabled;
+  $('open-history').disabled = !enabled;
   $('pause').disabled = enabled;
 }
 function pauseGame() {
@@ -153,6 +157,8 @@ function startGame() {
   timeLeft = GAME_TIME; score = 0; sticks = 0; served = 0; perfects = 0; slips = 0; wrong = 0;
   stick.balls = []; stick.pressed = false; stick.needLift = false;
   flyers = []; pops = []; bubbles = [];
+  lastHitT = tNow; lastNagT = {};
+  customers.forEach((c) => { c.bubbleT = 0; });
   seedBalls();
   $('intro').hidden = true; $('result').hidden = true; $('board').hidden = true;
   setChips(false);

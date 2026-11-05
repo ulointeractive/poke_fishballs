@@ -18,7 +18,7 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 - [Scoring](#scoring)
 - [Rank titles](#rank-titles)
 - [Pausing and restarting](#pausing-and-restarting)
-- [Names, leaderboard and history](#names-leaderboard-and-history)
+- [Names, my games and deleting data](#names-my-games-and-deleting-data)
 - [Sharing results](#sharing-results)
 - [Sound](#sound)
 - [Language](#language)
@@ -33,7 +33,7 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 ## How to play
 
 1. Pick a level on the start screen: **普通** or **挑戰**.
-2. Optionally type a name for the leaderboard, or tap **隨機** for a random one.
+2. Optionally type your name, or tap **隨機** for a random one.
 3. Tap **開檔！ Start**. You have **60 seconds**.
 4. **Press** on a fishball in the pot to poke it with the bamboo stick.
 5. **Release** to lift the stick, then press again to poke the next one.
@@ -74,12 +74,24 @@ When items overlap, the poke hits the one in front.
 ### Customers
 
 - The queue is made up of everyday people: adults, office workers, grandparents, kids.
+- The customer at the front of the queue talks to you during the game:
+
+| When | Cantonese | English |
+|---|---|---|
+| You poke outside the pot | 唔好篤空氣啦 · 篤邊度呀？ · 喂，煲喺下面呀 · 空氣唔使錢㗎咩？ | Stop poking the air! · Where are you poking? · Hey, the pot's down there! · Is air free now? |
+| You miss (sometimes) | 睇真啲先篤啦 · 又冇中？ · 魚蛋走晒去邊？ | Look before you poke! · Missed again? · Where did the fishballs go? |
+| Nothing poked for 3.5 seconds | 快手啲 · 快啲啦，我趕時間 · 等到頸都長 · 師傅，好肚餓呀 · 仲未得呀？ | Hurry up! · Quick, I'm in a rush! · I've been waiting forever! · Boss, I'm starving! · Not ready yet? |
+
 - When a stick is handed over, the customer reacts to it:
-  - A neat stick, with fishballs close to the centre: "正呀！" or "好靚！"
-  - An average stick: "唔該！" or "多謝！"
-  - A crooked stick: "咁歪嘅…" or "歪咗喎"
-  - A stick with anything other than fishballs (挑戰): "我要魚蛋呀！" or "點解有豬皮嘅？"
-- Reactions are for fun and don't change the score.
+
+| Stick | Cantonese | English |
+|---|---|---|
+| Neat: fishballs close to the centre | 正呀！ · 好靚！ · 一流！ · 串得好靚仔 · 師傅好手勢！ | Perfect! · Beautiful! · Top class! · What a neat stick! · Nice hands, boss! |
+| Average | 唔該！ · 多謝！ · 唔該晒 · 幾好吖 | Thanks! · Cheers! · Thanks a lot · Not bad |
+| Crooked | 咁歪嘅… · 歪咗喎 · 歪到好似比薩斜塔咁 · 你篤得咁歪嘅？ · 串到成條蛇咁 | So crooked… · Bit wonky… · Leaning like the Tower of Pisa · How did it get this crooked? · Wiggly as a snake |
+| Has something other than fishballs (挑戰) | 咁正！要魚蛋俾XX · 大佬，我要魚蛋喎 · 我要魚蛋呀！ · 點解有XX嘅？ · XX？我冇叫喎 | Great. I asked for fishballs and got XX · Boss, I wanted fishballs! · I wanted fishballs! · Why is there XX? · XX? I didn't order that! |
+
+XX is the item poked by mistake: 白蘿蔔, 牛丸, 墨魚丸 or 豬皮 (white radish, beef ball, cuttlefish ball or pig skin). Each kind of comment repeats at most every 3 seconds. Reactions are for fun and don't change the score. All lines are in `js/i18n.js` (the `say.*` entries).
 
 ### Time
 
@@ -95,10 +107,9 @@ When items overlap, the poke hits the one in front.
 | What's in the pot | Only fishballs | Fishballs mixed with 白蘿蔔 (white radish), 牛丸 (beef balls), 墨魚丸 (cuttlefish balls) and 豬皮 (pig skin) |
 | Items in the pot | 30 | Starts at 34 and grows by 1 per stick, up to 44 |
 | Share that isn't fishball | 0% | Starts at 40% and rises by 3% per stick, up to 70% |
-| Extra drops | None | Every stick handed over drops 2 more non-fishball items in ("加料！雜嘢多咗") |
+| Extra drops | None | Every stick handed over drops 2 more non-fishball items into the pot |
 | Curry current | Normal | 35% faster |
 | Wrong items | Not possible | −2 points each, and it takes up a space on the stick |
-| Leaderboard | 普通 board | Separate 挑戰 board |
 
 In 挑戰, fishballs are always topped up first, so the pot always has at least 13 of them.
 
@@ -114,9 +125,8 @@ In 挑戰, fishballs are always topped up first, so the pot always has at least 
 | Slip, miss, or poking outside the pot | 0 |
 
 - Your score never goes below 0.
-- Each player's best score per level goes on the leaderboard.
 
-The result screen shows your score, sticks served, fishballs poked, centre hits, slips, wrong items (挑戰), your personal best and your leaderboard position.
+The result screen shows your score, sticks served, fishballs poked, centre hits, slips, wrong items (挑戰), your personal best, and where this game ranks among your games on this device (e.g. 呢部機第 2 名).
 
 ---
 
@@ -146,26 +156,25 @@ Shown at the end of each game:
 
 ---
 
-## Names, leaderboard and history
+## Names, my games and deleting data
 
 ### Names
 
-- Players can type a name of up to 24 characters, on the start screen or after a game. It's shown on their device's leaderboard and in shared results.
+- Players can type a name of up to 24 characters, on the start screen or after a game. It's shown in **我嘅紀錄** and in shared results.
 - Anyone who leaves it blank gets a random name when their first game finishes, in the language they're playing in: for example 無影竹籤刺客 or 午夜咖喱忍者, or Shadow Curry Ninja or Iron Stick Samurai.
 - Tap **隨機** to roll a new random name at any time. It saves right away.
 - Names come only from what the player types or the random generator. No account names, device names or other personal details are used.
 
-### Leaderboard (排行榜)
+### My games (我嘅紀錄)
 
-- Each device has its own leaderboard: the **top 10 games played on that device**, per level. Use the 普通 / 挑戰 buttons to switch. If several people share a phone, each game is listed under the name used at the time.
-- The **record holder** (紀錄保持者) is shown in a red banner at the top until a better game is played on that device. The start screen also shows the device's best score.
-- The result screen shows where the game ranks on the device, e.g. 呢部機第 2 名 / #2 on this device.
+There's no leaderboard. **我嘅紀錄 / My games** (top-right button, or on the result screen) shows the player's own games on this device, **ranked by score, best first**:
+
+- Switch between 普通 and 挑戰.
+- Summary: games played, best score and average score for that level.
+- Each game shows its rank, date, name, fishballs, sticks, centre hits, slips (and wrong items in 挑戰), with a bar compared to the best.
+- The game just played is highlighted.
+- The result screen shows the new game's rank, e.g. 呢部機第 2 名 / #2 on this device.
 - To compare with friends, share the result text or image (see below).
-
-### Personal history (我嘅紀錄)
-
-- Your last 50 games, each tagged 普通 or 挑戰, with date, score, fishballs, sticks, centre hits, slips and wrong items.
-- Summary: games played, best 普通 score, best 挑戰 score.
 
 ### Where records are kept
 
@@ -177,7 +186,16 @@ Shown at the end of each game:
 | `fishball-name` | The player's name |
 | `fishball-lang` | Cantonese or English |
 
-Clearing the browser's site data for the game deletes all of it. Records don't move between devices or browsers.
+Records don't move between devices or browsers.
+
+### Deleting your data
+
+Two ways, and both remove everything:
+
+1. **In the game:** open **我嘅紀錄**, tap **刪除呢部機嘅所有紀錄 / Delete all my data on this device**, then **確定刪除 / Delete** to confirm, or **取消 / Cancel**. Games, name and language choice are erased from the browser.
+2. **In the browser:** clear the site data for the game's address (for example, in Chrome: Settings → Privacy → Site data; on iPhone: Settings → Safari → Advanced → Website Data).
+
+Deleted data can't be recovered.
 
 ---
 
@@ -235,7 +253,7 @@ Works with touch, mouse or pen. On a keyboard, Esc or P pauses.
 
 **Screen layouts**
 
-- **All layouts:** the title is on the left, with time, score and sticks always in the top-right corner. The buttons (pause, sound, leaderboard, my games) line up on the right.
+- **All layouts:** the title is on the left, with time, score and sticks always in the top-right corner. The buttons (pause, sound, my games) line up on the right.
 - **Phones held upright:** the top bar and buttons sit above the pot. On narrow phones (320 px wide, like iPhone SE), the buttons wrap onto a second line, still aligned right.
 - **Phones held sideways:** the score and buttons move into a column on the left, and the pot fills the rest of the screen.
 - **Tablets and desktops:** the game sits in a centred column up to 760 px wide.
@@ -307,12 +325,12 @@ Free GitHub Pages needs the repository to be **public**. Updates go live automat
 
 ```
 assets/thumbnail.png  image at the top of this README (also usable as the GitHub social preview)
-index.html        page structure: top bar, start / result / pause / leaderboard screens
+index.html        page structure: top bar, start / result / pause / my-games screens
 css/style.css     all colours, fonts and layout (including phone and sideways layouts)
 js/config.js      game settings: time, scoring, levels, share link
 js/i18n.js        every on-screen text in Cantonese and English, and the language switch
 js/state.js       page elements, small helpers, live game state
-js/records.js     leaderboard, personal history, player names
+js/records.js     my games (ranked), deleting data, player names
 js/share.js       share text and result image
 js/sound.js       sound effects
 js/layout.js      fitting the scene to the screen, street background
@@ -330,8 +348,9 @@ Where to look for common changes:
 | Game length, points, penalty, refill speed, boil strength, level settings, share link | `js/config.js` |
 | Any text in either language (screens, buttons, messages, customer lines, rank titles, random names) | `js/i18n.js` |
 | Colours, fonts, button styles | `css/style.css` |
-| Leaderboard, history, names | `js/records.js` |
-| When customers say each line | `js/poke.js` (`handOut`) |
+| My games screen, deleting data, names | `js/records.js` |
+| What customers say | `js/i18n.js` (`say.*`) |
+| When customers speak | `js/poke.js`, `js/game.js` (impatience), `js/customers.js` (`customerSay`) |
 | How customers look | `js/customers.js` |
 | How fishballs and other items look | `js/items.js` (`paintItem`) |
 | Sounds | `js/sound.js` |

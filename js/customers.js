@@ -94,14 +94,49 @@ function drawCustomer(c) {
   if (c.bubble && c.bubbleT > 0) {
     ctx.save();
     ctx.globalAlpha = clamp(c.bubbleT * 2, 0, 1);
-    const fs = Math.max(12, 15 * s);
+    const fs = Math.max(12, 14 * s), lh = fs * 1.25, pad = 8;
     ctx.font = `700 ${fs}px ${fontBody()}`;
-    const tw = ctx.measureText(c.bubble).width + 16;
-    const bx = c.x - tw / 2, by = L.top - 136 * s;
-    ctx.fillStyle = '#fff'; rr(bx, by, tw, fs + 12, 8); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(c.x - 5, by + fs + 11); ctx.lineTo(c.x + 3, by + fs + 20); ctx.lineTo(c.x + 6, by + fs + 11); ctx.fill();
+    const lines = wrapText(c.bubble, Math.min(W * 0.46, 240));
+    const tw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + pad * 2;
+    const bh = lines.length * lh + pad * 1.4;
+    const bx = clamp(c.x - tw / 2, 4, W - tw - 4);
+    const by = Math.max(4, L.top - 128 * s - bh);
+    const tailX = clamp(c.x, bx + 10, bx + tw - 10);
+    ctx.fillStyle = '#fff'; rr(bx, by, tw, bh, 8); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(tailX - 5, by + bh - 1); ctx.lineTo(tailX + 2, by + bh + 8); ctx.lineTo(tailX + 6, by + bh - 1); ctx.fill();
     ctx.fillStyle = '#2b1f17'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(c.bubble, c.x, by + (fs + 12) / 2 + 1);
+    lines.forEach((l, i) => ctx.fillText(l, bx + tw / 2, by + pad * 0.7 + lh * (i + 0.5)));
     ctx.restore();
   }
+}
+
+// split a speech line so it fits the bubble: by word in English, by character in Chinese (ctx.font must be set)
+function wrapText(text, maxW) {
+  const parts = /\s/.test(text) ? text.split(' ') : [...text];
+  const join = /\s/.test(text) ? ' ' : '';
+  const lines = [];
+  let cur = '';
+  for (const p of parts) {
+    const next = cur ? cur + join + p : p;
+    if (cur && ctx.measureText(next).width > maxW) { lines.push(cur); cur = p; } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+// pick one of a customer's lines; some lines mention the item that was poked by mistake
+function sayLine(key, kind) {
+  const v = pick(t(key));
+  return typeof v === 'function' ? v(kind ? kindName(kind) : '') : v;
+}
+// the customer at the front of the queue speaks; `nag` lines don't repeat more than every few seconds
+function customerSay(key, opts = {}) {
+  const c = customers.find((q) => !q.served);
+  if (!c) return;
+  if (opts.nag) {
+    if (tNow - (lastNagT[key] ?? -99) < 3) return;   // each kind of comment at most every 3 seconds
+    lastNagT[key] = tNow;
+  }
+  c.bubble = sayLine(key, opts.kind);
+  c.bubbleT = 1.8;
 }

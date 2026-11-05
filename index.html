@@ -42,7 +42,6 @@
       <div class="tools">
         <button class="chip icon" id="pause" type="button" disabled></button>
         <button class="chip icon" id="mute" type="button" aria-pressed="false"></button>
-        <button class="chip" id="open-board" type="button" data-i18n="btn.board">排行榜</button>
         <button class="chip" id="open-history" type="button" data-i18n="btn.history">我嘅紀錄</button>
       </div>
     </div>
@@ -142,7 +141,7 @@
         <p class="toast" id="toast" aria-live="polite"></p>
         <div class="row">
           <button class="btn" id="again" type="button" data-i18n="btn.again"></button>
-          <button class="btn ghost" id="r-board" type="button" data-i18n="btn.board"></button>
+          <button class="btn ghost" id="r-board" type="button" data-i18n="btn.history"></button>
           <button class="btn ghost" id="r-menu" type="button" data-i18n="btn.menu"></button>
         </div>
       </div>
@@ -162,30 +161,28 @@
 
     <div class="overlay" id="board" hidden>
       <div class="card">
-        <div class="tabs" role="tablist">
-          <button class="tab" id="tab-lb" role="tab" type="button" aria-selected="true" data-i18n="tab.board"></button>
-          <button class="tab" id="tab-hist" role="tab" type="button" aria-selected="false" data-i18n="tab.hist"></button>
+        <h2 data-i18n="rec.title"></h2>
+        <div class="seg" role="group" data-i18n-aria="lb.levelAria">
+          <button id="rec-normal" type="button" aria-pressed="true" data-i18n="level.normal"></button>
+          <button id="rec-hard" type="button" aria-pressed="false" data-i18n="level.hard"></button>
         </div>
-        <section id="pane-lb">
-          <div class="seg" role="group" data-i18n-aria="lb.levelAria">
-            <button id="lb-normal" type="button" aria-pressed="true" data-i18n="level.normal"></button>
-            <button id="lb-hard" type="button" aria-pressed="false" data-i18n="level.hard"></button>
+        <div class="summary">
+          <div><b id="h-games">0</b><span data-i18n="h.games"></span></div>
+          <div><b id="h-best">0</b><span data-i18n="h.best"></span></div>
+          <div><b id="h-avg">0</b><span data-i18n="h.avg"></span></div>
+        </div>
+        <ol class="list" id="rec-list"></ol>
+        <p class="note" id="rec-note" data-i18n="rec.note"></p>
+        <div class="danger">
+          <button class="btn small ghost" id="del-all" type="button" data-i18n="rec.delete"></button>
+          <div id="del-confirm" hidden>
+            <p class="note" data-i18n="rec.deleteAsk"></p>
+            <div class="row">
+              <button class="btn small" id="del-yes" type="button" data-i18n="rec.deleteYes"></button>
+              <button class="btn small ghost" id="del-no" type="button" data-i18n="btn.cancel"></button>
+            </div>
           </div>
-          <div class="champ" id="champ" hidden>
-            <span class="who"><small data-i18n="champ.label"></small><span id="champ-name"></span></span>
-            <span class="pts" id="champ-pts"></span>
-          </div>
-          <ol class="list" id="lb-list"></ol>
-          <p class="note" id="lb-note"></p>
-        </section>
-        <section id="pane-hist" hidden>
-          <div class="summary">
-            <div><b id="h-games">0</b><span data-i18n="h.games"></span></div>
-            <div><b id="h-best">0</b><span data-i18n="h.bestN"></span></div>
-            <div><b id="h-avg">0</b><span data-i18n="h.bestH"></span></div>
-          </div>
-          <ol class="list hist" id="hist-list"></ol>
-        </section>
+        </div>
         <button class="btn ghost" id="close-board" type="button" data-i18n="btn.back"></button>
       </div>
     </div>
