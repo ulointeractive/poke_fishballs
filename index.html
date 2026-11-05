@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>篤魚蛋</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+Hei+HK:wght@400;700;900&family=Chiron+Sung+HK:wght@700;900&display=swap">
+<link rel="stylesheet" href="css/style.css">
+
+<div class="app">
+  <div class="side">
+    <header class="stall">
+      <div class="sign">
+        <span class="sign-zh" data-i18n="sign.title">咖喱魚蛋</span>
+      </div>
+      <div class="hud">
+        <div class="hud-item"><span class="lbl" data-i18n="hud.time">時間</span><span class="val" id="hud-time">60.0</span></div>
+        <div class="hud-item"><span class="lbl" data-i18n="hud.score">分數</span><span class="val" id="hud-score">0</span></div>
+        <div class="hud-item"><span class="lbl" data-i18n="hud.sticks">串</span><span class="val" id="hud-sticks">0</span></div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <div class="meter">
+        <span class="stick-lbl" data-i18n="meter.stick">呢串</span>
+        <div class="dots" id="dots" data-i18n-aria="meter.dotsAria"></div>
+        <div class="timebar" aria-hidden="true"><i id="timebar"></i></div>
+      </div>
+      <div class="tools">
+        <button class="chip icon" id="pause" type="button" disabled></button>
+        <button class="chip icon" id="mute" type="button" aria-pressed="false"></button>
+        <button class="chip" id="open-board" type="button" data-i18n="btn.board">排行榜</button>
+        <button class="chip" id="open-history" type="button" data-i18n="btn.history">我嘅紀錄</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="stage" id="stage">
+    <canvas id="pot" data-i18n-aria="pot.aria"></canvas>
+
+    <div class="overlay" id="intro">
+      <div class="card">
+        <div class="card-top">
+          <h1 data-i18n="intro.title">篤魚蛋</h1>
+          <button class="chip lang" id="lang" type="button">EN</button>
+        </div>
+        <p data-i18n="intro.lead"></p>
+        <ol class="steps">
+          <li data-i18n="intro.step1"></li>
+          <li data-i18n="intro.step2"></li>
+          <li data-i18n="intro.step3"></li>
+        </ol>
+        <div class="levels" role="radiogroup" data-i18n-aria="level.pick">
+          <button class="level" id="lv-normal" role="radio" aria-checked="true" type="button"><b data-i18n="level.normal"></b><span data-i18n="level.normalDesc"></span></button>
+          <button class="level" id="lv-hard" role="radio" aria-checked="false" type="button"><b data-i18n="level.hard"></b><span data-i18n="level.hardDesc"></span></button>
+        </div>
+        <div class="legend" id="legend-hard" hidden>
+          <p class="legend-title" data-i18n="legend.hardTitle"></p>
+          <canvas id="legend-items" data-i18n-aria="legend.hardAria"></canvas>
+          <div class="legend-cols four">
+            <span><b data-i18n="kind.radish"></b></span><span><b data-i18n="kind.beef"></b></span><span><b data-i18n="kind.cuttle"></b></span><span><b data-i18n="kind.skin"></b></span>
+          </div>
+          <p class="note" data-i18n="legend.hardNote"></p>
+        </div>
+        <div class="legend">
+          <p class="legend-title" data-i18n="legend.centerTitle"></p>
+          <svg viewBox="0 0 300 74" role="img" data-i18n-aria="legend.centerAria">
+            <defs>
+              <radialGradient id="lg-ball" cx="0.38" cy="0.35" r="0.7">
+                <stop offset="0" stop-color="#fde9b0"/><stop offset="0.55" stop-color="#e5ac4a"/><stop offset="1" stop-color="#a8661d"/>
+              </radialGradient>
+            </defs>
+            <rect x="48" y="4" width="4" height="66" rx="2" fill="#c9a467"/>
+            <circle cx="50" cy="37" r="18" fill="url(#lg-ball)"/>
+            <rect x="148" y="4" width="4" height="66" rx="2" fill="#c9a467"/>
+            <circle cx="140" cy="37" r="18" fill="url(#lg-ball)"/>
+            <rect x="248" y="4" width="4" height="66" rx="2" fill="#c9a467"/>
+            <circle cx="276" cy="44" r="18" fill="url(#lg-ball)" opacity="0.75"/>
+            <path d="M258 30 l10 6" stroke="#a8231b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          </svg>
+          <div class="legend-cols">
+            <span><b data-i18n="legend.c1t"></b><span data-i18n="legend.c1"></span></span>
+            <span><b data-i18n="legend.c2t"></b><span data-i18n="legend.c2"></span></span>
+            <span><b data-i18n="legend.c3t"></b><span data-i18n="legend.c3"></span></span>
+          </div>
+        </div>
+        <p class="record-line" id="intro-record" hidden></p>
+        <div class="field">
+          <label for="name-intro" data-i18n="name.label"></label>
+          <div class="field-row">
+            <input id="name-intro" type="text" maxlength="24" autocomplete="off" data-i18n-ph="name.ph">
+            <button class="btn small ghost" id="roll-intro" type="button" data-i18n="name.roll"></button>
+          </div>
+        </div>
+        <button class="btn" id="start" type="button" data-i18n="btn.start"></button>
+      </div>
+    </div>
+
+    <div class="overlay" id="result" hidden>
+      <div class="card">
+        <h2 id="rank"></h2>
+        <p class="note" id="r-level"></p>
+        <span class="flag" id="r-new" hidden data-i18n="result.new"></span>
+        <div class="big"><b id="r-score">0</b><span data-i18n="unit.pts"></span></div>
+        <dl class="stats">
+          <dt data-i18n="r.sticks"></dt><dd id="r-sticks"></dd>
+          <dt data-i18n="r.served"></dt><dd id="r-served"></dd>
+          <dt data-i18n="r.perfect"></dt><dd id="r-perfect"></dd>
+          <dt data-i18n="r.slip"></dt><dd id="r-slip"></dd>
+          <dt id="r-wrong-l" data-i18n="r.wrong"></dt><dd id="r-wrong"></dd>
+          <dt data-i18n="r.best"></dt><dd id="r-best"></dd>
+          <dt data-i18n="r.place"></dt><dd id="r-place">—</dd>
+        </dl>
+        <p class="note" id="r-save"></p>
+        <div class="field">
+          <label for="name-result" data-i18n="name.label"></label>
+          <div class="field-row">
+            <input id="name-result" type="text" maxlength="24" autocomplete="off" data-i18n-ph="name.ph">
+            <button class="btn small ghost" id="roll-result" type="button" data-i18n="name.roll"></button>
+            <button class="btn small" id="save-name" type="button" data-i18n="name.save"></button>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn ghost" id="share" type="button" data-i18n="btn.share"></button>
+          <button class="btn ghost" id="save-img" type="button" hidden data-i18n="btn.saveImg"></button>
+        </div>
+        <textarea class="share-text" id="share-text" rows="3" readonly hidden data-i18n-aria="share.aria"></textarea>
+        <p class="toast" id="toast" aria-live="polite"></p>
+        <div class="row">
+          <button class="btn" id="again" type="button" data-i18n="btn.again"></button>
+          <button class="btn ghost" id="r-board" type="button" data-i18n="btn.board"></button>
+          <button class="btn ghost" id="r-menu" type="button" data-i18n="btn.menu"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="paused" hidden>
+      <div class="card">
+        <h2 data-i18n="pause.title"></h2>
+        <p class="note" id="pause-info"></p>
+        <button class="btn" id="resume" type="button" data-i18n="btn.resume"></button>
+        <div class="row">
+          <button class="btn ghost" id="restart" type="button" data-i18n="btn.restart"></button>
+          <button class="btn ghost" id="quit" type="button" data-i18n="btn.quit"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="board" hidden>
+      <div class="card">
+        <div class="tabs" role="tablist">
+          <button class="tab" id="tab-lb" role="tab" type="button" aria-selected="true" data-i18n="tab.board"></button>
+          <button class="tab" id="tab-hist" role="tab" type="button" aria-selected="false" data-i18n="tab.hist"></button>
+        </div>
+        <section id="pane-lb">
+          <div class="seg" role="group" data-i18n-aria="lb.levelAria">
+            <button id="lb-normal" type="button" aria-pressed="true" data-i18n="level.normal"></button>
+            <button id="lb-hard" type="button" aria-pressed="false" data-i18n="level.hard"></button>
+          </div>
+          <div class="champ" id="champ" hidden>
+            <span class="who"><small data-i18n="champ.label"></small><span id="champ-name"></span></span>
+            <span class="pts" id="champ-pts"></span>
+          </div>
+          <ol class="list" id="lb-list"></ol>
+          <p class="note" id="lb-note"></p>
+        </section>
+        <section id="pane-hist" hidden>
+          <div class="summary">
+            <div><b id="h-games">0</b><span data-i18n="h.games"></span></div>
+            <div><b id="h-best">0</b><span data-i18n="h.bestN"></span></div>
+            <div><b id="h-avg">0</b><span data-i18n="h.bestH"></span></div>
+          </div>
+          <ol class="list hist" id="hist-list"></ol>
+        </section>
+        <button class="btn ghost" id="close-board" type="button" data-i18n="btn.back"></button>
+      </div>
+    </div>
+  </main>
+
+  <p class="hint" data-i18n="hint"></p>
+</div>
+
+<!-- scripts load in this order; each one uses what the earlier ones defined -->
+<script src="js/config.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/state.js"></script>
+<script src="js/records.js"></script>
+<script src="js/share.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/items.js"></script>
+<script src="js/poke.js"></script>
+<script src="js/customers.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
