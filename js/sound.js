@@ -112,7 +112,7 @@ updateMuteButton();
 langListeners.push(updateMuteButton);
 
 // ---------- background music ----------
-// Original music made in code (the track is chosen with MUSIC_TRACK in js/config.js). It keeps the same tempo
+// Original music made in code. It keeps the same tempo
 // for the whole game. As time runs out it gets more intense without speeding up: a key change up at 20 s
 // and again at 10 s, busier hi-hats from 20 s, and snare rolls and a ticking clock in the last 10 seconds.
 // Notes are semitones from A4 (440 Hz); null = rest. One step = a 16th note; 16 steps = one bar.
@@ -176,28 +176,10 @@ function track(cfg) {
   });
 }
 const MUSIC = {
-  // A. Groove: just drums and a driving bass under soft held chords, no melody. A minor (Am7 - Fmaj7 - G7 - E7)
-  groove: track({
-    bpm: 124, pad: true,
-    roots: [-24, -28, -26, -29],
-    chords: [[0, 3, 7, 10], [-4, 0, 3, 7], [-2, 2, 5, 8], [-5, -1, 2, 5]],
-  }),
-  // B. Chill: a relaxed, warm beat with soft keys and a light melody that comes and goes. C major (Fmaj7 - Em7 - Dm7 - Cmaj7)
-  chill: track({
-    bpm: 96, bass: 'soft', kicks: [0, 10], snares: [4, 12], hats: 0.07, keys: [0, 6, 10], keysWave: 'triangle', keysCut: 2600,
-    leadHalf: true, leadWave: 'triangle', leadCut: 5000, leadVol: 0.16,
-    roots: [-28, -29, -31, -33],
-    chords: [[-4, 0, 3, 7], [-5, -2, 2, 5], [-7, -4, 0, 3], [-9, -5, -2, 2]],
-    lead: [
-      12, null, null, null, 10, null, 8, null, 7, null, null, null, null, null, null, null,
-      7, null, 8, null, 10, null, null, null, 14, null, null, 12, null, null, null, null,
-      12, null, null, null, 8, null, 5, null, 8, null, null, null, 10, null, null, null,
-      7, null, null, null, 3, null, 2, null, 3, null, null, null, null, null, null, null,
-    ],
-  }),
-  // C. Synth-pop: four-on-the-floor dance-pop with warm chords and a catchy hook every other phrase. C major (Cmaj7 - G - Am7 - Fmaj7)
-  pop: track({
-    bpm: 118, pad: true, keys: [3, 6, 11, 14], keysWave: 'sawtooth', keysCut: 1800, leadHalf: true,
+  // The game's track: a driving beat (drums, pumping bass, soft held chords) with a catchy synth-pop hook
+  // every other phrase. C major (Cmaj7 - G - Am7 - Fmaj7), 124 bpm.
+  main: track({
+    bpm: 124, pad: true, leadHalf: true,
     roots: [-21, -26, -24, -28],
     chords: [[3, 7, 10, 14], [-2, 2, 5, 10], [0, 3, 7, 10], [-4, 0, 3, 7]],
     lead: [
@@ -207,28 +189,9 @@ const MUSIC = {
       8, null, 10, 12, 15, null, 14, null, 12, null, 10, null, null, null, null, null,
     ],
   }),
-  // D. Funk: a groovy bass line and short keyboard stabs, no melody. D minor funk (Dm7 - G7 - Dm7 - A7)
-  funk: track({
-    bpm: 110, kicks: [0, 7, 10], snares: [4, 12], hats: 0.09, keys: [3, 6, 11, 14], keysCut: 2000,
-    bass: [0, null, null, 12, null, null, 0, null, 10, null, 0, null, null, 12, null, 7],
-    roots: [-31, -26, -31, -24],
-    chords: [[5, 8, 12, 15], [-2, 2, 5, 8], [5, 8, 12, 15], [0, 4, 7, 10]],
-  }),
-  // E. Arcade, toned down: the earlier arcade track with a quieter arpeggio and the melody only every other phrase. A minor
-  arcade: track({
-    bpm: 140, arp: true, leadHalf: true,
-    roots: [-24, -28, -26, -29],
-    chords: [[0, 3, 7, 10], [-4, 0, 3, 7], [-2, 2, 5, 8], [-5, -1, 2, 5]],
-    lead: [
-      12, null, 14, 15, 17, null, 19, null, 17, null, 15, null, 14, null, 15, null,
-      8, null, 10, 12, 15, null, 14, null, 12, null, 10, null, 8, null, null, null,
-      14, null, 15, 17, 19, null, 17, null, 15, null, 14, null, 17, null, null, null,
-      14, null, 11, null, 7, null, 11, null, 14, null, null, null, 11, null, null, null,
-    ],
-  }),
 };
 // the track the game plays (one of the keys above)
-const musicStyle = MUSIC_TRACK in MUSIC ? MUSIC_TRACK : 'groove';
+const musicStyle = 'main';
 
 function musicNote(step, at, len) {
   const left = state === 'play' || state === 'paused' ? timeLeft : GAME_TIME;

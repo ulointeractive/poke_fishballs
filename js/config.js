@@ -7,8 +7,6 @@ const GAME_TIME = 60;
 // the curry boils harder as time runs out: at the last second, the current is this many times faster
 const BOIL_MAX = 3.4;
 const REFILL_EVERY = 0.25;    // seconds between new items rising up into the pot
-// background music: 'groove', 'chill', 'pop', 'funk' or 'arcade' (see js/sound.js)
-const MUSIC_TRACK = 'groove';
 const WRONG_PENALTY = 2;      // challenge level: poking anything that isn't a fishball
 const LEVELS = {
   normal: { count: 30, others: 0, flow: 1 },
