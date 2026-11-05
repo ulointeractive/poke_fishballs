@@ -112,9 +112,8 @@ updateMuteButton();
 langListeners.push(updateMuteButton);
 
 // ---------- background music ----------
-// Original music made in code. It keeps the same tempo
-// for the whole game. As time runs out it gets more intense without speeding up: a key change up at 20 s
-// and again at 10 s, busier hi-hats from 20 s, and snare rolls and a ticking clock in the last 10 seconds.
+// Original music made in code. It keeps the same tempo and the same key for the whole game. As time runs out
+// it gets more intense: busier hi-hats from 20 s, and snare rolls and a ticking clock in the last 10 seconds.
 // Notes are semitones from A4 (440 Hz); null = rest. One step = a 16th note; 16 steps = one bar.
 const MUSIC_VOL = 1;
 const hz = (n) => 440 * Math.pow(2, n / 12);
@@ -190,8 +189,7 @@ const musicStyle = 'main';
 function musicNote(step, at, len) {
   const left = state === 'play' || state === 'paused' ? timeLeft : GAME_TIME;
   const tense = left <= 20, final = left <= 10;
-  const lift = final ? 3 : tense ? 2 : 0;               // key change up as time runs out
-  MUSIC[musicStyle].note(step, at, len, lift, tense);
+  MUSIC[musicStyle].note(step, at, len, 0, tense);   // always the same key
   const s = step % 16;
   if (tense && s % 2 === 1) hat(at, 0.08);                // busier hi-hats
   if (final && s >= 12) noise('bandpass', 2200, 1800, 0.06, 0.2, 0, musicOut, at);   // snare roll into each bar
