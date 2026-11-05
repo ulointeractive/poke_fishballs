@@ -15,7 +15,7 @@ Open `index.html` in a browser (desktop or phone). No build step.
 
 ## Leaderboard and sharing
 
-Players type a name for the all-time leaderboard (anyone who leaves it blank gets a random stall-style name, e.g. 紅街市魚蛋迷75; no account or device names are used); the record holder stays on top until someone beats them. Results can be shared as text (with the game link) or saved as an image.
+Players type a name for the all-time leaderboard (anyone who leaves it blank gets a random stall-style name, e.g. 神速魚蛋迷75; no account or device names are used); the record holder stays on top until someone beats them. Results can be shared as text (with the game link) or saved as an image.
 
 ## Test mode
 

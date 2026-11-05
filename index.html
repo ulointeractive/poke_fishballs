@@ -610,11 +610,11 @@ body {
   function li(cls) { const el = document.createElement('li'); if (cls) el.className = cls; return el; }
   function emptyRow(text) { const el = li('empty'); el.textContent = text; return el; }
 
-  // a random stall-style name for players who don't type one
+  // a random stall-style name for players who don't type one (no places or personal details)
   function randomName() {
-    const places = ['氹仔', '路環', '新馬路', '大三巴', '議事亭', '紅街市', '下環', '雀仔園', '望廈', '沙梨頭', '黑沙', '筷子基'];
+    const moods = ['神速', '快手', '穩陣', '醒目', '大胃', '飛快', '眼利', '無敵', '新手', '夜貓'];
     const titles = ['魚蛋俠', '篤蛋王', '竹籤手', '咖喱仔', '咖喱妹', '篤神', '魚蛋精', '串串仔', '魚蛋迷'];
-    return pick(places) + pick(titles) + String(Math.floor(Math.random() * 90) + 10);
+    return pick(moods) + pick(titles) + String(Math.floor(Math.random() * 90) + 10);
   }
   function cleanName(s) {
     return String(s || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
