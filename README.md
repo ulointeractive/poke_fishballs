@@ -1,5 +1,7 @@
 # 篤魚蛋 Poke Fishballs
 
+![篤魚蛋 Poke Fishballs: a simmering pot of curry fishballs at the stall, with a cup of bamboo skewers](assets/thumbnail.png)
+
 **Mini games to poke the most fishballs in one minute.**
 
 A one-minute browser game about a street-stall favourite: curry fishballs (咖喱魚蛋) on a bamboo stick. You run the stall. Poke as many fishballs as you can, fill each stick with six, and serve the queue before time runs out.
@@ -16,13 +18,13 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 - [Scoring](#scoring)
 - [Rank titles](#rank-titles)
 - [Pausing and restarting](#pausing-and-restarting)
-- [Names, leaderboard and history](#names-leaderboard-and-history)
+- [My games and deleting data](#my-games-and-deleting-data)
 - [Sharing results](#sharing-results)
 - [Sound](#sound)
 - [Language](#language)
 - [Devices and screen sizes](#devices-and-screen-sizes)
 - [Privacy, data and security](#privacy-data-and-security)
-- [Running the game](#running-the-game)
+- [Running the game](#running-the-game) and [putting it online](#putting-the-game-online-with-github-pages)
 - [For developers](#for-developers)
 - [Score benchmarks](#score-benchmarks)
 
@@ -31,7 +33,6 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 ## How to play
 
 1. Pick a level on the start screen: **普通** or **挑戰**.
-2. Optionally type a name for the leaderboard, or tap **隨機** for a random one.
 3. Tap **開檔！ Start**. You have **60 seconds**.
 4. **Press** on a fishball in the pot to poke it with the bamboo stick.
 5. **Release** to lift the stick, then press again to poke the next one.
@@ -66,17 +67,30 @@ When items overlap, the poke hits the one in front.
 
 - Fishballs float and drift in a slow swirl of simmering curry.
 - Every poke pushes nearby items away with a ripple. Dragging the stick while it's down in the pot stirs the items around it.
+- **The curry boils harder as time runs out.** It starts at a gentle simmer. Bubbles rise more and more often and bump the fishballs, and the current speeds up to 2.6× by the last second, so the last 20 seconds are the hardest. (The pot calms down again after the game.)
 - The stall keeps topping up the pot: a new item drops in about every 0.25 seconds whenever the pot is below its target.
 
 ### Customers
 
 - The queue is made up of everyday people: adults, office workers, grandparents, kids.
+- The customer at the front of the queue talks to you during the game:
+
+| When | Cantonese | English |
+|---|---|---|
+| You poke outside the pot | 唔好篤空氣啦 · 篤邊度呀？ · 喂，煲喺下面呀 · 空氣唔使錢㗎咩？ | Stop poking the air! · Where are you poking? · Hey, the pot's down there! · Is air free now? |
+| You miss (sometimes) | 睇真啲先篤啦 · 又冇中？ · 魚蛋走晒去邊？ | Look before you poke! · Missed again? · Where did the fishballs go? |
+| Nothing poked for 3.5 seconds | 快手啲 · 快啲啦，我趕時間 · 等到頸都長 · 師傅，好肚餓呀 · 仲未得呀？ | Hurry up! · Quick, I'm in a rush! · I've been waiting forever! · Boss, I'm starving! · Not ready yet? |
+
 - When a stick is handed over, the customer reacts to it:
-  - A neat stick, with fishballs close to the centre: "正呀！" or "好靚！"
-  - An average stick: "唔該！" or "多謝！"
-  - A crooked stick: "咁歪嘅…" or "歪咗喎"
-  - A stick with anything other than fishballs (挑戰): "我要魚蛋呀！" or "點解有豬皮嘅？"
-- Reactions are for fun and don't change the score.
+
+| Stick | Cantonese | English |
+|---|---|---|
+| Neat: fishballs close to the centre | 正呀！ · 好靚！ · 一流！ · 串得好靚仔 · 師傅好手勢！ | Perfect! · Beautiful! · Top class! · What a neat stick! · Nice hands, boss! |
+| Average | 唔該！ · 多謝！ · 唔該晒 · 幾好吖 | Thanks! · Cheers! · Thanks a lot · Not bad |
+| Crooked | 咁歪嘅… · 歪咗喎 · 歪到好似比薩斜塔咁 · 你篤得咁歪嘅？ · 串到成條蛇咁 | So crooked… · Bit wonky… · Leaning like the Tower of Pisa · How did it get this crooked? · Wiggly as a snake |
+| Has something other than fishballs (挑戰) | 咁正！要魚蛋俾XX · 大佬，我要魚蛋喎 · 我要魚蛋呀！ · 點解有XX嘅？ · XX？我冇叫喎 | Great. I asked for fishballs and got XX · Boss, I wanted fishballs! · I wanted fishballs! · Why is there XX? · XX? I didn't order that! |
+
+XX is the item poked by mistake: 白蘿蔔, 牛丸, 墨魚丸 or 豬皮 (white radish, beef ball, cuttlefish ball or pig skin). Each kind of comment repeats at most every 3 seconds. Reactions are for fun and don't change the score. All lines are in `js/i18n.js` (the `say.*` entries).
 
 ### Time
 
@@ -92,10 +106,9 @@ When items overlap, the poke hits the one in front.
 | What's in the pot | Only fishballs | Fishballs mixed with 白蘿蔔 (white radish), 牛丸 (beef balls), 墨魚丸 (cuttlefish balls) and 豬皮 (pig skin) |
 | Items in the pot | 30 | Starts at 34 and grows by 1 per stick, up to 44 |
 | Share that isn't fishball | 0% | Starts at 40% and rises by 3% per stick, up to 70% |
-| Extra drops | None | Every stick handed over drops 2 more non-fishball items in ("加料！雜嘢多咗") |
+| Extra drops | None | Every stick handed over drops 2 more non-fishball items into the pot |
 | Curry current | Normal | 35% faster |
 | Wrong items | Not possible | −2 points each, and it takes up a space on the stick |
-| Leaderboard | 普通 board | Separate 挑戰 board |
 
 In 挑戰, fishballs are always topped up first, so the pot always has at least 13 of them.
 
@@ -111,9 +124,8 @@ In 挑戰, fishballs are always topped up first, so the pot always has at least 
 | Slip, miss, or poking outside the pot | 0 |
 
 - Your score never goes below 0.
-- Each player's best score per level goes on the leaderboard.
 
-The result screen shows your score, sticks served, fishballs poked, centre hits, slips, wrong items (挑戰), your personal best and your leaderboard position.
+The result screen shows your score, sticks served, fishballs poked, centre hits, slips, wrong items (挑戰), your personal best, and where this game ranks among your games on this device (e.g. 呢部機第 2 名).
 
 ---
 
@@ -143,35 +155,40 @@ Shown at the end of each game:
 
 ---
 
-## Names, leaderboard and history
+## My games and deleting data
 
-### Names
+It's a single-player game, so there are no names or accounts.
 
-- Players can type a name of up to 24 characters, on the start screen or after a game.
-- Anyone who leaves it blank gets a random name when their first game finishes, in the language they're playing in: for example 無影竹籤刺客 or 午夜咖喱忍者, or Shadow Curry Ninja or Iron Stick Samurai.
-- Tap **隨機** to roll a new random name at any time. It saves right away.
-- Names come only from what the player types or the random generator. No account names, device names or other personal details are used.
+### My games (我嘅紀錄)
 
-### Leaderboard (排行榜)
+There's no leaderboard. **我嘅紀錄 / My games** (top-right button, or on the result screen) shows the player's own games on this device, **ranked by score, best first**:
 
-- Each level has its own **all-time** leaderboard showing the top 50 players. Use the 普通 / 挑戰 buttons to switch between them.
-- Each player appears once per level, with their best score.
-- The **record holder** (紀錄保持者) is shown in a red banner at the top and stays there until someone beats them. The start screen also shows the current record for the selected level.
-
-### Personal history (我嘅紀錄)
-
-- Your last 50 games, each tagged 普通 or 挑戰, with date, score, fishballs, sticks, centre hits, slips and wrong items.
-- Summary: games played, best 普通 score, best 挑戰 score.
-- Only you can see your own history.
+- Switch between 普通 and 挑戰.
+- Summary: games played, best score and average score for that level.
+- Each game shows its rank, then its **score**, with its rank title (e.g. 魚蛋師傅) at the top right. Underneath, in tiny text: how many fishballs and sticks on the left, and the date and time in the bottom-right corner.
+- The game just played is highlighted.
+- The result screen shows the new game's rank, e.g. 呢部機第 2 名 / #2 on this device.
+- To compare with friends, share the result text or image (see below).
 
 ### Where records are kept
 
-| How the game is opened | Leaderboard | Personal history |
-|---|---|---|
-| As the claude.ai artifact | Shared online with everyone who can open it | Saved online, private to each player |
-| `index.html` opened directly | Only this browser's own scores | Saved in this browser only |
+**Everything stays in the browser on the player's device.** Nothing is ever uploaded: there's no server, no account and no online database.
 
-To save scores to the shared leaderboard, a player needs at least **Contributor** access to the artifact. Anyone with less access can play and see the leaderboard, but their scores stay on their own device, and the result screen tells them so.
+| Stored on the device | What it holds |
+|---|---|
+| `fishball-history` | The last 50 games: level, score, stats and date |
+| `fishball-lang` | Cantonese or English |
+
+Records don't move between devices or browsers.
+
+### Deleting your data
+
+Two ways, and both remove everything:
+
+1. **In the game:** open **我嘅紀錄**, tap **刪除所有紀錄 / Delete all records**, then **確定刪除 / Delete** to confirm, or **取消 / Cancel**. All games and the language choice are erased from the browser.
+2. **In the browser:** clear the site data for the game's address (for example, in Chrome: Settings → Privacy → Site data; on iPhone: Settings → Safari → Advanced → Website Data).
+
+Deleted data can't be recovered.
 
 ---
 
@@ -180,14 +197,14 @@ To save scores to the shared leaderboard, a player needs at least **Contributor*
 On the result screen:
 
 - **分享成績** opens the phone's share sheet, or copies a message like this, ready to paste into a chat:
-  > 無影竹籤刺客喺「篤魚蛋」挑戰關一分鐘攞咗 172 分！篤咗 103 粒魚蛋，交咗 18 串，正中 76 次。你破唔破到？
+  > 我喺「篤魚蛋」挑戰關一分鐘攞咗 172 分！篤咗 103 粒魚蛋，交咗 18 串，正中 76 次。你破唔破到？
   >
   > followed by the game link
 
   If copying isn't allowed, the text appears in a box to copy by hand.
-- **儲存成績圖** saves a square result image with your name, score, level and stats.
+- **儲存成績圖** saves a square result image with your score, level and stats.
 
-Anyone opening the shared link needs access to the artifact. Set its sharing (organisation, or a public link) from the artifact's Share menu.
+The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/config.js`). Anyone can open it; no account needed. When the link is pasted into most chat apps, it shows the thumbnail image as a preview.
 
 ---
 
@@ -210,7 +227,6 @@ The **speaker** button turns all sound on or off; it shows a crossed-out speaker
 
 - The **EN / 粵** button, at the top right of the instructions panel, switches the whole game between Cantonese (Traditional Chinese) and English: every screen, button, pop-up message, customer line, rank title, share message and result image.
 - On a player's first visit, the game picks Cantonese if their browser language is Chinese, and English otherwise. After that it remembers the player's choice on that device.
-- Random names come out in the current language. Names already saved stay as they are.
 - All text lives in `js/i18n.js`. To change a word, edit it there.
 
 ---
@@ -229,7 +245,7 @@ Works with touch, mouse or pen. On a keyboard, Esc or P pauses.
 
 **Screen layouts**
 
-- **All layouts:** the title is on the left, with time, score and sticks always in the top-right corner. The buttons (pause, sound, leaderboard, my games) line up on the right.
+- **All layouts:** the title is on the left, with time, score and sticks always in the top-right corner. The buttons (pause, sound, my games) line up on the right.
 - **Phones held upright:** the top bar and buttons sit above the pot. On narrow phones (320 px wide, like iPhone SE), the buttons wrap onto a second line, still aligned right.
 - **Phones held sideways:** the score and buttons move into a column on the left, and the pot fills the rest of the screen.
 - **Tablets and desktops:** the game sits in a centred column up to 760 px wide.
@@ -256,22 +272,14 @@ Not yet tested on real Safari, the browser engine used on every iPhone and iPad.
 | Service | Why | What it receives |
 |---|---|---|
 | Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`) | Downloads the two Chinese fonts | The player's IP address and browser details, as with any web font. No game data. |
-| claude.ai artifact services (only when played as the artifact) | Leaderboard, history, saving the result image | See "What is stored" below |
 
-There are no analytics, ads, tracking pixels, cookies, API keys or passwords anywhere in the code. The game doesn't use the camera, microphone, location, contacts or photos.
+Google Fonts is the only outside service. GitHub Pages hosts the files, and GitHub sees normal web traffic, like any website host.
 
-The claude.ai artifact link appears in the code only as text in the share message.
+There are no analytics, ads, tracking pixels, cookies, accounts, API keys or passwords anywhere in the code. The game doesn't use the camera, microphone, location, contacts or photos.
 
 ### What is stored
 
-| Where | What | Who can see it |
-|---|---|---|
-| Online leaderboard (`scores`, `scoresHard`) | For each player: an opaque claude.ai id, the leaderboard name they chose or were given, best score and its stats, number of games, date of the best game | Everyone who can open the artifact |
-| Online history (`data/users/<id>/history`) | The player's last 50 games: level, score, stats, date | Only that player, not even the owner |
-| The browser's local storage | `fishball-lang` (language), `fishball-name` (leaderboard name), `fishball-history` (history when played offline or without save permission) | Only that browser |
-
-- **Player identity:** the game asks claude.ai only for an opaque player id, a random-looking code used to keep each player's scores separate. It does **not** request names, photos or email addresses.
-- **Names:** come only from what the player typed or the random generator.
+Only the two items in the player's own browser listed under [Where records are kept](#where-records-are-kept). Nothing is sent anywhere.
 
 ### Browser features used, only when the player taps
 
@@ -281,17 +289,25 @@ The claude.ai artifact link appears in the code only as text in the share messag
 
 ### Things to be aware of
 
-- **Scores can be faked.** The game runs entirely in the player's browser, so a technically skilled player with save permission could write a fake best score for themselves. They can't change anyone else's score. The artifact owner can delete any entry, which Claude can do on request.
-- **Names aren't moderated.** A player could type something rude. The owner can remove it the same way.
-- **Who can save:** only people with Contributor access or higher can write to the leaderboard. Viewers can play and see it, but their scores stay on their own device.
-- **Google Fonts:** if you'd rather the game contacted no outside service, the fonts can be bundled with the game instead.
+- **Records are per device.** A new phone, another browser, or clearing site data starts from zero.
+- **Private browsing:** some browsers forget local storage when a private window closes, so those games aren't kept.
+- **Google Fonts:** if you'd rather the game contacted no outside service at all, the fonts can be bundled with the game instead.
 
 ---
 
 ## Running the game
 
-- **As a claude.ai artifact:** open the artifact link. It's private until shared from its Share menu.
+- **Online:** the game's GitHub Pages address, `https://ulouwm.github.io/poke_fishballs/`, once Pages is turned on (below). Anyone can play; no account needed.
 - **Locally:** open `index.html` in any modern browser on desktop or phone. There's no build step and nothing to install. Fonts load from Google Fonts, with system fonts as a fallback.
+
+### Putting the game online with GitHub Pages
+
+1. Make sure the game is on the `main` branch.
+2. On GitHub, open the repository's **Settings → Pages**.
+3. Under "Build and deployment", choose **Deploy from a branch**, branch `main`, folder `/ (root)`, and save.
+4. After a minute or two the game is live at `https://ulouwm.github.io/poke_fishballs/`. Share that address with anyone.
+
+Free GitHub Pages needs the repository to be **public**. Updates go live automatically a minute or so after each change is merged into `main`.
 
 ---
 
@@ -300,12 +316,13 @@ The claude.ai artifact link appears in the code only as text in the share messag
 ### Files
 
 ```
-index.html        page structure: top bar, start / result / pause / leaderboard screens
+assets/thumbnail.png  image at the top of this README (also usable as the GitHub social preview)
+index.html        page structure: top bar, start / result / pause / my-games screens
 css/style.css     all colours, fonts and layout (including phone and sideways layouts)
-js/config.js      game settings: time, scoring, levels, SAVE_RANKING switch
+js/config.js      game settings: time, scoring, levels, share link
 js/i18n.js        every on-screen text in Cantonese and English, and the language switch
 js/state.js       page elements, small helpers, live game state
-js/records.js     leaderboard, personal history, player names
+js/records.js     my games (ranked), deleting data
 js/share.js       share text and result image
 js/sound.js       sound effects
 js/layout.js      fitting the scene to the screen, street background
@@ -320,28 +337,18 @@ Where to look for common changes:
 
 | To change… | Edit |
 |---|---|
-| Game length, points, penalty, refill speed, level settings, the leaderboard switch | `js/config.js` |
-| Any text in either language (screens, buttons, messages, customer lines, rank titles, random names) | `js/i18n.js` |
+| Game length, points, penalty, refill speed, boil strength, level settings, share link | `js/config.js` |
+| Any text in either language (screens, buttons, messages, customer lines, rank titles) | `js/i18n.js` |
 | Colours, fonts, button styles | `css/style.css` |
-| Random names, leaderboard behaviour | `js/records.js` |
-| When customers say each line | `js/poke.js` (`handOut`) |
+| My games screen, deleting data | `js/records.js` |
+| What customers say | `js/i18n.js` (`say.*`) |
+| When customers speak | `js/poke.js`, `js/game.js` (impatience), `js/customers.js` (`customerSay`) |
 | How customers look | `js/customers.js` |
 | How fishballs and other items look | `js/items.js` (`paintItem`) |
 | Sounds | `js/sound.js` |
 | Rank title score thresholds | `js/game.js` (`rankFor`) |
 
 The scripts are plain scripts, not modules, so the game works when you double-click `index.html`. They load in the order listed in `index.html`. Each file can use anything the files before it defined, so keep that order when adding files.
-
-### Test mode: `SAVE_RANKING`
-
-In `js/config.js`:
-
-```js
-const SAVE_RANKING = false;
-```
-
-- **`false` (current):** test mode. Games still go into each player's personal history, but **nothing is written to the shared leaderboard**. The result screen shows "測試模式：呢局冇上排行榜。"
-- **`true`:** scores go onto the leaderboard. Switch to this when the game is published.
 
 ### Tuning values
 
@@ -354,25 +361,11 @@ All in `js/config.js`:
 | `CENTER_BONUS` | 1 | Extra point for a centre hit |
 | `WRONG_PENALTY` | 2 | Points lost for a non-fishball item |
 | `REFILL_EVERY` | 0.25 | Seconds between items dropped into the pot |
+| `BOIL_MAX` | 2.6 | How much faster the curry moves at the last second than at the start |
 | `LEVELS.normal` | 30 items, 0% other items | 普通 settings |
 | `LEVELS.hard` | 34→44 items, 40%→70% other items, 1.35× current, +2 items per stick | 挑戰 settings |
 | `HISTORY_MAX` | 50 | Games kept in personal history |
-
-### Online data (claude.ai artifact)
-
-| Path | Contents | Who can write |
-|---|---|---|
-| `scores/<player id>` | 普通 best: `best`, `sticks`, `served`, `perfects`, `wrong`, `games`, `name`, `at` | Only that player, or the owner |
-| `scoresHard/<player id>` | Same, for 挑戰 | Only that player, or the owner |
-| `data/users/<player id>/history` | `runs`: last 50 games | Only that player (private) |
-
-Everyone who can open the artifact can read both leaderboards. The player id is an opaque id from claude.ai, and no profile names are read.
-
-### Publishing checklist
-
-1. Set `SAVE_RANKING` to `true` in `js/config.js`.
-2. Publish the updated page.
-3. Share the artifact so players can open it and save scores: organisation access or a public link, with at least Contributor access.
+| `SHARE_URL` | GitHub Pages address | Link added to shared results |
 
 ---
 

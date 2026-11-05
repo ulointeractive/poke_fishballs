@@ -40,7 +40,8 @@ body {
   gap: 10px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 12px;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));      /* clear the iPhone notch / status bar */
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); /* and the home bar */
 }
 .side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
@@ -281,6 +282,15 @@ body {
 }
 .seg button[aria-pressed="true"] { background: var(--sign); color: #fff; }
 .tag { display: inline-block; font-size: 11px; font-weight: 700; color: #fff; background: var(--sign-deep); border-radius: 3px; padding: 0 5px; margin-right: 4px; vertical-align: 1px; }
+.list li.rec { grid-template-columns: 2.2em 1fr; align-items: center; }
+.rec-body { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.rec-score { font-weight: 900; font-size: 20px; line-height: 1.2; }
+.rec-score small { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+.rec-title { font-size: 13px; font-weight: 700; color: var(--sign); text-align: right; white-space: nowrap; }
+.rec-sub, .rec-when { font-size: 11px; color: var(--muted); }
+.rec-when { text-align: right; white-space: nowrap; }
+.danger { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.danger #del-all { align-self: flex-start; }
 .toast { font-size: 13px; color: #1f6b3a; min-height: 1em; }
 @media (max-width: 420px) {
   .hud { gap: 10px; }
@@ -290,7 +300,7 @@ body {
   .card { padding: 16px; }
 }
 @media (max-width: 360px) {
-  .app { gap: 8px; padding-block: 8px; }
+  .app { gap: 8px; padding-top: max(8px, env(safe-area-inset-top, 0px)); padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
   .hud-item { min-width: 36px; }
   .val { font-size: 17px; }
   .chip { font-size: 12px; padding: 4px 9px; }
@@ -304,7 +314,8 @@ body {
     display: grid;
     grid-template-columns: minmax(170px, 230px) 1fr;
     gap: 10px;
-    padding-block: 8px;
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   }
   .side { overflow-y: auto; }
   .stall { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 10px; }

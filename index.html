@@ -3,14 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head>
-<body>
-<title>篤魚蛋</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<title>篤魚蛋 Poke Fishballs</title>
+<meta name="description" content="一分鐘，你篤得到幾多粒咖喱魚蛋？ How many curry fishballs can you poke in one minute?">
+<meta name="theme-color" content="#a8231b">
+<!-- link preview when the game's address is shared in chat apps -->
+<meta property="og:title" content="篤魚蛋 Poke Fishballs">
+<meta property="og:description" content="一分鐘，你篤得到幾多粒？ How many curry fishballs can you poke in one minute?">
+<meta property="og:image" content="https://ulouwm.github.io/poke_fishballs/assets/thumbnail.png">
+<meta property="og:url" content="https://ulouwm.github.io/poke_fishballs/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='30' y='2' width='4' height='60' rx='2' fill='%23c9a467'/%3E%3Ccircle cx='32' cy='22' r='12' fill='%23e5ac4a'/%3E%3Ccircle cx='32' cy='44' r='12' fill='%23d8962f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+Hei+HK:wght@400;700;900&family=Chiron+Sung+HK:wght@700;900&display=swap">
 <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
 
 <div class="app">
   <div class="side">
@@ -34,7 +42,6 @@
       <div class="tools">
         <button class="chip icon" id="pause" type="button" disabled></button>
         <button class="chip icon" id="mute" type="button" aria-pressed="false"></button>
-        <button class="chip" id="open-board" type="button" data-i18n="btn.board">排行榜</button>
         <button class="chip" id="open-history" type="button" data-i18n="btn.history">我嘅紀錄</button>
       </div>
     </div>
@@ -55,6 +62,7 @@
           <li data-i18n="intro.step2"></li>
           <li data-i18n="intro.step3"></li>
         </ol>
+        <p class="note" data-i18n="intro.boil"></p>
         <div class="levels" role="radiogroup" data-i18n-aria="level.pick">
           <button class="level" id="lv-normal" role="radio" aria-checked="true" type="button"><b data-i18n="level.normal"></b><span data-i18n="level.normalDesc"></span></button>
           <button class="level" id="lv-hard" role="radio" aria-checked="false" type="button"><b data-i18n="level.hard"></b><span data-i18n="level.hardDesc"></span></button>
@@ -90,13 +98,6 @@
           </div>
         </div>
         <p class="record-line" id="intro-record" hidden></p>
-        <div class="field">
-          <label for="name-intro" data-i18n="name.label"></label>
-          <div class="field-row">
-            <input id="name-intro" type="text" maxlength="24" autocomplete="off" data-i18n-ph="name.ph">
-            <button class="btn small ghost" id="roll-intro" type="button" data-i18n="name.roll"></button>
-          </div>
-        </div>
         <button class="btn" id="start" type="button" data-i18n="btn.start"></button>
       </div>
     </div>
@@ -117,23 +118,15 @@
           <dt data-i18n="r.place"></dt><dd id="r-place">—</dd>
         </dl>
         <p class="note" id="r-save"></p>
-        <div class="field">
-          <label for="name-result" data-i18n="name.label"></label>
-          <div class="field-row">
-            <input id="name-result" type="text" maxlength="24" autocomplete="off" data-i18n-ph="name.ph">
-            <button class="btn small ghost" id="roll-result" type="button" data-i18n="name.roll"></button>
-            <button class="btn small" id="save-name" type="button" data-i18n="name.save"></button>
-          </div>
-        </div>
         <div class="row">
           <button class="btn ghost" id="share" type="button" data-i18n="btn.share"></button>
-          <button class="btn ghost" id="save-img" type="button" hidden data-i18n="btn.saveImg"></button>
+          <button class="btn ghost" id="save-img" type="button" data-i18n="btn.saveImg"></button>
         </div>
         <textarea class="share-text" id="share-text" rows="3" readonly hidden data-i18n-aria="share.aria"></textarea>
         <p class="toast" id="toast" aria-live="polite"></p>
         <div class="row">
           <button class="btn" id="again" type="button" data-i18n="btn.again"></button>
-          <button class="btn ghost" id="r-board" type="button" data-i18n="btn.board"></button>
+          <button class="btn ghost" id="r-board" type="button" data-i18n="btn.history"></button>
           <button class="btn ghost" id="r-menu" type="button" data-i18n="btn.menu"></button>
         </div>
       </div>
@@ -153,31 +146,33 @@
 
     <div class="overlay" id="board" hidden>
       <div class="card">
-        <div class="tabs" role="tablist">
-          <button class="tab" id="tab-lb" role="tab" type="button" aria-selected="true" data-i18n="tab.board"></button>
-          <button class="tab" id="tab-hist" role="tab" type="button" aria-selected="false" data-i18n="tab.hist"></button>
+        <div class="card-top">
+          <h2 data-i18n="rec.title"></h2>
+          <button class="chip icon" id="close-board" type="button" data-i18n-aria="btn.close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+          </button>
         </div>
-        <section id="pane-lb">
-          <div class="seg" role="group" data-i18n-aria="lb.levelAria">
-            <button id="lb-normal" type="button" aria-pressed="true" data-i18n="level.normal"></button>
-            <button id="lb-hard" type="button" aria-pressed="false" data-i18n="level.hard"></button>
+        <div class="seg" role="group" data-i18n-aria="lb.levelAria">
+          <button id="rec-normal" type="button" aria-pressed="true" data-i18n="level.normal"></button>
+          <button id="rec-hard" type="button" aria-pressed="false" data-i18n="level.hard"></button>
+        </div>
+        <div class="summary">
+          <div><b id="h-games">0</b><span data-i18n="h.games"></span></div>
+          <div><b id="h-best">0</b><span data-i18n="h.best"></span></div>
+          <div><b id="h-avg">0</b><span data-i18n="h.avg"></span></div>
+        </div>
+        <ol class="list" id="rec-list"></ol>
+        <p class="note" id="rec-note" data-i18n="rec.note"></p>
+        <div class="danger">
+          <button class="btn small ghost" id="del-all" type="button" data-i18n="rec.delete"></button>
+          <div id="del-confirm" hidden>
+            <p class="note" data-i18n="rec.deleteAsk"></p>
+            <div class="row">
+              <button class="btn small" id="del-yes" type="button" data-i18n="rec.deleteYes"></button>
+              <button class="btn small ghost" id="del-no" type="button" data-i18n="btn.cancel"></button>
+            </div>
           </div>
-          <div class="champ" id="champ" hidden>
-            <span class="who"><small data-i18n="champ.label"></small><span id="champ-name"></span></span>
-            <span class="pts" id="champ-pts"></span>
-          </div>
-          <ol class="list" id="lb-list"></ol>
-          <p class="note" id="lb-note"></p>
-        </section>
-        <section id="pane-hist" hidden>
-          <div class="summary">
-            <div><b id="h-games">0</b><span data-i18n="h.games"></span></div>
-            <div><b id="h-best">0</b><span data-i18n="h.bestN"></span></div>
-            <div><b id="h-avg">0</b><span data-i18n="h.bestH"></span></div>
-          </div>
-          <ol class="list hist" id="hist-list"></ol>
-        </section>
-        <button class="btn ghost" id="close-board" type="button" data-i18n="btn.back"></button>
+        </div>
       </div>
     </div>
   </main>

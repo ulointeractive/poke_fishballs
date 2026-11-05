@@ -10,7 +10,7 @@ function inCurry(sx, sy) {
 function resolvePoke() {
   const tx = stick.x, ty = stick.y;
   const fx = tx - L.cx, fy = (ty - L.cy) / L.sq;
-  if (!inCurry(tx, ty)) { addPop(t('pop.air'), tx, ty - 24, '#3b3330', 15); return; }
+  if (!inCurry(tx, ty)) { addPop(t('pop.air'), tx, ty - 24, '#3b3330', 15); customerSay('say.air', { nag: true }); return; }
   if (stick.balls.length >= STICK_CAP) return;
   ripples.push({ x: fx, y: fy, t: 0 });
 
@@ -24,6 +24,7 @@ function resolvePoke() {
     impulse(fx, fy, L.r * 4, L.R * 0.55);
     sound('drip');
     addPop(t('pop.miss'), tx, ty - 24, '#fff2d6', 16);
+    if (Math.random() < 0.35) customerSay('say.miss', { nag: true });
     return;
   }
   const off = (tx - hs.sx) / L.r;
@@ -36,6 +37,7 @@ function resolvePoke() {
   }
   balls.splice(balls.indexOf(hit), 1);
   stick.balls.push({ off, rel: hs.sy - ty, v: hit.v, kind: hit.kind });
+  lastHitT = tNow;
   impulse(fx, fy, L.r * 4.2, L.R * 0.75);
   if (hit.kind !== 'fish') {
     // wrong item: lose points, and it still takes a place on the stick
@@ -65,9 +67,9 @@ function handOut() {
   const odd = stick.balls.find((b) => b.kind !== 'fish');
   const avg = stick.balls.reduce((s, b) => s + Math.abs(b.off), 0) / n;
   let say, mood;
-  if (odd) { say = pick(t('say.wrong'))(kindName(odd.kind)); mood = 0; }
+  if (odd) { say = sayLine('say.wrong', odd.kind); mood = 0; }
   else {
-    say = pick(t(avg < 0.2 ? 'say.great' : avg < 0.42 ? 'say.ok' : 'say.bad'));
+    say = sayLine(avg < 0.2 ? 'say.great' : avg < 0.42 ? 'say.ok' : 'say.bad');
     mood = avg < 0.2 ? 2 : avg < 0.42 ? 1 : 0;
   }
   const list = stick.balls.map((b, i, a) => ({ off: b.off, rel: slotRel(i, a.length), v: b.v, kind: b.kind }));
@@ -84,7 +86,6 @@ function handOut() {
       b.kind = pick(OTHER_KINDS);
       balls.push(b);
     }
-    addPop(t('pop.more'), L.cx, L.cy - L.R * L.sq * 0.6, '#ffd0c4', 18);
   }
   updateHUD();
 }

@@ -186,8 +186,15 @@ function collide() {
     }
   }
 }
+// 1 at the start of a game, rising to BOIL_MAX as the clock runs down
+function boilLevel() {
+  if (state !== 'play' && state !== 'paused') return 1;
+  const done = clamp(1 - timeLeft / GAME_TIME, 0, 1);
+  return 1 + (BOIL_MAX - 1) * Math.pow(done, 1.3);
+}
 function physics(dt) {
-  const flow = L.R * 0.16 * LEVELS[playLevel].flow;
+  const boil = boilLevel();
+  const flow = L.R * 0.16 * LEVELS[playLevel].flow * boil;
   for (const b of balls) {
     if (b.drop > 0) {
       b.drop = Math.max(0, b.drop - dt * 2.4);
@@ -198,9 +205,19 @@ function physics(dt) {
     // a slow simmering swirl plus a wandering current
     const tx = (-b.y / d) * flow * (d / L.rin) + Math.sin(tNow * 0.6 + b.phase * 3) * flow * 0.5;
     const ty = (b.x / d) * flow * (d / L.rin) + Math.cos(tNow * 0.8 + b.phase * 2) * flow * 0.5;
-    const k = 1 - Math.exp(-1.1 * dt);
+    const k = 1 - Math.exp(-1.1 * boil * dt);
     b.vx += (tx - b.vx) * k; b.vy += (ty - b.vy) * k;
     b.x += b.vx * dt; b.y += b.vy * dt;
   }
+  // rolling boil: bubbles rise at random spots, and each one bumps whatever is floating there
+  const rate = 1.5 * Math.pow(boil, 2.4);
+  if (Math.random() < rate * dt) {
+    const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * L.rin;
+    const bx = Math.cos(a) * d, by = Math.sin(a) * d;
+    bubbles.push({ x: bx, y: by, t: 0, life: rand(0.35, 0.7), s: rand(0.26, 0.48) * (0.8 + boil * 0.25) });
+    impulse(bx, by, L.r * 2.6, L.R * 0.22 * boil);
+  }
+  bubbles.forEach((q) => (q.t += dt));
+  bubbles = bubbles.filter((q) => q.t < q.life);
   collide(); collide();
 }

@@ -29,7 +29,7 @@ function update(dt) {
   ripples.forEach((r) => (r.t += dt)); ripples = ripples.filter((r) => r.t < 0.7);
   pops.forEach((p) => (p.t += dt)); pops = pops.filter((p) => p.t < 0.9);
 
-  if (!reduceMotion && Math.random() < dt * 8) {
+  if (!reduceMotion && Math.random() < dt * 8 * Math.sqrt(boilLevel())) {
     steam.push({ x: L.cx + rand(-0.7, 0.7) * L.R, y: L.cy + rand(-0.3, 0.3) * L.R * L.sq, t: 0, life: rand(1.6, 2.6), s: rand(0.8, 1.4), vx: rand(-8, 8) });
   }
   steam.forEach((p) => { p.t += dt; p.y -= dt * L.R * 0.28; p.x += p.vx * dt; });
@@ -52,6 +52,10 @@ function update(dt) {
     const d = c.tx - c.x;
     c.x += Math.sign(d) * Math.min(Math.abs(d), walk);
   }
+  for (const c of customers) if (c.bubbleT > 0) c.bubbleT -= dt;
+  // nobody poked anything for a while: the customer gets impatient
+  const front = customers.find((q) => !q.served);
+  if (state === 'play' && tNow - lastHitT > 3.5 && front && !(front.bubbleT > 0)) customerSay('say.slow', { nag: true });
   for (const c of leavers) {
     c.bubbleT -= dt;
     if (c.wait > 0) c.wait -= dt; else c.x += walk * 0.9;
@@ -110,7 +114,7 @@ cv.addEventListener('pointercancel', release);
 
 // ---------- game flow ----------
 function setChips(enabled) {
-  $('open-board').disabled = !enabled; $('open-history').disabled = !enabled;
+  $('open-history').disabled = !enabled;
   $('pause').disabled = enabled;
 }
 function pauseGame() {
@@ -146,13 +150,14 @@ document.addEventListener('keydown', (e) => {
 });
 function startGame() {
   playLevel = level;
-  if (cleanName($('name-intro').value) !== Store.name) Store.setName($('name-intro').value);
   initAudio();
   if (ac && ac.state === 'suspended') ac.resume();
   state = 'play';
   timeLeft = GAME_TIME; score = 0; sticks = 0; served = 0; perfects = 0; slips = 0; wrong = 0;
   stick.balls = []; stick.pressed = false; stick.needLift = false;
-  flyers = []; pops = [];
+  flyers = []; pops = []; bubbles = [];
+  lastHitT = tNow; lastNagT = {};
+  customers.forEach((c) => { c.bubbleT = 0; });
   seedBalls();
   $('intro').hidden = true; $('result').hidden = true; $('board').hidden = true;
   setChips(false);
@@ -173,10 +178,9 @@ function fillResult(run, res) {
   $('r-wrong').textContent = t('n.items', run.wrong);
   $('r-wrong').hidden = $('r-wrong-l').hidden = lv !== 'hard';
   if (!res) return;
-  $('r-best').textContent = t('n.pts', Math.max(run.score, Store.localBest(lv), (Store.mine[lv] && Store.mine[lv].best) || 0));
-  const place = Store.place(lv);
-  $('r-place').textContent = res.saved === 'test' ? t('r.test') : place ? t('r.rank', place) : t('r.localOnly');
-  $('r-save').textContent = res.saved === 'readonly' ? t('r.readonly') : res.saved === 'test' ? t('r.testNote') : '';
+  $('r-best').textContent = t('n.pts', Math.max(run.score, Store.localBest(lv)));
+  $('r-place').textContent = t('r.rank', Store.place(run));
+  $('r-save').textContent = t('r.privacy');
 }
 function showPauseInfo() {
   $('pause-info').textContent = t('pause.info', levelLabel(playLevel), timeLeft.toFixed(1), score);
@@ -201,14 +205,12 @@ async function endGame() {
   lastRun = run;
   $('share-text').hidden = true;
   $('toast').textContent = '';
-  syncNameInputs();
   fillResult(run, null);
   $('r-new').hidden = true;
-  $('r-place').textContent = t('r.saving');
   $('r-save').textContent = '';
   const shown = new Promise((res) => setTimeout(res, 900));
-  let res = { isNew: false, saved: 'local' };
-  try { res = await Store.saveRun(run); } catch (e) {}
+  let res = { isNew: false };
+  try { res = Store.saveRun(run); } catch (e) {}
   await shown;
   $('r-new').hidden = !res.isNew;
   lastSave = res;
@@ -220,12 +222,7 @@ $('start').addEventListener('click', startGame);
 $('again').addEventListener('click', () => { level = playLevel; startGame(); });
 
 // ---------- boot ----------
-// The claude.ai viewer can swap in a new version of this page while it is open;
-// booting through its update hook makes the new version start cleanly.
-let booted = false;
 function start() {
-  if (booted) return;
-  booted = true;
   resize();
   for (let i = 0; i < 4; i++) spawnCustomer(slotX(i));
   updateHUD();
@@ -241,11 +238,4 @@ function start() {
   }
   requestAnimationFrame(frame);
 }
-const hot = window.claude && window.claude.hot;
-try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ name: Store.name })); } catch (e) {}
-try {
-  if (hot && typeof hot.ready === 'function') hot.ready(start);
-  else start();
-} catch (e) { start(); }
-// fallback in case the viewer's hook never calls back
-setTimeout(start, 1500);
+start();

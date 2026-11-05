@@ -34,8 +34,10 @@ const L = {};
 let balls = [], ripples = [], pops = [], steam = [], flyers = [], customers = [], leavers = [];
 let state = 'ready';
 let timeLeft = GAME_TIME, score = 0, sticks = 0, served = 0, perfects = 0, slips = 0, wrong = 0;
-let level = 'normal', playLevel = 'normal', lbLevel = 'normal';
+let level = 'normal', playLevel = 'normal', recLevel = 'normal';
 let tNow = 0, refillTimer = 0;
+let bubbles = [];   // boiling bubbles on the curry surface
+let lastHitT = 0, lastNagT = {};   // for customers who get impatient or comment on bad pokes
 let bg = null, sprites = null;
 let lastRun = null;
 const stick = {

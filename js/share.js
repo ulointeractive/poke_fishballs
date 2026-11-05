@@ -8,7 +8,7 @@ function toast(msg) {
   toastTimer = setTimeout(() => { $('toast').textContent = ''; }, 4000);
 }
 function shareText(r) {
-  return `${t('share.text', Store.name, r, r.level === 'hard')}\n${SHARE_URL}`;
+  return `${t('share.text', r, r.level === 'hard')}\n${SHARE_URL}`;
 }
 $('share').addEventListener('click', async () => {
   if (!lastRun) return;
@@ -39,7 +39,7 @@ function resultImage(r) {
   g.font = `900 110px ${fd}`; g.fillText(t('sign.title'), 540, 185);
   g.fillStyle = '#fbfbf8'; g.fillRect(80, 320, 920, 680);
   g.fillStyle = '#2b1f17';
-  g.font = `700 48px ${fb}`; g.fillText((Store.name || t('img.subtitle')) + (r.level === 'hard' ? t('img.hard') : ''), 540, 410);
+  g.font = `700 48px ${fb}`; g.fillText(t('img.subtitle') + (r.level === 'hard' ? t('img.hard') : ''), 540, 410);
   g.font = `900 260px ${fd}`; g.fillText(String(r.score), 540, 600);
   g.font = `700 48px ${fb}`; g.fillStyle = '#6d625a'; g.fillText(t('unit.pts'), 540, 750);
   g.font = `400 40px ${fb}`;
@@ -54,27 +54,14 @@ function resultImage(r) {
   }
   return new Promise((res) => c.toBlob((b) => res(b), 'image/png'));
 }
-let downloads = null;
+// save the result image as a PNG file on the player's device
 $('save-img').addEventListener('click', async () => {
   if (!lastRun) return;
   const blob = await resultImage(lastRun);
   if (!blob) return;
-  if (downloads) {
-    try { await downloads.save({ filename: t('img.file', lastRun.score), data: blob }); toast(t('toast.imgSaved')); }
-    catch (e) { toast(t('toast.imgSkipped')); }
-  } else {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = t('img.file', lastRun.score);
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = t('img.file', lastRun.score);
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast(t('toast.imgSaved'));
 });
-(async () => {
-  const inClaude = !!(window.claude && typeof window.claude.use === 'function');
-  if (inClaude) {
-    try { downloads = await window.claude.use('downloads'); } catch (e) { downloads = null; }
-    $('save-img').hidden = !downloads;
-  } else {
-    $('save-img').hidden = false;
-  }
-})();
