@@ -112,7 +112,7 @@ updateMuteButton();
 langListeners.push(updateMuteButton);
 
 // ---------- background music ----------
-// Four original tracks made in code; the player picks one on the start screen. Each keeps the same tempo
+// Five original tracks made in code; the player picks one on the start screen. Each keeps the same tempo
 // for the whole game. As time runs out it gets more intense without speeding up: a key change up at 20 s
 // and again at 10 s, busier hi-hats from 20 s, and snare rolls and a ticking clock in the last 10 seconds.
 // Notes are semitones from A4 (440 Hz); null = rest. One step = a 16th note; 16 steps = one bar.
@@ -120,12 +120,12 @@ const MUSIC_VOL = 1;
 const hz = (n) => 440 * Math.pow(2, n / 12);
 let musicTimer = 0, musicStep = 0, musicNext = 0;
 // one synth note: an oscillator (plus a slightly detuned twin when asked) through a low-pass filter
-function synth(type, n, at, dur, vol, cutoff = 8000, twin = false) {
+function synth(type, n, at, dur, vol, cutoff = 8000, twin = false, out = musicOut) {
   const f = ac.createBiquadFilter(), g = ac.createGain();
   f.type = 'lowpass'; f.frequency.setValueAtTime(cutoff, at);
   g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.008);
   g.gain.setValueAtTime(vol, at + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-  f.connect(g).connect(musicOut);
+  f.connect(g).connect(out);
   for (const cents of twin ? [-8, 8] : [0]) {
     const o = ac.createOscillator();
     o.type = type; o.frequency.setValueAtTime(hz(n), at); o.detune.value = cents;
@@ -142,7 +142,17 @@ const kick = (at, vol = 0.9) => drum(160, 42, 0.22, vol, at);
 const snare = (at, vol = 0.4) => { noise('bandpass', 1900, 1500, 0.14, vol, 0, musicOut, at); drum(220, 180, 0.07, vol * 0.3, at); };
 const clap = (at, vol = 0.35) => { [0, 0.012, 0.024].forEach((d) => noise('bandpass', 1300, 1100, 0.09, vol, 0, musicOut, at + d)); };
 const hat = (at, vol) => noise('highpass', 8000, 8000, 0.025, vol, 0, musicOut, at);
-const chord = (type, notes, at, dur, vol, cutoff, twin) => notes.forEach((n) => synth(type, n, at, dur, vol, cutoff, twin));
+const chord = (type, notes, at, dur, vol, cutoff, twin, out) => notes.forEach((n) => synth(type, n, at, dur, vol, cutoff, twin, out));
+// a guitar-amp style distortion, shared by everything that goes through it (made once per audio context)
+function distortion() {
+  if (ac.fishDist) return ac.fishDist;
+  const ws = ac.createWaveShaper(), c = new Float32Array(1024), tone = ac.createBiquadFilter(), g = ac.createGain();
+  for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(6 * x); }
+  ws.curve = c; tone.type = 'lowpass'; tone.frequency.value = 3200; g.gain.value = 0.35;
+  ws.connect(tone).connect(g).connect(musicOut);
+  ac.fishDist = ws;
+  return ws;
+}
 const lead = (seq, step, at, len, fn) => {
   const n = seq[step % seq.length]; if (n === null) return;
   let hold = 1; while (hold < 4 && seq[(step + hold) % seq.length] === null) hold++;
@@ -175,76 +185,93 @@ const MUSIC = {
       lead(this.lead, step, at, len, (n, d) => synth('sawtooth', n + lift, at, d, 0.11, 2600, true));
     },
   },
-  // 2. 放克 / Funky: groovy street funk in E (Em7 - A7 - Em7 - Cmaj7 - B7), slap bass and guitar-like stabs
-  funk: {
-    bpm: 108,
-    bars: [
-      { root: -29, ch: [-5, -2, 2, 5] }, { root: -24, ch: [0, 4, 7, 10] },
-      { root: -29, ch: [-5, -2, 2, 5] }, { root: -24, ch: [0, 4, 7, 10] },
-      { root: -29, ch: [-5, -2, 2, 5] }, { root: -24, ch: [0, 4, 7, 10] },
-      { root: -21, ch: [3, 7, 10, 14] }, { root: -22, ch: [2, 6, 9, 12] },
-    ],
-    bassline: [0, null, null, 12, null, null, 0, null, 10, null, 0, null, null, 12, null, 7],
-    lead: [
-      19, null, 17, 19, null, 22, null, 19, null, 17, null, 14, null, null, 12, null,
-      null, null, null, null, 14, null, 16, null, 19, null, null, null, 16, null, 14, null,
-    ],
-    note(step, at, len, lift) {
-      const s = step % 16, b = this.bars[Math.floor(step / 16) % this.bars.length];
-      if (s === 0 || s === 7 || s === 10) kick(at, 0.85);
-      if (s === 4 || s === 12) clap(at);
-      if (s === 15) snare(at, 0.12);                         // ghost note
-      hat(at, s % 2 ? 0.05 : 0.1);
-      const bn = this.bassline[s];
-      if (bn !== null) synth('square', b.root + 12 + bn + lift, at, len * 1.4, 0.2, 900);
-      if (s === 3 || s === 6 || s === 11 || s === 14) chord('sawtooth', b.ch.map((n) => n + 12 + lift), at, 0.07, 0.035, 2400);
-      if (Math.floor(step / 16) % 2 === 1 || step % 64 >= 32)
-        lead(this.lead, step, at, len, (n, d) => synth('square', n + lift, at, d, 0.07, 3000));
-    },
-  },
-  // 3. 倒數 / Countdown: dramatic game-show tension in D minor (Dm - Bb - Gm - A), string ostinato and brass hits
-  countdown: {
+  // 2. 電音 / Dance: club house in G minor (Gm - F - Eb - F), off-beat bass, open hats, piano-like stabs, plucked lead
+  dance: {
     bpm: 126,
     bars: [
-      { root: -19, os: [-7, -4, 0, 5], top: 12 }, { root: -23, os: [-11, -7, -4, 1], top: 13 },
-      { root: -26, os: [-14, -11, -7, -2], top: 10 }, { root: -24, os: [-12, -8, -5, 0], top: 16 },
-    ],
-    note(step, at, len, lift) {
-      const s = step % 16, b = this.bars[Math.floor(step / 16) % 4];
-      if (s === 0 || s === 8) kick(at, 0.8);
-      if (s === 0 || s === 3 || s === 6) drum(130, 70, 0.3, 0.45, at);   // timpani-like toms
-      if (s === 12) snare(at, 0.35);
-      if (s % 2 === 0) hat(at, 0.06);
-      synth('sawtooth', b.os[[0, 2, 1, 3, 2, 1, 3, 2][s % 8]] + lift, at, len * 0.7, 0.08, 1800, true);
-      if (s === 0) { chord('sawtooth', [b.os[0], b.os[1] + 12, b.os[2] + 12].map((n) => n + lift), at, 0.4, 0.06, 1500, true); synth('triangle', b.root + lift, at, len * 14, 0.25, 500); }
-      if (s === 0) synth('triangle', b.top + lift, at, len * 15, 0.06, 4000);
-    },
-  },
-  // 4. 8-bit: bright, happy chiptune in C major (C - G - Am - F)
-  chip: {
-    bpm: 150,
-    bars: [
-      { root: -21, ch: [3, 7, 10, 15] }, { root: -26, ch: [-2, 2, 5, 10] },
-      { root: -24, ch: [0, 3, 7, 12] }, { root: -28, ch: [-4, 0, 3, 8] },
+      { root: -26, ch: [-2, 1, 5] }, { root: -28, ch: [-4, 0, 3] },
+      { root: -30, ch: [-6, -2, 1] }, { root: -28, ch: [-4, 0, 3] },
     ],
     lead: [
-      10, null, 15, null, 14, null, 10, null, 7, null, 10, null, 12, null, 10, null,
-      7, null, null, 7, 5, null, 7, null, 10, null, null, null, 5, null, 2, null,
-      3, null, 7, null, 12, null, 10, null, 7, null, 3, null, 7, null, 10, null,
-      8, null, 12, null, 15, null, 14, null, 12, null, 10, null, 8, null, 7, null,
+      17, null, 17, null, 20, null, 22, null, null, 20, null, 17, null, 15, null, null,
+      17, null, null, 17, 18, null, 17, null, 15, null, null, 13, null, 15, null, null,
     ],
     note(step, at, len, lift) {
       const s = step % 16, b = this.bars[Math.floor(step / 16) % 4];
-      if (s === 0 || s === 8 || s === 10) drum(120, 50, 0.12, 0.7, at);
-      if (s === 4 || s === 12) noise('highpass', 1500, 1500, 0.09, 0.3, 0, musicOut, at);
-      if (s % 2 === 0) hat(at, 0.06);
-      if (s % 2 === 0) synth('triangle', b.root + 12 + (s % 4 === 2 ? 7 : 0) + lift, at, len * 1.6, 0.3, 4000);
-      synth('square', b.ch[s % 4] + 12 + lift, at, len * 0.6, 0.025, 6000);
-      lead(this.lead, step, at, len, (n, d) => synth('square', n + 12 + lift, at, d, 0.07, 7000));
+      if (s % 4 === 0) kick(at, 0.95);
+      if (s === 4 || s === 12) clap(at, 0.4);
+      hat(at, 0.035);
+      if (s % 4 === 2) { noise('highpass', 7000, 7000, 0.14, 0.12, 0, musicOut, at); synth('sawtooth', b.root + 12 + lift, at, len * 1.8, 0.28, 520); }
+      if ([2, 5, 8, 11, 14].includes(s)) chord('sawtooth', b.ch.map((n) => n + 12 + lift), at, 0.12, 0.035, 2800, true);
+      lead(this.lead, step, at, len, (n, d) => { synth('triangle', n + lift, at, Math.min(d, 0.2), 0.16, 6000); synth('square', n + lift + 12, at, 0.05, 0.02, 5000); });
+    },
+  },
+  // 3. 搖滾 / Rock: driving rock in E minor (Em - C - D - B), distorted power chords and a guitar lead
+  rock: {
+    bpm: 152,
+    roots: [-17, -21, -19, -22],
+    lead: [
+      19, null, null, null, 17, null, 14, null, 12, null, 14, null, 17, null, null, null,
+      15, null, null, null, 14, null, 12, null, 10, null, 12, null, 14, null, null, null,
+      17, null, null, null, 19, null, 17, null, 14, null, 12, null, 14, null, null, null,
+      14, null, null, null, 18, null, null, null, 21, null, null, null, 18, null, null, null,
+    ],
+    note(step, at, len, lift) {
+      const s = step % 16, r = this.roots[Math.floor(step / 16) % 4] + lift, dist = distortion();
+      if (s === 0 || s === 6 || s === 8 || s === 10) kick(at, 0.9);
+      if (s === 4 || s === 12) snare(at, 0.5);
+      if (s % 2 === 0) noise('highpass', 5000, 5000, 0.08, 0.07, 0, musicOut, at);   // ride
+      if (s % 2 === 0) synth('square', r - 12, at, len * 1.8, 0.2, 700);              // bass
+      if (s === 0 || s === 10) chord('sawtooth', [r, r + 7, r + 12], at, len * 5, 0.09, 4000, false, dist);
+      else if (s % 2 === 0) chord('sawtooth', [r, r + 7], at, len * 0.9, 0.07, 1400, false, dist);   // palm-muted chugs
+      if (Math.floor(step / 64) % 2 === 1) lead(this.lead, step, at, len, (n, d) => synth('sawtooth', n + lift, at, d, 0.06, 3500, true, dist));
+    },
+  },
+  // 4. 疾速 / Rush: drum and bass in D minor (Dm - Bb - C - A), fast breakbeat and a deep, growling bass
+  rush: {
+    bpm: 174,
+    roots: [-31, -35, -33, -36],
+    lead: [
+      17, null, null, 15, null, null, 12, null, null, null, 10, null, 12, null, null, null,
+      13, null, null, 12, null, null, 10, null, null, null, 8, null, 10, null, null, null,
+      15, null, null, 13, null, null, 10, null, null, null, 8, null, 7, null, null, null,
+      16, null, null, 12, null, null, 7, null, null, null, 4, null, 7, null, null, null,
+    ],
+    note(step, at, len, lift) {
+      const s = step % 16, r = this.roots[Math.floor(step / 16) % 4] + lift;
+      if (s === 0 || s === 10) kick(at, 0.95);
+      if (s === 4 || s === 12) snare(at, 0.55);
+      if (s === 7 || s === 14) snare(at, 0.14);                                        // ghost snares
+      if (s % 2 === 0) hat(at, 0.08); else hat(at, 0.03);
+      if (s === 0 || s === 8) synth('sawtooth', r + 12, at, len * 7.5, 0.2, 380, true); // growling bass
+      lead(this.lead, step, at, len, (n, d) => synth('square', n + lift, at, d, 0.06, 4200, true));
+    },
+  },
+  // 5. 狂飆 / Turbo: Eurobeat in B minor (Bm - G - A - F#), bouncing octave bass and a bright, fast lead
+  turbo: {
+    bpm: 156,
+    bars: [
+      { root: -22, ch: [2, 5, 9] }, { root: -26, ch: [-2, 2, 5] },
+      { root: -24, ch: [0, 4, 7] }, { root: -27, ch: [-3, 1, 4] },
+    ],
+    lead: [
+      14, null, 14, 12, 14, null, 17, null, 14, null, 12, null, 9, null, 12, null,
+      10, null, 10, 9, 10, null, 14, null, 10, null, 9, null, 5, null, 9, null,
+      12, null, 12, 10, 12, null, 16, null, 17, null, 16, null, 12, null, 16, null,
+      16, null, null, null, 13, null, null, null, 9, null, 13, null, 16, null, 21, null,
+    ],
+    note(step, at, len, lift) {
+      const s = step % 16, b = this.bars[Math.floor(step / 16) % 4];
+      if (s % 4 === 0) kick(at, 0.9);
+      if (s === 4 || s === 12) snare(at, 0.45);
+      if (s % 4 === 2) noise('highpass', 7000, 7000, 0.1, 0.1, 0, musicOut, at);
+      if (s % 2 === 0) synth('sawtooth', b.root + 12 + (s % 4 === 2 ? 12 : 0) + lift, at, len * 1.6, 0.22, 900);
+      if (s === 0 || s === 6 || s === 12) chord('sawtooth', b.ch.map((n) => n + 12 + lift), at, 0.1, 0.03, 3000, true);
+      lead(this.lead, step, at, len, (n, d) => synth('sawtooth', n + 12 + lift, at, d, 0.08, 5000, true));
     },
   },
 };
-const MUSIC_STYLES = ['arcade', 'funk', 'countdown', 'chip'];
+const MUSIC_STYLES = ['arcade', 'dance', 'rock', 'rush', 'turbo'];
 let musicStyle = 'arcade';
 try { const m = localStorage.getItem('fishball-music'); if (MUSIC_STYLES.includes(m)) musicStyle = m; } catch (e) {}
 
