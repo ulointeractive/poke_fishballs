@@ -137,10 +137,10 @@ function drum(f0, f1, dur, vol, at) {
   g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
   o.connect(g).connect(musicOut); o.start(at); o.stop(at + dur + 0.02);
 }
-// kick: the pitch drops almost at once to a low C (65 Hz, the key's root), so it thumps instead of sliding through other notes
-const kick = (at, vol = 0.9) => {
+// kick: the pitch drops almost at once to the current chord's root, two octaves down (f), so it thumps in tune
+const kick = (at, vol = 0.9, f = 55) => {
   const o = ac.createOscillator(), g = ac.createGain();
-  o.frequency.setValueAtTime(150, at); o.frequency.exponentialRampToValueAtTime(65.4, at + 0.03);
+  o.frequency.setValueAtTime(150, at); o.frequency.exponentialRampToValueAtTime(f, at + 0.03);
   g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.2);
   o.connect(g).connect(musicOut); o.start(at); o.stop(at + 0.22);
 };
@@ -167,13 +167,13 @@ function track(cfg) {
   }, cfg, {
     note(step, at, len, lift, tense) {
       const s = step % 16, bar = Math.floor(step / 16) % this.roots.length, r = this.roots[bar] + lift, ch = this.chords[bar];
-      if (this.kicks.includes(s)) kick(at, 0.9);
+      if (this.kicks.includes(s)) { let f = hz(r - 12); while (f > 70) f /= 2; kick(at, 0.9, f); }
       if (this.snares.includes(s)) snare(at, 0.42);
       hat(at, s % 2 ? this.hats : this.hats * 0.35);
       if (Array.isArray(this.bass)) { const o = this.bass[s]; if (o !== null) synth('square', r + 12 + o, at, len * 1.4, 0.2, 900); }
       else if (this.bass === 'soft') { if (s % 4 === 0 || s === 7 || s === 10) synth('triangle', r + 12, at, len * 2.5, 0.35, 1200); }
       else if (s % 2 === 0) synth('sawtooth', r + (s % 4 === 2 ? 12 : 0), at, len * 1.7, 0.22, 650);
-      if (this.pad && s === 0) ch.forEach((n) => synth('triangle', n + lift, at, len * 16, 0.05, 2000));
+      if (this.pad && s === 0) ch.forEach((n) => synth('triangle', n + lift, at, len * 16, 0.2 / ch.length, 2000));
       if (this.keys && this.keys.includes(s)) ch.forEach((n) => synth(this.keysWave, n + 12 + lift, at, len * 1.2, 0.03, this.keysCut));
       if (this.arp) synth('sawtooth', ch[[0, 1, 2, 3, 2, 1, 2, 3][s % 8]] + 12 + lift + (tense ? 12 : 0), at, len * 0.8, 0.03, 2200);
       if (this.lead && (!this.leadHalf || Math.floor(step / 64) % 2 === 1))
@@ -183,11 +183,11 @@ function track(cfg) {
 }
 const MUSIC = {
   // The game's track: a driving beat (drums, pumping bass, soft held chords), no melody, in a bright major key.
-  // C major (Cmaj7 - G - Am7 - Fmaj7), 124 bpm.
+  // C major, plain three-note chords voiced close together: C (C E G) - G (B D G) - Am (C E A) - F (C F A), 124 bpm.
   main: track({
     bpm: 124, pad: true,
     roots: [-21, -26, -24, -28],
-    chords: [[3, 7, 10, 14], [-2, 2, 5, 10], [0, 3, 7, 10], [-4, 0, 3, 7]],
+    chords: [[3, 7, 10], [2, 5, 10], [3, 7, 12], [3, 8, 12]],
   }),
 };
 // the track the game plays (one of the keys above)
