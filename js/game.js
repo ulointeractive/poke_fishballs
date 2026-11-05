@@ -119,6 +119,32 @@ function release() {
   updateHUD();
 }
 cv.addEventListener('pointerup', release);
+
+// ---------- no zooming on phones ----------
+// Fast tapping looks like a double-tap to iPhone Safari, which then zooms the page in (and the page
+// can't scroll, so it can't be zoomed back out). Blocking the touch events stops that; the pointer
+// events above still arrive, so poking works as before.
+['touchstart', 'touchmove', 'touchend'].forEach((type) => cv.addEventListener(type, (e) => e.preventDefault(), { passive: false }));
+// a double-tap anywhere else on the page (not on a button) must not zoom either
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = e.timeStamp;
+  if (now - lastTouchEnd < 400 && !e.target.closest('button, a, input, textarea')) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+// iPhone pinch gestures
+['gesturestart', 'gesturechange'].forEach((type) => document.addEventListener(type, (e) => e.preventDefault()));
+// if the page still ends up zoomed in somehow, put it back to normal size
+if (window.visualViewport) {
+  const meta = document.querySelector('meta[name=viewport]');
+  window.visualViewport.addEventListener('resize', () => {
+    if (window.visualViewport.scale > 1.01 && meta) {
+      const c = meta.content;
+      meta.content = c.replace('maximum-scale=1', 'maximum-scale=1.01');
+      requestAnimationFrame(() => { meta.content = c; });
+    }
+  });
+}
 cv.addEventListener('pointercancel', release);
 
 // ---------- game flow ----------
