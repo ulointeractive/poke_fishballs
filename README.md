@@ -1,6 +1,6 @@
 # 篤魚蛋 Poke Fishballs
 
-![篤魚蛋 Poke Fishballs: a bamboo stick of six curry fishballs](assets/thumbnail.png)
+![篤魚蛋 Poke Fishballs: a stick of six curry fishballs pointing up over a pot of curry at the stall](assets/thumbnail.png)
 
 **Mini games to poke the most fishballs in one minute.**
 
