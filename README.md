@@ -131,7 +131,7 @@ Shown at the end of each game:
 
 ## Pausing and restarting
 
-- Press **暫停** in the top bar during a game. **Esc** or **P** on a keyboard also work.
+- Press the **pause** button (two bars) in the top bar during a game. It turns into a play button while paused. **Esc** or **P** on a keyboard also work.
 - The game pauses on its own if you switch to another app or tab.
 - While paused, the clock and the pot are frozen. The pause screen shows the level, time left and score, with three choices:
   - **繼續**: carry on.
@@ -200,7 +200,7 @@ Anyone opening the shared link needs access to the artifact. Set its sharing (or
 | Miss into the curry | Water-drop "plip" with a tiny splash |
 | Slip, wrong item, poking outside the pot | Silent |
 
-**聲音 開 / 關** (Sound on / off) turns all sound on or off. Sound starts after the first tap, as browsers require. On iPhone, the side silent switch also mutes the game.
+The **speaker** button turns all sound on or off; it shows a crossed-out speaker while muted. Sound starts after the first tap, as browsers require. On iPhone, the side silent switch also mutes the game.
 
 ---
 

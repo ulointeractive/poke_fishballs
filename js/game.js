@@ -119,22 +119,24 @@ function pauseGame() {
   stick.pressed = false; stick.needLift = false;
   showPauseInfo();
   $('paused').hidden = false;
-  $('pause').textContent = t('btn.paused');
+  updatePauseButton();
 }
 function resumeGame() {
   if (state !== 'paused') return;
   $('paused').hidden = true;
-  $('pause').textContent = t('btn.pause');
   state = 'play';
+  updatePauseButton();
 }
+function updatePauseButton() { setIconButton($('pause'), state === 'paused' ? 'play' : 'pause', t(state === 'paused' ? 'btn.resume' : 'btn.pause')); }
+updatePauseButton();
 $('pause').addEventListener('click', () => { if (state === 'play') pauseGame(); else resumeGame(); });
 $('resume').addEventListener('click', resumeGame);
-$('restart').addEventListener('click', () => { $('paused').hidden = true; $('pause').textContent = t('btn.pause'); level = playLevel; startGame(); });
+$('restart').addEventListener('click', () => { $('paused').hidden = true; level = playLevel; startGame(); updatePauseButton(); });
 $('quit').addEventListener('click', () => {
   // leave without saving this game
-  $('paused').hidden = true; $('pause').textContent = t('btn.pause');
+  $('paused').hidden = true;
   state = 'ready'; stick.balls = []; score = 0; sticks = 0; timeLeft = GAME_TIME;
-  updateHUD(); setChips(true);
+  updateHUD(); setChips(true); updatePauseButton();
   $('intro').hidden = false; setLevel(playLevel);
 });
 // pause by itself if the player switches away mid-game
@@ -180,7 +182,7 @@ function showPauseInfo() {
   $('pause-info').textContent = t('pause.info', levelLabel(playLevel), timeLeft.toFixed(1), score);
 }
 langListeners.push(() => {
-  $('pause').textContent = t(state === 'paused' ? 'btn.paused' : 'btn.pause');
+  updatePauseButton();
   if (state === 'paused') showPauseInfo();
   if (!$('result').hidden) fillResult(lastRun, lastSave);
 });
