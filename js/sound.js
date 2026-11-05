@@ -111,8 +111,8 @@ function sound(kind) {
   else if (kind === 'off') { tone('square', 150, 105, 0.16, 0.2); tone('sine', 210, 120, 0.2, 0.6); noise('lowpass', 500, 150, 0.1, 0.25); }
   // slipped off: a slow, wet slide down the side of the fishball, then a little splash
   else if (kind === 'slip') { slide(0.7); setTimeout(() => { if (ac && !muted) loud(() => droplet(0.14, 0.06)); }, 680); }
-  // poked the wrong item: a buzzer, "eh-eh"
-  else if (kind === 'wrong') { tone('sawtooth', 180, 170, 0.15, 0.3); tone('sawtooth', 180, 165, 0.22, 0.3, 0.18); tone('sine', 140, 90, 0.3, 0.5); tone('square', 360, 340, 0.15, 0.08); tone('square', 360, 330, 0.22, 0.08, 0.18); }
+  // poked the wrong item: "uh-oh", two falling notes
+  else if (kind === 'wrong') { tone('square', 659, 640, 0.16, 0.22); tone('triangle', 659, 640, 0.16, 0.3); tone('square', 523, 440, 0.32, 0.22, 0.2); tone('triangle', 523, 440, 0.32, 0.3, 0.2); }
   else if (kind === 'whoosh') noise('bandpass', 500, 2400, 0.28, 0.14);
   else if (kind === 'serve0') serveSound(0);
   else if (kind === 'serve1') serveSound(1);

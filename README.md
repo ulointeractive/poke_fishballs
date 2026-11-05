@@ -217,7 +217,7 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 | Centre hit | A clean poke and a bright, rising "ting-ting!", and a gold **正中！+2** |
 | Off-centre hit | A dull, wobbly "bonk" with no chime, and an orange **篤歪咗 +1** |
 | Slipped off (篤太邊) | A slow, wet slide (about 0.7 seconds), then a little splash |
-| Wrong item (挑戰) | A buzzer, "eh-eh" |
+| Wrong item (挑戰) | "Uh-oh": two falling notes |
 | New item reaches the surface | A soft "bloop" |
 | Stick handed over | A whoosh as the stick flies over |
 | Customer gets a neat stick | Cash-drawer "ka-ching" and a rising run of bells (with a sparkle for a very neat stick) |
