@@ -135,21 +135,29 @@ function pickKind() {
   if (!othersShare()) return 'fish';
   return countKind(true) < wantFish() ? 'fish' : pick(OTHER_KINDS);
 }
+// how long an item floats before it sinks out of sight (seconds); the other stuff comes and goes faster
+function floatTime(kind) { return kind === 'fish' ? rand(10, 18) : rand(6, 10); }
 function makeBall(x, y, drop = 0) {
-  return { x, y, vx: 0, vy: 0, phase: Math.random() * TAU, v: Math.floor(Math.random() * VARIANTS), drop, kind: pickKind() };
+  const kind = pickKind();
+  return { x, y, vx: 0, vy: 0, phase: Math.random() * TAU, v: Math.floor(Math.random() * VARIANTS), drop, kind,
+    age: 0, life: floatTime(kind), sink: 0 };
 }
 function seedBalls() {
   flowSeed = Math.random() * 100;   // every game's currents start somewhere different
   balls = [];
   for (let i = 0; i < LEVELS[playLevel].count; i++) {
     const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * L.rin;
-    balls.push(makeBall(Math.cos(a) * d, Math.sin(a) * d));
+    const b = makeBall(Math.cos(a) * d, Math.sin(a) * d);
+    b.age = rand(0, b.life * 0.9);   // so they don't all sink at the same moment
+    balls.push(b);
   }
   for (let k = 0; k < 60; k++) collide();
 }
 function ballScreen(b) {
   const bob = Math.sin(tNow * 2.3 + b.phase) * L.r * 0.07;
-  return { sx: L.cx + b.x, sy: L.cy + b.y * L.sq + bob - b.drop * b.drop * L.R * 0.9 };
+  // in its last second an item bobs lower, then slides under the curry
+  const warn = clamp((b.age - b.life + 1) / 1, 0, 1) * L.r * 0.18;
+  return { sx: L.cx + b.x, sy: L.cy + b.y * L.sq + bob - b.drop * b.drop * L.R * 0.9 + warn + (b.sink || 0) * L.r * 1.1 };
 }
 function impulse(fx, fy, radius, strength) {
   for (const b of balls) {
@@ -164,9 +172,9 @@ function impulse(fx, fy, radius, strength) {
 function collide() {
   const min = L.r * 2.02;
   for (let i = 0; i < balls.length; i++) {
-    const a = balls[i]; if (a.drop > 0) continue;
+    const a = balls[i]; if (a.drop > 0 || a.sink > 0.3) continue;
     for (let j = i + 1; j < balls.length; j++) {
-      const c = balls[j]; if (c.drop > 0) continue;
+      const c = balls[j]; if (c.drop > 0 || c.sink > 0.3) continue;
       const dx = c.x - a.x, dy = c.y - a.y, dd = dx * dx + dy * dy;
       if (dd < min * min && dd > 1e-6) {
         const d = Math.sqrt(dd), o = (min - d) / 2, nx = dx / d, ny = dy / d;
@@ -222,6 +230,12 @@ function physics(dt) {
       if (b.drop === 0) { ripples.push({ x: b.x, y: b.y, t: 0 }); impulse(b.x, b.y, L.r * 3, L.R * 0.25); sound('plop'); }
       continue;
     }
+    // after floating for a while, an item sinks out of sight; the stall drops new ones in
+    b.age += dt;
+    if (b.age > b.life) {
+      if (!b.sink) ripples.push({ x: b.x, y: b.y, t: 0 });
+      b.sink = Math.min(1, b.sink + dt * 1.5);
+    }
     // the curry's current where this item is, plus its own small wobble
     const [fx, fy] = flowAt(b.x, b.y);
     const tx = fx * flow * 1.1 + Math.sin(tNow * 0.6 + b.phase * 3) * flow * 0.45;
@@ -238,6 +252,7 @@ function physics(dt) {
     bubbles.push({ x: bx, y: by, t: 0, life: rand(0.35, 0.7), s: rand(0.26, 0.48) * (0.8 + boil * 0.25) });
     impulse(bx, by, L.r * 2.6, L.R * 0.22 * boil);
   }
+  balls = balls.filter((b) => b.sink < 1);
   bubbles.forEach((q) => (q.t += dt));
   bubbles = bubbles.filter((q) => q.t < q.life);
   collide(); collide();

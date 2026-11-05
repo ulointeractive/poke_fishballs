@@ -38,7 +38,7 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 5. **Release** to lift the stick, then press again to poke the next one.
 6. When a stick has **6 items** on it, lifting the stick hands it to the next customer automatically, and you get a fresh stick.
 
-Works with a mouse or a touch screen. The dots next to **呢串** show how many items are on the current stick.
+Works with a mouse or a touch screen. The dots next to **呢串** show how many items are on the current stick and how each one went on: gold with a glow for a centre hit, orange and nudged to one side for an off-centre hit (篤歪咗), red for a wrong item.
 
 ---
 
@@ -65,7 +65,8 @@ When items overlap, the poke hits the one in front.
 
 ### The pot
 
-- Fishballs float and drift in a slow swirl of simmering curry.
+- Fishballs float and drift in every direction: a few eddies turn both ways and wander around the pot, and the whole pot swirls gently clockwise, then anticlockwise. The pattern starts differently each game.
+- **Items don't stay forever.** After floating for a while (fishballs 10–18 seconds, other items 6–10 seconds), an item bobs lower for a second, then sinks out of sight and can no longer be poked. New items keep dropping in, so the pot is always changing.
 - Every poke pushes nearby items away with a ripple. Dragging the stick while it's down in the pot stirs the items around it.
 - **The curry boils harder as time runs out.** It starts at a gentle simmer. Bubbles rise more and more often and bump the fishballs, and the current speeds up to 2.6× by the last second, so the last 20 seconds are the hardest. (The pot calms down again after the game.)
 - The stall keeps topping up the pot: a new item drops in about every 0.25 seconds whenever the pot is below its target.
@@ -211,14 +212,17 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 
 | Moment | Sound |
 |---|---|
-| Fishball poked | Soft "pop" |
-| Centre hit | Pop plus a bright chime |
-| Stick handed over | Two-note "ding" |
+| Background music | An original, cheerful street-stall tune in a five-note scale, during a game only. It speeds up a little as the curry boils harder, and stops on pause and at the end. |
+| Centre hit | Pop plus a bright chime, and a gold **正中！+2** |
+| Off-centre hit | A duller, lower thunk, and an orange **篤歪咗 +1** |
+| Stick handed over | A whoosh as the stick flies over |
+| Customer gets a neat stick | Cash-drawer "ka-ching" and a rising run of bells (with a sparkle for a very neat stick) |
+| Customer gets a crooked stick or a wrong item | A sad "wah-wah" |
 | New item drops into the pot | Small "plop" |
 | Miss into the curry | Water-drop "plip" with a tiny splash |
 | Slip, wrong item, poking outside the pot | Silent |
 
-The **speaker** button turns all sound on or off; it shows a crossed-out speaker while muted. Sound starts after the first tap, as browsers require. On iPhone, the side silent switch also mutes the game.
+The **speaker** button turns all sound and music on or off; it shows a crossed-out speaker while muted. Sound starts after the first tap, as browsers require. On iPhone, the side silent switch also mutes the game.
 
 ---
 
@@ -323,7 +327,7 @@ js/i18n.js        every on-screen text in Cantonese and English, and the languag
 js/state.js       page elements, small helpers, live game state
 js/records.js     my games (ranked), deleting data
 js/share.js       share text and result image
-js/sound.js       sound effects
+js/sound.js       sound effects and background music
 js/layout.js      fitting the scene to the screen, street background
 js/items.js       what's in the pot: item artwork, which items appear, floating physics
 js/poke.js        poking, hits and misses, scoring, handing sticks to customers

@@ -91,6 +91,11 @@ function drawBalls() {
       ctx.fillStyle = `rgba(60,25,0,${0.25 * (1 - b.drop)})`;
       ctx.beginPath(); ctx.ellipse(cx + b.x, cy + b.y * sq + L.r * 0.3, L.r * 0.8, L.r * 0.8 * sq, 0, 0, TAU); ctx.fill();
       drawItem(s.sx, s.sy, b.kind, b.v, 'plain');
+    } else if (b.sink > 0) {
+      // sinking: fades into the curry as it goes under
+      ctx.globalAlpha = Math.max(0, 1 - b.sink);
+      drawItem(s.sx, s.sy, b.kind, b.v, 'pot');
+      ctx.globalAlpha = 1;
     } else {
       drawItem(s.sx, s.sy, b.kind, b.v, 'pot');
     }

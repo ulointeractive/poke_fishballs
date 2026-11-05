@@ -19,7 +19,7 @@ function resolvePoke() {
   const reach = L.r * 1.25;
   let hit = null, hs = null, hd = Infinity;
   for (const b of balls) {
-    if (b.drop > 0.05) continue;
+    if (b.drop > 0.05 || b.sink > 0.35) continue;
     const s = ballScreen(b), dx = tx - s.sx, dy = ty - s.sy, d = dx * dx + dy * dy;
     if (d < reach * reach && d < hd) { hit = b; hs = s; hd = d; }
   }
@@ -53,8 +53,9 @@ function resolvePoke() {
       perfects++; score += 1 + CENTER_BONUS;
       sound('perfect'); addPop(t('pop.perfect', 1 + CENTER_BONUS), tx, ty - 30, '#ffe27a', 22);
     } else {
+      // off-centre: worth 1, and it should be obvious that it wasn't a centre hit
       score += 1;
-      sound('poke'); addPop('+1', tx, ty - 30, '#fff', 18);
+      sound('off'); addPop(t('pop.off'), tx, ty - 30, '#ffb36b', 19);
     }
   }
   updateHUD();
@@ -79,7 +80,7 @@ function handOut() {
   flyers.push({ balls: list, x0: stick.x, y0: tipY(), t: 0, target, say, mood });
   stick.balls = [];
   sticks++;
-  sound('ding');
+  sound('whoosh');
   const cfg = LEVELS[playLevel];
   if (cfg.dropPerStick && state === 'play') {
     // every finished stick drops more of the other stuff into the pot

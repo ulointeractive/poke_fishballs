@@ -56,7 +56,7 @@ const STRINGS = {
     'pause.info': (lv, t, s) => `${lv}關 · 仲有 ${t} 秒 · ${s} 分`,
     'rank.0': '傳說級魚蛋佬', 'rank.1': '魚蛋師傅', 'rank.2': '熟手學徒', 'rank.3': '新嚟幫手', 'rank.4': '篤到手軟',
     'pop.timeUp': '時間到！', 'pop.air': '篤空氣', 'pop.miss': '冇中', 'pop.slip': '滑走咗！',
-    'pop.wrong': (kind, p) => `篤錯${kind}！−${p}`, 'pop.perfect': (p) => `正中！+${p}`,
+    'pop.wrong': (kind, p) => `篤錯${kind}！−${p}`, 'pop.perfect': (p) => `正中！+${p}`, 'pop.off': '篤歪咗 +1',
     // what customers say. A line written as (k) => `...${k}...` mentions the wrong item that was poked.
     'say.great': ['正呀！', '好靚！', '一流！', '串得好靚仔', '師傅好手勢！'],
     'say.ok': ['唔該！', '多謝！', '唔該晒', '幾好吖'],
@@ -127,7 +127,7 @@ const STRINGS = {
     'pause.info': (lv, t, s) => `${lv} · ${t}s left · ${s} pts`,
     'rank.0': 'Fishball Legend', 'rank.1': 'Fishball Master', 'rank.2': 'Skilled Apprentice', 'rank.3': 'New Helper', 'rank.4': 'Sore Arms',
     'pop.timeUp': "Time's up!", 'pop.air': 'Poked the air', 'pop.miss': 'Miss', 'pop.slip': 'Slipped!',
-    'pop.wrong': (kind, p) => `${kind}! −${p}`, 'pop.perfect': (p) => `Centre! +${p}`,
+    'pop.wrong': (kind, p) => `${kind}! −${p}`, 'pop.perfect': (p) => `Centre! +${p}`, 'pop.off': 'Off-centre +1',
     'say.great': ['Perfect!', 'Beautiful!', 'Top class!', 'What a neat stick!', 'Nice hands, boss!'],
     'say.ok': ['Thanks!', 'Cheers!', 'Thanks a lot', 'Not bad'],
     'say.bad': ['So crooked…', 'Bit wonky…', 'Leaning like the Tower of Pisa', 'How did it get this crooked?', 'Wiggly as a snake'],
