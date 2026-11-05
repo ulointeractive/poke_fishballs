@@ -232,6 +232,26 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
 .summary b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
 .summary span { font-size: 12px; color: var(--muted); }
 .hint { margin: 0; font-size: 12px; color: var(--muted); text-align: center; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.field-row { display: flex; gap: 8px; }
+.field input {
+  font: inherit; font-size: 16px; color: var(--ink);
+  flex: 1; min-width: 0;
+  border: 2px solid var(--line); border-radius: 6px; padding: 8px 10px; background: #fff;
+}
+.field input:focus-visible { outline: none; border-color: var(--sign); }
+.btn.small { font-size: 14px; padding: 8px 12px; border-bottom-width: 3px; }
+.champ {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--sign); color: #fff; border-radius: 6px; padding: 10px 12px;
+}
+.champ small { display: block; font-size: 11px; color: #f6d9cf; letter-spacing: 0.1em; }
+.champ .who { font-weight: 700; font-size: 16px; }
+.champ .pts { color: var(--gold); font-family: var(--font-display); font-size: 26px; }
+.champ .pts small { display: inline; color: #f6d9cf; }
+.record-line { font-size: 14px; color: var(--sign-deep); background: #f6ece0; border-radius: 6px; padding: 6px 10px; }
+.share-text { font: inherit; font-size: 13px; width: 100%; box-sizing: border-box; border: 2px solid var(--line); border-radius: 6px; padding: 8px; resize: none; }
+.toast { font-size: 13px; color: #1f6b3a; min-height: 1em; }
 @media (max-width: 420px) {
   .hud { gap: 10px; }
   .val { font-size: 19px; }
@@ -247,15 +267,13 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     </div>
     <div class="hud">
       <div class="hud-item"><span class="lbl">時間</span><span class="val" id="hud-time">60.0</span></div>
-      <div class="hud-item"><span class="lbl">魚蛋</span><span class="val" id="hud-score">0</span></div>
+      <div class="hud-item"><span class="lbl">分數</span><span class="val" id="hud-score">0</span></div>
       <div class="hud-item"><span class="lbl">串</span><span class="val" id="hud-sticks">0</span></div>
       <button class="mute" id="mute" type="button" aria-pressed="false">聲音 開</button>
     </div>
   </header>
 
   <div class="meter">
-    <span>呢串</span>
-    <div class="dots" id="dots" aria-label="呢串魚蛋數量"></div>
     <div class="timebar" aria-hidden="true"><i id="timebar"></i></div>
     <button class="chip" id="open-board" type="button">排行榜</button>
     <button class="chip" id="open-history" type="button">我嘅紀錄</button>
@@ -271,9 +289,13 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         <ol class="steps">
           <li>對準魚蛋，㩒落去篤<small>Press down on a fishball to poke it</small></li>
           <li>放手提起竹籤，再篤下一粒<small>Release to lift, then poke the next one</small></li>
-          <li>一串六粒，自動交俾客人<small>Six per stick, handed to the customer</small></li>
+          <li>一串要六粒。自己數，數夠就將竹籤拉上去客人度放手<small>Six per stick. Count them yourself, then drag the stick up to the customer and let go</small></li>
         </ol>
-        <p class="note">篤偏咗，魚蛋喺竹籤上都會偏。篤得太邊，魚蛋會滑走。</p>
+        <p class="note">啱啱好六粒：每粒 1 分，再加 2 分。唔夠六粒，客人會嬲，冇獎分。多過六粒，多出嚟嘅當送，唔計分。篤得太邊，魚蛋會滑走。</p>
+        <p class="record-line" id="intro-record" hidden></p>
+        <label class="field" for="name-intro">排行榜用嘅名
+          <input id="name-intro" type="text" maxlength="12" autocomplete="nickname" placeholder="例如：氹仔魚蛋王">
+        </label>
         <button class="btn" id="start" type="button">開檔！ Start</button>
       </div>
     </div>
@@ -282,15 +304,30 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       <div class="card">
         <h2 id="rank">魚蛋師傅</h2>
         <span class="flag" id="r-new" hidden>新紀錄！</span>
-        <div class="big"><b id="r-score">0</b><span>粒魚蛋</span></div>
+        <div class="big"><b id="r-score">0</b><span>分</span></div>
         <dl class="stats">
           <dt>交咗俾客人</dt><dd id="r-sticks">0 串</dd>
+          <dt>啱啱好六粒</dt><dd id="r-exact">0 串</dd>
+          <dt>賣出魚蛋</dt><dd id="r-served">0 粒</dd>
           <dt>正中紅心</dt><dd id="r-perfect">0 次</dd>
           <dt>滑走咗</dt><dd id="r-slip">0 次</dd>
-          <dt>你嘅最佳</dt><dd id="r-best">0 粒</dd>
+          <dt>你嘅最佳</dt><dd id="r-best">0 分</dd>
           <dt>排行榜</dt><dd id="r-place">—</dd>
         </dl>
         <p class="note" id="r-save"></p>
+        <div class="field">
+          <label for="name-result">排行榜用嘅名</label>
+          <div class="field-row">
+            <input id="name-result" type="text" maxlength="12" autocomplete="nickname" placeholder="例如：氹仔魚蛋王">
+            <button class="btn small" id="save-name" type="button">儲存</button>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn ghost" id="share" type="button">分享成績</button>
+          <button class="btn ghost" id="save-img" type="button" hidden>儲存成績圖</button>
+        </div>
+        <textarea class="share-text" id="share-text" rows="3" readonly hidden aria-label="成績文字"></textarea>
+        <p class="toast" id="toast" aria-live="polite"></p>
         <div class="row">
           <button class="btn" id="again" type="button">再篤過</button>
           <button class="btn ghost" id="r-board" type="button">睇排行榜</button>
@@ -305,6 +342,10 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
           <button class="tab" id="tab-hist" role="tab" type="button" aria-selected="false">我嘅紀錄</button>
         </div>
         <section id="pane-lb">
+          <div class="champ" id="champ" hidden>
+            <span class="who"><small>紀錄保持者</small><span id="champ-name"></span></span>
+            <span class="pts" id="champ-pts"></span>
+          </div>
           <ol class="list" id="lb-list"></ol>
           <p class="note" id="lb-note"></p>
         </section>
@@ -327,10 +368,14 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
 <script>
 (() => {
   const TAU = Math.PI * 2;
-  const STICK_CAP = 6;
+  const STICK_CAP = 8;          // physical room on one bamboo stick
+  const ORDER = 6;              // what each customer wants
+  const EXACT_BONUS = 2;
   const GAME_TIME = 60;
   const BALL_COUNT = 30;
+  const REFILL_EVERY = 0.25;    // seconds between new fishballs dropped into the pot
   const HISTORY_MAX = 50;
+  const SHARE_URL = 'https://claude.ai/artifact/Q3pvQLryEHuyTrhSmoiqeC';
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const $ = (id) => document.getElementById(id);
@@ -339,9 +384,6 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   const stage = $('stage');
   const hudTime = $('hud-time'), hudScore = $('hud-score'), hudSticks = $('hud-sticks');
   const timebar = $('timebar');
-  const dotsEl = $('dots');
-  for (let i = 0; i < STICK_CAP; i++) { const d = document.createElement('span'); d.className = 'dot'; dotsEl.appendChild(d); }
-  const dotEls = [...dotsEl.children];
 
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -353,10 +395,16 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   const L = {};
   let balls = [], ripples = [], pops = [], steam = [], flyers = [], customers = [], leavers = [];
   let state = 'ready';
-  let timeLeft = GAME_TIME, score = 0, sticks = 0, perfects = 0, slips = 0;
+  let timeLeft = GAME_TIME, score = 0, sticks = 0, exact = 0, served = 0, perfects = 0, slips = 0;
   let tNow = 0, refillTimer = 0;
   let bg = null, sprites = null;
-  const stick = { balls: [], depth: 0, pressed: false, resolved: false, x: 0, y: 0, hasPointer: false };
+  let lastRun = null;
+  const stick = {
+    balls: [], depth: 0, pressed: false, resolved: false, x: 0, y: 0, hasPointer: false,
+    needLift: false,   // the stick must come back up before it can poke again
+    zonePress: false,  // pressed up at the counter, not in the pot
+    pressY: 0, vy: 0, lastT: 0,
+  };
 
   // ---------- records: shared leaderboard + personal history ----------
   // Online (inside claude.ai): leaderboard in `scores/<viewer id>`, history private in `data/users/<id>/history`.
@@ -364,10 +412,12 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   const Store = {
     mode: 'local', db: null, user: null, uid: null, canSave: true,
     leaders: [], lbLoaded: false, lbTimedOut: false,
-    history: [], mine: null,
+    history: [], mine: null, name: '',
 
     async init() {
       this.loadLocal();
+      try { this.name = cleanName(localStorage.getItem('fishball-name') || ''); } catch (e) {}
+      syncNameInputs();
       try {
         if (window.claude && typeof window.claude.use === 'function') {
           const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
@@ -394,7 +444,9 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         renderBoards();
       }, () => { this.lbTimedOut = true; clearTimeout(timer); renderBoards(); });
       this.db.doc('scores/' + this.uid).onSnapshot((d) => {
-        this.mine = d.exists ? d.data() : null; renderBoards();
+        this.mine = d.exists ? d.data() : null;
+        if (!this.name && this.mine && this.mine.name) { this.name = cleanName(this.mine.name); syncNameInputs(); }
+        renderBoards();
       }, () => {});
       this.db.doc('data/users/' + this.uid + '/history').onSnapshot((d) => {
         this.history = (d.exists && Array.isArray(d.data().runs)) ? d.data().runs : [];
@@ -409,11 +461,12 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         try {
           await this.db.doc('data/users/' + this.uid + '/history').set({ runs });
           const games = (this.mine && this.mine.games || 0) + 1;
-          const top = isNew ? { best: run.score, sticks: run.sticks, perfects: run.perfects, at: run.at }
-            : { best: prevBest, sticks: this.mine.sticks || 0, perfects: this.mine.perfects || 0, at: this.mine.at || run.at };
-          await this.db.doc('scores/' + this.uid).set({ ...top, games });
+          const top = isNew ? { best: run.score, sticks: run.sticks, exact: run.exact, perfects: run.perfects, at: run.at }
+            : { best: prevBest, sticks: this.mine.sticks || 0, exact: this.mine.exact || 0, perfects: this.mine.perfects || 0, at: this.mine.at || run.at };
+          const doc = { ...top, games, name: this.name };
+          await this.db.doc('scores/' + this.uid).set(doc);
           this.history = runs;
-          this.mine = { ...top, games };
+          this.mine = doc;
           return { isNew, saved: 'cloud' };
         } catch (e) {
           this.canSave = false;
@@ -423,6 +476,20 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       this.mine = { best: Math.max(prevBest, run.score) };
       try { localStorage.setItem('fishball-history', JSON.stringify(runs)); } catch (e) {}
       return { isNew, saved: this.mode === 'cloud' ? 'readonly' : 'local' };
+    },
+    async setName(raw) {
+      this.name = cleanName(raw);
+      try { localStorage.setItem('fishball-name', this.name); } catch (e) {}
+      syncNameInputs();
+      if (this.mode === 'cloud' && this.canSave && this.mine) {
+        try {
+          const doc = { ...this.mine, name: this.name };
+          await this.db.doc('scores/' + this.uid).set(doc);
+          this.mine = doc;
+        } catch (e) { this.canSave = false; return false; }
+      }
+      renderBoards();
+      return true;
     },
     place() {
       if (this.mode !== 'cloud' || !this.mine) return null;
@@ -439,6 +506,27 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   function li(cls) { const el = document.createElement('li'); if (cls) el.className = cls; return el; }
   function emptyRow(text) { const el = li('empty'); el.textContent = text; return el; }
 
+  function cleanName(s) {
+    return String(s || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
+  }
+  function syncNameInputs() {
+    for (const id of ['name-intro', 'name-result']) {
+      const el = $(id);
+      if (document.activeElement !== el) el.value = Store.name;
+    }
+  }
+  // the all-time record stays on top until somebody beats it
+  function showChamp(name, pts) {
+    const box = $('champ'), line = $('intro-record');
+    if (name == null) { box.hidden = true; line.hidden = true; return; }
+    $('champ-name').textContent = name;
+    $('champ-pts').textContent = pts;
+    const u = document.createElement('small'); u.textContent = ' 分'; $('champ-pts').appendChild(u);
+    box.hidden = false;
+    line.textContent = Store.mode === 'cloud' ? `現時紀錄：${name}，${pts} 分。你破唔破到？` : `你喺呢部機嘅最高分：${pts} 分`;
+    line.hidden = false;
+  }
+
   let renderSeq = 0;
   async function renderBoards() {
     const seq = ++renderSeq;
@@ -450,19 +538,22 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       if (!Store.lbLoaded) {
         lb.replaceChildren(emptyRow(Store.lbTimedOut ? '暫時連唔到排行榜，遲啲再試。' : '載入緊…'));
       } else if (!Store.leaders.length) {
+        showChamp(null);
         lb.replaceChildren(emptyRow('未有人上榜，你做第一個！'));
       } else {
         const ps = await Store.user.profiles(Store.leaders.map((r) => r.id));
         if (seq !== renderSeq) return;
+        const nameOf = (r) => cleanName(r.name) || (ps[r.id] && ps[r.id].name) || '無名英雄';
+        showChamp(nameOf(Store.leaders[0]), Store.leaders[0].best);
         lb.replaceChildren(...Store.leaders.map((r, i) => {
           const row = li(r.id === Store.uid ? 'me' : '');
           const pos = document.createElement('span'); pos.className = 'pos'; pos.textContent = i + 1;
           const who = document.createElement('span'); who.className = 'who';
-          const nm = (ps[r.id] && ps[r.id].name) || '玩家';
+          const nm = nameOf(r);
           who.textContent = r.id === Store.uid ? nm + '（你）' : nm;
-          const sub = document.createElement('small'); sub.textContent = `${r.sticks || 0} 串 · 正中 ${r.perfects || 0} 次`; who.appendChild(sub);
+          const sub = document.createElement('small'); sub.textContent = `${r.sticks || 0} 串 · 啱啱好 ${r.exact || 0} 串`; who.appendChild(sub);
           const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = r.best;
-          const u = document.createElement('small'); u.textContent = '粒'; pts.appendChild(u);
+          const u = document.createElement('small'); u.textContent = '分'; pts.appendChild(u);
           row.append(pos, who, pts);
           return row;
         }));
@@ -470,14 +561,15 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     } else {
       note.textContent = '而家係離線模式：排行榜只計呢部機玩過嘅分數。';
       const top = [...Store.history].sort((a, b) => b.score - a.score).slice(0, 10);
+      if (top.length) showChamp(Store.name || '你', top[0].score); else showChamp(null);
       if (!top.length) lb.replaceChildren(emptyRow('未有紀錄，玩一局先！'));
       else lb.replaceChildren(...top.map((r, i) => {
         const row = li();
         const pos = document.createElement('span'); pos.className = 'pos'; pos.textContent = i + 1;
-        const who = document.createElement('span'); who.className = 'who'; who.textContent = '你';
+        const who = document.createElement('span'); who.className = 'who'; who.textContent = Store.name || '你';
         const sub = document.createElement('small'); sub.textContent = fmtDate(r.at); who.appendChild(sub);
         const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = r.score;
-        const u = document.createElement('small'); u.textContent = '粒'; pts.appendChild(u);
+        const u = document.createElement('small'); u.textContent = '分'; pts.appendChild(u);
         row.append(pos, who, pts);
         return row;
       }));
@@ -494,10 +586,12 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       const row = li(r.score === best ? 'me' : '');
       const who = document.createElement('span'); who.className = 'who';
       who.textContent = fmtDate(r.at);
-      const sub = document.createElement('small'); sub.textContent = `${r.sticks} 串 · 正中 ${r.perfects} · 滑走 ${r.slips}`; who.appendChild(sub);
+      const sub = document.createElement('small');
+      sub.textContent = r.exact != null ? `${r.sticks} 串（啱啱好 ${r.exact}）· 正中 ${r.perfects} · 滑走 ${r.slips}` : `${r.sticks} 串 · 正中 ${r.perfects} · 滑走 ${r.slips}`;
+      who.appendChild(sub);
       const bar = document.createElement('div'); bar.className = 'bar'; bar.style.width = `${best ? Math.max(4, (r.score / best) * 100) : 0}%`; who.appendChild(bar);
       const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = r.score;
-      const u = document.createElement('small'); u.textContent = '粒'; pts.appendChild(u);
+      const u = document.createElement('small'); u.textContent = '分'; pts.appendChild(u);
       row.append(who, pts);
       return row;
     }));
@@ -520,6 +614,95 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   $('tab-lb').addEventListener('click', () => showTab('lb'));
   $('tab-hist').addEventListener('click', () => showTab('hist'));
   $('close-board').addEventListener('click', () => { $('board').hidden = true; });
+
+  // ---------- name ----------
+  $('name-intro').addEventListener('change', (e) => { Store.setName(e.target.value); });
+  async function saveResultName() {
+    const ok = await Store.setName($('name-result').value);
+    toast(ok ? (Store.name ? `已儲存：${Store.name}` : '已清除名') : '儲存唔到名：你冇權限寫入排行榜。');
+  }
+  $('save-name').addEventListener('click', saveResultName);
+  $('name-result').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveResultName(); } });
+
+  // ---------- sharing ----------
+  let toastTimer = 0;
+  function toast(msg) {
+    $('toast').textContent = msg;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { $('toast').textContent = ''; }, 4000);
+  }
+  function shareText(r) {
+    const who = Store.name ? `${Store.name}喺` : '我喺';
+    return `${who}「篤魚蛋」一分鐘攞咗 ${r.score} 分！交咗 ${r.sticks} 串（啱啱好六粒 ${r.exact} 串），正中 ${r.perfects} 次。你破唔破到？\n${SHARE_URL}`;
+  }
+  $('share').addEventListener('click', async () => {
+    if (!lastRun) return;
+    const text = shareText(lastRun);
+    const box = $('share-text');
+    if (navigator.share) {
+      try { await navigator.share({ text }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('成績已複製，貼去 WhatsApp 或者 IG 啦！');
+    } catch (e) {
+      box.value = text; box.hidden = false; box.focus(); box.select();
+      toast('揀晒段文字再複製。');
+    }
+  });
+
+  function resultImage(r) {
+    const c = document.createElement('canvas');
+    c.width = 1080; c.height = 1080;
+    const g = c.getContext('2d');
+    const fb = fontBody(), fd = getComputedStyle(document.documentElement).getPropertyValue('--font-display');
+    g.fillStyle = '#d3e5d9'; g.fillRect(0, 0, 1080, 1080);
+    g.strokeStyle = '#bdd4c5'; g.lineWidth = 4;
+    for (let i = 0; i <= 1080; i += 60) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 1080); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(1080, i); g.stroke(); }
+    g.fillStyle = '#a8231b'; g.fillRect(80, 80, 920, 200);
+    g.fillStyle = '#f4c55a'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `900 110px ${fd}`; g.fillText('咖喱魚蛋', 540, 185);
+    g.fillStyle = '#fbfbf8'; g.fillRect(80, 320, 920, 680);
+    g.fillStyle = '#2b1f17';
+    g.font = `700 48px ${fb}`; g.fillText(Store.name || '一分鐘挑戰', 540, 410);
+    g.font = `900 260px ${fd}`; g.fillText(String(r.score), 540, 600);
+    g.font = `700 48px ${fb}`; g.fillStyle = '#6d625a'; g.fillText('分', 540, 750);
+    g.font = `400 40px ${fb}`;
+    g.fillText(`${r.sticks} 串 · 啱啱好 ${r.exact} 串 · 正中 ${r.perfects} 次`, 540, 830);
+    g.fillStyle = '#a8231b'; g.font = `700 40px ${fb}`; g.fillText('你破唔破到？', 540, 920);
+    // a little stick of fishballs
+    g.fillStyle = '#d9b877'; g.fillRect(930, 340, 10, 260);
+    for (let i = 0; i < 6; i++) {
+      const y = 370 + i * 38, grd = g.createRadialGradient(925, y - 8, 2, 935, y, 20);
+      grd.addColorStop(0, '#fde9b0'); grd.addColorStop(0.6, '#e2a845'); grd.addColorStop(1, '#a8661d');
+      g.fillStyle = grd; g.beginPath(); g.arc(935, y, 19, 0, TAU); g.fill();
+    }
+    return new Promise((res) => c.toBlob((b) => res(b), 'image/png'));
+  }
+  let downloads = null;
+  $('save-img').addEventListener('click', async () => {
+    if (!lastRun) return;
+    const blob = await resultImage(lastRun);
+    if (!blob) return;
+    if (downloads) {
+      try { await downloads.save({ filename: `篤魚蛋-${lastRun.score}分.png`, data: blob }); toast('成績圖已儲存。'); }
+      catch (e) { toast('冇儲存成績圖。'); }
+    } else {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = `篤魚蛋-${lastRun.score}分.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }
+  });
+  (async () => {
+    const inClaude = !!(window.claude && typeof window.claude.use === 'function');
+    if (inClaude) {
+      try { downloads = await window.claude.use('downloads'); } catch (e) { downloads = null; }
+      $('save-img').hidden = !downloads;
+    } else {
+      $('save-img').hidden = false;
+    }
+  })();
 
   // ---------- sound ----------
   let ac = null, muted = false, bangBuf = null;
@@ -568,6 +751,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     else if (kind === 'miss') bang(0.55, 5000);
     else if (kind === 'slip') bang(0.3, 2500);
     else if (kind === 'ding') { tone('sine', 1320, 1320, 0.25, 0.12); tone('sine', 1760, 1760, 0.35, 0.1, 0.09); }
+    else if (kind === 'meh') { tone('sine', 660, 660, 0.18, 0.1); tone('sine', 520, 520, 0.25, 0.08, 0.1); }
     else if (kind === 'plop') tone('sine', 300, 120, 0.08, 0.08);
   }
   $('mute').addEventListener('click', () => {
@@ -776,6 +960,11 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     const tx = stick.x, ty = stick.y;
     const fx = tx - L.cx, fy = (ty - L.cy) / L.sq;
     if (!inCurry(tx, ty)) { sound('miss'); addPop('篤空氣', tx, ty - 24, '#3b3330', 15); return; }
+    if (stick.balls.length >= STICK_CAP) {
+      sound('miss'); impulse(fx, fy, L.r * 3, L.R * 0.4);
+      addPop('竹籤冇位喇！', tx, ty - 24, '#ffd0c4', 16);
+      return;
+    }
     ripples.push({ x: fx, y: fy, t: 0 });
 
     let hit = null, hs = null;
@@ -801,25 +990,44 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     }
     balls.splice(balls.indexOf(hit), 1);
     stick.balls.push({ off, rel: hs.sy - ty, v: hit.v });
-    score++;
     impulse(fx, fy, L.r * 4.2, L.R * 0.75);
     if (Math.abs(off) < 0.18) { perfects++; sound('perfect'); addPop('正中！', tx, ty - 30, '#ffe27a', 22); }
-    else { sound('poke'); addPop('+1', tx, ty - 30, '#fff', 18); }
-    updateHUD();
+    else sound('poke');
   }
 
+  // The player hands the stick over: whatever is on it is what the customer gets.
   function handOut() {
+    const n = stick.balls.length;
+    if (!n) return;
     const target = customers.find((c) => !c.served);
     if (!target) return;
     target.served = true;
-    const avg = stick.balls.reduce((s, b) => s + Math.abs(b.off), 0) / stick.balls.length;
-    const say = avg < 0.2 ? pick(['正呀！', '好靚！']) : avg < 0.42 ? pick(['唔該！', '多謝！']) : pick(['咁歪嘅…', '歪咗喎']);
-    const mood = avg < 0.2 ? 2 : avg < 0.42 ? 1 : 0;
+    const avg = stick.balls.reduce((s, b) => s + Math.abs(b.off), 0) / n;
+    let gained, say, mood, popText, popColor;
+    if (n === ORDER) {
+      gained = ORDER + EXACT_BONUS; exact++;
+      say = avg < 0.25 ? pick(['正呀！', '好靚！']) : pick(['唔該！', '多謝！']);
+      mood = avg < 0.25 ? 2 : 1;
+      popText = `啱啱好！+${gained}`; popColor = '#ffe27a';
+    } else if (n < ORDER) {
+      gained = n;
+      say = pick(['唔夠喎！', '得咁少？', '呃秤呀！']);
+      mood = 0;
+      popText = `唔夠六粒 +${gained}`; popColor = '#ffd0c4';
+    } else {
+      gained = ORDER;
+      say = pick(['多咗喎，多謝晒！', '老闆好人！']);
+      mood = 2;
+      popText = `送咗 ${n - ORDER} 粒 +${gained}`; popColor = '#fff2d6';
+    }
+    score += gained;
+    served += Math.min(n, ORDER);
+    sticks++;
     const list = stick.balls.map((b, i, a) => ({ off: b.off, rel: slotRel(i, a.length), v: b.v }));
     flyers.push({ balls: list, x0: stick.x, y0: tipY(), t: 0, target, say, mood });
+    addPop(popText, clamp(stick.x, 70, W - 70), Math.max(30, stick.y - 20), popColor, 20);
     stick.balls = [];
-    sticks++;
-    sound('ding');
+    sound(n === ORDER ? 'ding' : 'meh');
     updateHUD();
   }
 
@@ -1016,7 +1224,21 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     ctx.clearRect(0, 0, W, H);
     if (bg) ctx.drawImage(bg, 0, 0, W, H);
     const people = customers.concat(leavers).sort((a, b) => a.x - b.x);
+    const next = customers.find((c) => !c.served);
+    if (state === 'play' && next && stick.balls.length && inCounter(stick.y)) {
+      // show who will receive the stick
+      const s = custScale(next);
+      ctx.fillStyle = 'rgba(244,197,90,0.45)';
+      ctx.beginPath(); ctx.ellipse(next.x, L.top - 50 * s, 34 * s, 62 * s, 0, 0, TAU); ctx.fill();
+    }
     for (const c of people) drawCustomer(c);
+    if (state === 'play' && next && stick.balls.length && inCounter(stick.y)) {
+      ctx.font = `900 ${Math.max(13, L.top * 0.1)}px ${fontBody()}`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(60,25,10,0.8)'; ctx.fillStyle = '#ffe27a';
+      ctx.strokeText('放手交俾佢', next.x, L.top * 0.1 + 8);
+      ctx.fillText('放手交俾佢', next.x, L.top * 0.1 + 8);
+    }
     drawPot();
     drawBalls();
     drawSteam();
@@ -1050,9 +1272,11 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
       timeLeft -= dt;
       if (timeLeft <= 0) { timeLeft = 0; endGame(); }
     }
-    const target = stick.pressed ? 1 : 0;
-    stick.depth += (target - stick.depth) * Math.min(1, dt * (stick.pressed ? 22 : 14));
-    if (stick.pressed && !stick.resolved && stick.depth > 0.85) { stick.resolved = true; if (state === 'play') resolvePoke(); }
+    // a new poke has to start from a lifted stick: down -> up -> down
+    if (stick.needLift && stick.depth < 0.35) stick.needLift = false;
+    const plunging = stick.pressed && !stick.zonePress && !stick.needLift;
+    stick.depth += ((plunging ? 1 : 0) - stick.depth) * Math.min(1, dt * (plunging ? 22 : 14));
+    if (plunging && !stick.resolved && stick.depth > 0.85) { stick.resolved = true; if (state === 'play') resolvePoke(); }
 
     stick.balls.forEach((b, i, a) => { b.rel += (slotRel(i, a.length) - b.rel) * Math.min(1, dt * 14); });
 
@@ -1060,7 +1284,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
 
     if (balls.length < BALL_COUNT) {
       refillTimer += dt;
-      if (refillTimer > 0.45) {
+      if (refillTimer > REFILL_EVERY) {
         refillTimer = 0;
         balls.push(makeBall(rand(-0.6, 0.6) * L.bx, rand(-1, -0.4) * L.by, 1));
       }
@@ -1107,7 +1331,6 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   function updateHUD() {
     hudScore.textContent = score;
     hudSticks.textContent = sticks;
-    dotEls.forEach((d, i) => d.classList.toggle('on', i < stick.balls.length));
   }
 
   // ---------- input ----------
@@ -1125,20 +1348,33 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
         }
       }
     }
+    const now = e.timeStamp || performance.now();
+    const dtm = (now - stick.lastT) / 1000;
+    if (dtm > 0 && dtm < 0.2) stick.vy = stick.vy * 0.4 + ((ny - stick.y) / dtm) * 0.6;
+    stick.lastT = now;
     stick.x = nx; stick.y = ny; stick.hasPointer = true;
   }
+  const inCounter = (y) => y < L.top + 6;
   cv.addEventListener('pointermove', setPos);
   cv.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     setPos(e);
     if (state !== 'play' || stick.pressed) return;
-    stick.pressed = true; stick.resolved = false;
+    stick.pressed = true; stick.resolved = false; stick.vy = 0;
+    stick.pressY = stick.y;
+    stick.zonePress = inCounter(stick.y);
+    if (!stick.zonePress && stick.depth >= 0.35) stick.needLift = true;
   });
   function release() {
     if (!stick.pressed) return;
     stick.pressed = false;
-    if (state === 'play' && stick.balls.length >= STICK_CAP) handOut();
+    if (state === 'play' && stick.balls.length) {
+      // hand over: let go up at the counter, or flick the stick upwards
+      const flick = stick.vy < -L.R * 6 && stick.pressY - stick.y > L.R * 0.35;
+      if (inCounter(stick.y) || flick) handOut();
+    }
+    stick.zonePress = false;
     updateHUD();
   }
   cv.addEventListener('pointerup', release);
@@ -1147,11 +1383,12 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
   // ---------- game flow ----------
   function setChips(enabled) { $('open-board').disabled = !enabled; $('open-history').disabled = !enabled; }
   function startGame() {
+    if (cleanName($('name-intro').value) !== Store.name) Store.setName($('name-intro').value);
     initAudio();
     if (ac && ac.state === 'suspended') ac.resume();
     state = 'play';
-    timeLeft = GAME_TIME; score = 0; sticks = 0; perfects = 0; slips = 0;
-    stick.balls = []; stick.pressed = false;
+    timeLeft = GAME_TIME; score = 0; sticks = 0; exact = 0; served = 0; perfects = 0; slips = 0;
+    stick.balls = []; stick.pressed = false; stick.zonePress = false; stick.needLift = false;
     flyers = []; pops = [];
     seedBalls();
     $('intro').hidden = true; $('result').hidden = true; $('board').hidden = true;
@@ -1159,10 +1396,10 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     updateHUD();
   }
   function rankFor(n) {
-    if (n >= 48) return '傳說級魚蛋佬';
-    if (n >= 36) return '魚蛋師傅';
-    if (n >= 24) return '熟手學徒';
-    if (n >= 12) return '新嚟幫手';
+    if (n >= 200) return '傳說級魚蛋佬';
+    if (n >= 150) return '魚蛋師傅';
+    if (n >= 100) return '熟手學徒';
+    if (n >= 50) return '新嚟幫手';
     return '篤到手軟';
   }
   async function endGame() {
@@ -1170,10 +1407,16 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     stick.pressed = false;
     setChips(true);
     addPop('時間到！', W / 2, L.cy - L.R * 0.2, '#ffe27a', 30);
-    const run = { score, sticks, perfects, slips, at: Date.now() };
+    const run = { score, sticks, exact, served, perfects, slips, at: Date.now() };
+    lastRun = run;
+    $('share-text').hidden = true;
+    $('toast').textContent = '';
+    syncNameInputs();
     $('rank').textContent = rankFor(score);
     $('r-score').textContent = score;
     $('r-sticks').textContent = `${sticks} 串`;
+    $('r-exact').textContent = `${exact} 串`;
+    $('r-served').textContent = `${served} 粒`;
     $('r-perfect').textContent = `${perfects} 次`;
     $('r-slip').textContent = `${slips} 次`;
     $('r-new').hidden = true;
@@ -1184,7 +1427,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
     try { res = await Store.saveRun(run); } catch (e) {}
     await shown;
     $('r-new').hidden = !res.isNew;
-    $('r-best').textContent = `${(Store.mine && Store.mine.best) || score} 粒`;
+    $('r-best').textContent = `${(Store.mine && Store.mine.best) || score} 分`;
     const place = Store.place();
     $('r-place').textContent = place ? `第 ${place} 名` : '只計呢部機';
     $('r-save').textContent = res.saved === 'readonly' ? '你嘅分數只儲存喺呢部機：你冇權限寫入排行榜。' : '';
