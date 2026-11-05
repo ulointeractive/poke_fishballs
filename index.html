@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>篤魚蛋</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+Hei+HK:wght@400;700;900&family=Chiron+Sung+HK:wght@700;900&display=swap">
+<style>
+/* Layout: one-screen street stall. Red signboard + HUD on top, the pot fills the rest, green tiled wall behind. */
+:root {
+  --tile: #d3e5d9;
+  --grout: #bdd4c5;
+  --sign: #a8231b;
+  --sign-deep: #721510;
+  --gold: #f4c55a;
+  --ink: #2b1f17;
+  --card: #fbfbf8;
+  --muted: #6d625a;
+  --curry: #cf7f1c;
+  --font-display: "Chiron Sung HK", "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --font-body: "Chiron Hei HK", "Noto Sans TC", "PingFang HK", "Microsoft JhengHei", system-ui, sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; margin: 0; }
+[hidden] { display: none !important; }
+body {
+  background-color: var(--tile);
+  background-image:
+    linear-gradient(var(--grout) 2px, transparent 2px),
+    linear-gradient(90deg, var(--grout) 2px, transparent 2px);
+  background-size: 30px 30px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+.app {
+  box-sizing: border-box;
+  height: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px;
+}
+.stall {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  background: var(--sign);
+  border: 3px solid var(--sign-deep);
+  border-radius: 6px;
+  padding: 10px 14px;
+  box-shadow: 0 3px 0 var(--sign-deep);
+}
+.sign { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sign-zh {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(26px, 6vw, 36px);
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  text-shadow: 0 2px 0 var(--sign-deep);
+  line-height: 1;
+}
+.sign-sub { color: #f6d9cf; font-size: 13px; letter-spacing: 0.08em; }
+.hud { display: flex; align-items: center; gap: 14px; }
+.hud-item { display: flex; flex-direction: column; align-items: center; min-width: 44px; }
+.lbl { font-size: 11px; color: #f6d9cf; letter-spacing: 0.1em; }
+.val {
+  font-weight: 900;
+  font-size: 22px;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.val.low { color: var(--gold); }
+.mute {
+  font: inherit;
+  font-size: 12px;
+  color: #fff;
+  background: var(--sign-deep);
+  border: 1px solid #c9554c;
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.mute:focus-visible, .btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.meter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.dots { display: flex; gap: 5px; }
+.dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid #b5782a;
+  box-sizing: border-box;
+  background: transparent;
+  transition: background 0.12s;
+}
+.dot.on { background: radial-gradient(circle at 35% 35%, #fff1c4, #f0c060 40%, #c9832a); border-color: #9c5f1c; }
+.timebar { flex: 1; height: 8px; background: var(--grout); border-radius: 4px; overflow: hidden; }
+.timebar > i { display: block; height: 100%; width: 100%; background: var(--sign); transform-origin: left; }
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 340px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 3px solid #8d9593;
+  background: #b9bfbd;
+}
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: none; display: block; }
+.overlay {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  background: rgba(43, 31, 23, 0.42);
+  padding: 16px;
+}
+.card {
+  background: var(--card);
+  border-radius: 8px;
+  border-top: 6px solid var(--sign);
+  padding: 20px 22px;
+  max-width: 400px;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card h1, .card h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--sign);
+  letter-spacing: 0.08em;
+  text-wrap: balance;
+}
+.card h1 { font-size: 34px; }
+.card h2 { font-size: 28px; }
+.card p { margin: 0; line-height: 1.6; }
+.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; line-height: 1.45; }
+.steps small, .en { color: var(--muted); font-size: 12px; display: block; }
+.note { font-size: 13px; color: var(--muted); }
+.btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--sign);
+  border: 0;
+  border-bottom: 4px solid var(--sign-deep);
+  border-radius: 6px;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+.btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+.big { font-family: var(--font-display); font-weight: 900; font-size: 56px; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.big span { font-size: 20px; margin-left: 6px; }
+.stats { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 15px; }
+.stats dt { color: var(--muted); }
+.stats dd { margin: 0; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.hint { margin: 0; font-size: 12px; color: var(--muted); text-align: center; }
+@media (max-width: 420px) {
+  .hud { gap: 10px; }
+  .val { font-size: 19px; }
+}
+</style>
+
+<div class="app">
+  <header class="stall">
+    <div class="sign">
+      <span class="sign-zh">咖喱魚蛋</span>
+      <span class="sign-sub">篤魚蛋 · 一分鐘</span>
+    </div>
+    <div class="hud">
+      <div class="hud-item"><span class="lbl">時間</span><span class="val" id="hud-time">60.0</span></div>
+      <div class="hud-item"><span class="lbl">魚蛋</span><span class="val" id="hud-score">0</span></div>
+      <div class="hud-item"><span class="lbl">串</span><span class="val" id="hud-sticks">0</span></div>
+      <button class="mute" id="mute" type="button" aria-pressed="false">聲音 開</button>
+    </div>
+  </header>
+
+  <div class="meter">
+    <span>呢串</span>
+    <div class="dots" id="dots" aria-label="呢串魚蛋數量"></div>
+    <div class="timebar" aria-hidden="true"><i id="timebar"></i></div>
+  </div>
+
+  <main class="stage" id="stage">
+    <canvas id="pot" aria-label="魚蛋煲"></canvas>
+
+    <div class="overlay" id="intro">
+      <div class="card">
+        <h1>篤魚蛋</h1>
+        <p>放學啦！同學仔排緊隊等食咖喱魚蛋。一分鐘內，你篤得到幾多粒？</p>
+        <ol class="steps">
+          <li>對準魚蛋，㩒落去篤<small>Press down on a fishball to poke it</small></li>
+          <li>放手提起竹籤，再篤下一粒<small>Release to lift, then poke the next one</small></li>
+          <li>一串六粒，自動交俾客人<small>Six per stick, handed to the customer</small></li>
+        </ol>
+        <p class="note">篤偏咗，魚蛋喺竹籤上都會偏。篤得太邊，魚蛋會滑走。</p>
+        <button class="btn" id="start" type="button">開檔！ Start</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="result" hidden>
+      <div class="card">
+        <h2 id="rank">魚蛋師傅</h2>
+        <div class="big"><b id="r-score">0</b><span>粒魚蛋</span></div>
+        <dl class="stats">
+          <dt>交咗俾客人</dt><dd id="r-sticks">0 串</dd>
+          <dt>正中紅心</dt><dd id="r-perfect">0 次</dd>
+          <dt>滑走咗</dt><dd id="r-slip">0 次</dd>
+          <dt>最高紀錄</dt><dd id="r-best">0 粒</dd>
+        </dl>
+        <button class="btn" id="again" type="button">再篤過 Play again</button>
+      </div>
+    </div>
+  </main>
+
+  <p class="hint">㩒低篤魚蛋，放手提起竹籤 · Press to poke, release to lift</p>
+</div>
+
+<script>
+(() => {
+  const TAU = Math.PI * 2;
+  const STICK_CAP = 6;
+  const GAME_TIME = 60;
+  const BALL_COUNT = 15;
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const $ = (id) => document.getElementById(id);
+  const cv = $('pot');
+  const ctx = cv.getContext('2d');
+  const stage = $('stage');
+  const hudTime = $('hud-time'), hudScore = $('hud-score'), hudSticks = $('hud-sticks');
+  const timebar = $('timebar');
+  const dotsEl = $('dots');
+  for (let i = 0; i < STICK_CAP; i++) { const d = document.createElement('span'); d.className = 'dot'; dotsEl.appendChild(d); }
+  const dotEls = [...dotsEl.children];
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // ---------- state ----------
+  let W = 0, H = 0, dpr = 1;
+  const L = {};
+  let balls = [], ripples = [], pops = [], steam = [], flyers = [], customers = [], leavers = [];
+  let state = 'ready';
+  let timeLeft = GAME_TIME, score = 0, sticks = 0, perfects = 0, slips = 0;
+  let tNow = 0, refillTimer = 0;
+  let bg = null;
+  const stick = { balls: [], depth: 0, pressed: false, resolved: false, x: 0, y: 0, hasPointer: false };
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem('fishball-best') || '0', 10) || 0; } catch (e) {}
+
+  // ---------- sound ----------
+  let ac = null, muted = false, noiseBuf = null;
+  function initAudio() {
+    if (ac) return;
+    try {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.3, ac.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    } catch (e) { ac = null; }
+  }
+  function tone(type, f0, f1, dur, vol, delay = 0) {
+    const t = ac.currentTime + delay;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  function sound(kind) {
+    if (!ac || muted) return;
+    if (kind === 'poke') tone('sine', 520, 160, 0.1, 0.3);
+    else if (kind === 'perfect') { tone('sine', 520, 160, 0.1, 0.3); tone('triangle', 1400, 1800, 0.12, 0.08, 0.04); }
+    else if (kind === 'slip') tone('triangle', 260, 700, 0.14, 0.15);
+    else if (kind === 'tap') tone('square', 900, 700, 0.03, 0.04);
+    else if (kind === 'ding') { tone('sine', 1320, 1320, 0.25, 0.12); tone('sine', 1760, 1760, 0.35, 0.1, 0.09); }
+    else if (kind === 'splash' || kind === 'plop') {
+      const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      src.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.value = kind === 'plop' ? 700 : 1200;
+      g.gain.value = kind === 'plop' ? 0.12 : 0.2;
+      src.connect(f).connect(g).connect(ac.destination); src.start();
+    }
+  }
+  $('mute').addEventListener('click', () => {
+    muted = !muted;
+    $('mute').textContent = muted ? '聲音 關' : '聲音 開';
+    $('mute').setAttribute('aria-pressed', String(muted));
+  });
+
+  // ---------- layout ----------
+  function resize() {
+    const rect = stage.getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = rect.width; H = rect.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const oldR = L.R;
+    L.top = clamp(H * 0.25, 100, 170);
+    L.sq = 0.58;
+    const availH = H - L.top - 14;
+    L.R = Math.max(70, Math.min(W * 0.45, availH / (2 * L.sq + 0.42)));
+    L.cx = W / 2;
+    const total = (2 * L.sq + 0.42) * L.R;
+    L.cy = L.top + Math.max(6, (availH - total) / 2) + L.sq * L.R + 6;
+    L.r = L.R * 0.118;
+    L.rin = L.R * 0.88 - L.r;
+    if (oldR) { const k = L.R / oldR; balls.forEach((b) => { b.x *= k; b.y *= k; }); }
+    customers.forEach((c, i) => { c.tx = slotX(i); });
+    if (!stick.hasPointer) { stick.x = L.cx + L.R * 0.5; stick.y = L.cy + L.R * L.sq * 0.1; }
+    buildBackground();
+  }
+
+  function buildBackground() {
+    bg = document.createElement('canvas');
+    bg.width = Math.round(W * dpr); bg.height = Math.round(H * dpr);
+    const b = bg.getContext('2d');
+    b.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // dusk street behind the queue
+    const sky = b.createLinearGradient(0, 0, 0, L.top);
+    sky.addColorStop(0, '#45597a'); sky.addColorStop(1, '#d28a5e');
+    b.fillStyle = sky; b.fillRect(0, 0, W, L.top);
+    // old Macau shophouses
+    let x = -10, seed = 7;
+    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    const fronts = ['#e8c37a', '#d98b6a', '#9fc0b0', '#e6d6b8', '#c7a0b8'];
+    while (x < W + 10) {
+      const w = 50 + rnd() * 50, h = L.top * (0.55 + rnd() * 0.4);
+      b.fillStyle = fronts[Math.floor(rnd() * fronts.length)];
+      b.globalAlpha = 0.55;
+      b.fillRect(x, L.top - h, w - 4, h);
+      b.globalAlpha = 1;
+      for (let wy = L.top - h + 10; wy < L.top - 30; wy += 22) {
+        for (let wx = x + 8; wx < x + w - 16; wx += 16) {
+          b.fillStyle = rnd() < 0.55 ? 'rgba(255,214,120,0.85)' : 'rgba(40,40,60,0.35)';
+          b.fillRect(wx, wy, 8, 11);
+        }
+      }
+      x += w;
+    }
+    // counter rail
+    b.fillStyle = '#5d6462'; b.fillRect(0, L.top - 2, W, 10);
+    b.fillStyle = '#9aa2a0'; b.fillRect(0, L.top - 2, W, 3);
+    // steel counter top
+    const top = b.createLinearGradient(0, L.top + 8, 0, H);
+    top.addColorStop(0, '#c9cecc'); top.addColorStop(1, '#9ea5a3');
+    b.fillStyle = top; b.fillRect(0, L.top + 8, W, H - L.top - 8);
+    b.strokeStyle = 'rgba(255,255,255,0.18)'; b.lineWidth = 1;
+    for (let i = 0; i < 14; i++) { const y = L.top + 8 + i * 9; b.beginPath(); b.moveTo(0, y); b.lineTo(W, y + 30); b.stroke(); }
+  }
+
+  // ---------- fishballs ----------
+  function makeBall(x, y, drop = 0) {
+    return { x, y, vx: 0, vy: 0, phase: Math.random() * TAU, spin: Math.random() * TAU, drop };
+  }
+  function seedBalls() {
+    balls = [];
+    for (let i = 0; i < BALL_COUNT; i++) {
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * L.rin;
+      balls.push(makeBall(Math.cos(a) * d, Math.sin(a) * d));
+    }
+    for (let k = 0; k < 40; k++) collide();
+  }
+  function ballScreen(b) {
+    const bob = Math.sin(tNow * 2.3 + b.phase) * L.r * 0.07;
+    return { sx: L.cx + b.x, sy: L.cy + b.y * L.sq + bob - b.drop * b.drop * L.R * 0.9 };
+  }
+  function impulse(fx, fy, radius, strength) {
+    for (const b of balls) {
+      if (b.drop > 0) continue;
+      const dx = b.x - fx, dy = b.y - fy, d = Math.hypot(dx, dy);
+      if (d < radius && d > 0.01) {
+        const k = strength * (1 - d / radius);
+        b.vx += (dx / d) * k; b.vy += (dy / d) * k;
+      }
+    }
+  }
+  function collide() {
+    const min = L.r * 2.02;
+    for (let i = 0; i < balls.length; i++) {
+      const a = balls[i]; if (a.drop > 0) continue;
+      for (let j = i + 1; j < balls.length; j++) {
+        const c = balls[j]; if (c.drop > 0) continue;
+        const dx = c.x - a.x, dy = c.y - a.y, dd = dx * dx + dy * dy;
+        if (dd < min * min && dd > 1e-6) {
+          const d = Math.sqrt(dd), o = (min - d) / 2, nx = dx / d, ny = dy / d;
+          a.x -= nx * o; a.y -= ny * o; c.x += nx * o; c.y += ny * o;
+          const rv = (c.vx - a.vx) * nx + (c.vy - a.vy) * ny;
+          if (rv < 0) { const im = -rv * 0.45; a.vx -= nx * im; a.vy -= ny * im; c.vx += nx * im; c.vy += ny * im; }
+        }
+      }
+    }
+    for (const b of balls) {
+      const d = Math.hypot(b.x, b.y);
+      if (d > L.rin) {
+        const nx = b.x / d, ny = b.y / d;
+        b.x = nx * L.rin; b.y = ny * L.rin;
+        const vr = b.vx * nx + b.vy * ny;
+        if (vr > 0) { b.vx -= 1.6 * vr * nx; b.vy -= 1.6 * vr * ny; }
+      }
+    }
+  }
+  function physics(dt) {
+    const flow = L.R * 0.16;
+    for (const b of balls) {
+      if (b.drop > 0) {
+        b.drop = Math.max(0, b.drop - dt * 2.4);
+        if (b.drop === 0) { ripples.push({ x: b.x, y: b.y, t: 0 }); impulse(b.x, b.y, L.r * 3, L.R * 0.25); sound('plop'); }
+        continue;
+      }
+      const d = Math.hypot(b.x, b.y) || 1;
+      // a slow simmering swirl plus a wandering current
+      const tx = (-b.y / d) * flow * (d / L.rin) + Math.sin(tNow * 0.6 + b.phase * 3) * flow * 0.5;
+      const ty = (b.x / d) * flow * (d / L.rin) + Math.cos(tNow * 0.8 + b.phase * 2) * flow * 0.5;
+      const k = 1 - Math.exp(-1.1 * dt);
+      b.vx += (tx - b.vx) * k; b.vy += (ty - b.vy) * k;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      b.spin += dt * 0.4;
+    }
+    collide(); collide();
+  }
+
+  // ---------- poking ----------
+  function addPop(text, x, y, color = '#fff', size = 18) { pops.push({ text, x, y, t: 0, color, size }); }
+
+  function resolvePoke() {
+    const tx = stick.x, ty = stick.y;
+    const fx = tx - L.cx, fy = (ty - L.cy) / L.sq;
+    if (Math.hypot(fx, fy) > L.R * 0.92) { sound('tap'); addPop('篤空氣', tx, ty - 24, '#3b3330', 15); return; }
+    ripples.push({ x: fx, y: fy, t: 0 });
+
+    let hit = null, hs = null;
+    for (const b of balls) {
+      if (b.drop > 0.05) continue;
+      const s = ballScreen(b), dx = tx - s.sx, dy = ty - s.sy;
+      if (dx * dx + dy * dy < L.r * L.r && (!hit || s.sy > hs.sy)) { hit = b; hs = s; }
+    }
+    if (!hit) {
+      impulse(fx, fy, L.r * 4, L.R * 0.55);
+      sound('splash');
+      addPop('冇中', tx, ty - 24, '#fff2d6', 16);
+      return;
+    }
+    const off = (tx - hs.sx) / L.r;
+    if (Math.abs(off) > 0.72) {
+      hit.vx += -Math.sign(off) * L.R * 1.1;
+      impulse(fx, fy, L.r * 3.5, L.R * 0.6);
+      slips++;
+      sound('slip');
+      addPop('滑走咗！', tx, ty - 24, '#ffd0c4', 17);
+      return;
+    }
+    balls.splice(balls.indexOf(hit), 1);
+    stick.balls.push({ off, rel: hs.sy - ty, spin: hit.spin });
+    score++;
+    impulse(fx, fy, L.r * 4.2, L.R * 0.75);
+    if (Math.abs(off) < 0.18) { perfects++; sound('perfect'); addPop('正中！', tx, ty - 30, '#ffe27a', 22); }
+    else { sound('poke'); addPop('+1', tx, ty - 30, '#fff', 18); }
+    updateHUD();
+  }
+
+  function handOut() {
+    const target = customers.find((c) => !c.served);
+    if (!target) return;
+    target.served = true;
+    const avg = stick.balls.reduce((s, b) => s + Math.abs(b.off), 0) / stick.balls.length;
+    const say = avg < 0.2 ? pick(['正呀！', '好靚！']) : avg < 0.42 ? pick(['唔該！', '多謝！']) : pick(['咁歪嘅…', '歪咗喎']);
+    const mood = avg < 0.2 ? 2 : avg < 0.42 ? 1 : 0;
+    const list = stick.balls.map((b, i, a) => ({ off: b.off, rel: slotRel(i, a.length), spin: b.spin }));
+    flyers.push({ balls: list, x0: stick.x, y0: tipY(), t: 0, target, say, mood });
+    stick.balls = [];
+    sticks++;
+    sound('ding');
+    updateHUD();
+  }
+
+  function slotRel(i, n) { return -(L.r * 1.3 + (n - 1 - i) * L.r * 1.86); }
+  function tipY() { return stick.y - L.r * 1.9 * (1 - stick.depth); }
+
+  // ---------- customers ----------
+  const SHIRTS = ['#f7f7f2', '#eef3f8', '#f7f7f2', '#f3efe4'];
+  const BOTTOMS = ['#23365e', '#2f4a3a', '#5a2330', '#3b3b46'];
+  const BAGS = ['#d24b3a', '#3a7bd2', '#e0a230', '#6a4bd2', '#2f9e6e'];
+  const HAIR = ['#1d1612', '#2b1e16', '#3a2a1c'];
+  const SKIN = ['#f1c9a5', '#e6b48f', '#d9a17a', '#f5d3b4'];
+  function slotX(i) { return W * 0.82 - i * Math.max(64, W * 0.2); }
+  function spawnCustomer(x) {
+    const c = { x: x ?? -40, tx: 0, shirt: pick(SHIRTS), bottom: pick(BOTTOMS), bag: pick(BAGS), hair: pick(HAIR), skin: pick(SKIN),
+      hs: rand(0.88, 1.06), phase: Math.random() * TAU, skirt: Math.random() < 0.5, served: false };
+    customers.push(c);
+    customers.forEach((q, i) => { q.tx = slotX(i); });
+    return c;
+  }
+  function custScale(c) { return (L.top / 165) * c.hs; }
+  function handPos(c) { const s = custScale(c); return { x: c.x - 20 * s, y: L.top - 56 * s }; }
+
+  function drawCustomer(c) {
+    const s = custScale(c);
+    const walking = c.leaving ? c.wait <= 0 : Math.abs(c.tx - c.x) > 1;
+    const sw = walking ? Math.sin(tNow * 10 + c.phase) : 0;
+    const bob = walking ? Math.abs(sw) * 3 * s : Math.sin(tNow * 2 + c.phase) * 0.8 * s;
+    ctx.save();
+    ctx.translate(c.x, L.top - 1 - bob);
+    // bag
+    ctx.fillStyle = c.bag; rr(-18 * s, -76 * s, 36 * s, 34 * s, 6 * s); ctx.fill();
+    // legs
+    ctx.fillStyle = '#3b3330';
+    ctx.fillRect(-7 * s + sw * 4 * s, -28 * s, 5 * s, 28 * s);
+    ctx.fillRect(2 * s - sw * 4 * s, -28 * s, 5 * s, 28 * s);
+    // shorts or pinafore skirt
+    ctx.fillStyle = c.bottom;
+    if (c.skirt) { ctx.beginPath(); ctx.moveTo(-12 * s, -50 * s); ctx.lineTo(12 * s, -50 * s); ctx.lineTo(16 * s, -26 * s); ctx.lineTo(-16 * s, -26 * s); ctx.closePath(); ctx.fill(); }
+    else { rr(-13 * s, -50 * s, 26 * s, 20 * s, 3 * s); ctx.fill(); }
+    // shirt
+    ctx.fillStyle = c.shirt; rr(-14 * s, -80 * s, 28 * s, 34 * s, 7 * s); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 1; ctx.stroke();
+    // tie
+    ctx.fillStyle = c.bottom; ctx.beginPath(); ctx.moveTo(-2.5 * s, -78 * s); ctx.lineTo(2.5 * s, -78 * s); ctx.lineTo(1.5 * s, -62 * s); ctx.lineTo(-1.5 * s, -62 * s); ctx.fill();
+    // arm reaching for fishballs (front customer) or holding a stick (leaving)
+    const reaching = !c.leaving && customers[0] === c && Math.abs(c.tx - c.x) < 4;
+    ctx.strokeStyle = c.skin; ctx.lineCap = 'round'; ctx.lineWidth = 5 * s;
+    ctx.beginPath(); ctx.moveTo(-12 * s, -74 * s);
+    if (reaching || c.leaving) ctx.lineTo(-20 * s, -56 * s); else ctx.lineTo(-16 * s, -52 * s);
+    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(12 * s, -74 * s); ctx.lineTo(16 * s, -52 * s); ctx.stroke();
+    // head
+    ctx.fillStyle = c.skin; ctx.beginPath(); ctx.arc(0, -93 * s, 13 * s, 0, TAU); ctx.fill();
+    ctx.fillStyle = c.hair; ctx.beginPath(); ctx.arc(0, -95 * s, 13.6 * s, Math.PI * 1.02, Math.PI * 1.98); ctx.fill();
+    ctx.fillRect(-13.4 * s, -97 * s, 26.8 * s, 4 * s);
+    // face
+    ctx.strokeStyle = '#2b1f17'; ctx.fillStyle = '#2b1f17'; ctx.lineWidth = 1.6 * s;
+    const happy = c.leaving && c.mood >= 1;
+    if (happy) {
+      ctx.beginPath(); ctx.arc(-4.5 * s, -90 * s, 2.4 * s, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+      ctx.beginPath(); ctx.arc(4.5 * s, -90 * s, 2.4 * s, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.arc(-4.5 * s, -90 * s, 1.6 * s, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(4.5 * s, -90 * s, 1.6 * s, 0, TAU); ctx.fill();
+    }
+    ctx.beginPath();
+    if (c.leaving && c.mood === 0) { ctx.moveTo(-3 * s, -84 * s); ctx.lineTo(3 * s, -85 * s); }
+    else ctx.arc(0, -86 * s, 3 * s, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+    ctx.restore();
+
+    if (c.held) {
+      const h = handPos(c);
+      drawSkewer(h.x, h.y + 4 * s, c.held, (3.4 * s) / L.r, 0.15);
+    }
+    if (c.bubble && c.bubbleT > 0) {
+      ctx.save();
+      ctx.globalAlpha = clamp(c.bubbleT * 2, 0, 1);
+      const fs = Math.max(12, 15 * s);
+      ctx.font = `700 ${fs}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-body')}`;
+      const tw = ctx.measureText(c.bubble).width + 16;
+      const bx = c.x - tw / 2, by = L.top - 136 * s;
+      ctx.fillStyle = '#fff'; rr(bx, by, tw, fs + 12, 8); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(c.x - 5, by + fs + 11); ctx.lineTo(c.x + 3, by + fs + 20); ctx.lineTo(c.x + 6, by + fs + 11); ctx.fill();
+      ctx.fillStyle = '#2b1f17'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(c.bubble, c.x, by + (fs + 12) / 2 + 1);
+      ctx.restore();
+    }
+  }
+
+  // ---------- drawing helpers ----------
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function drawBall(x, y, r, spin, mode) {
+    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.08, x, y, r);
+    g.addColorStop(0, '#fff3c8'); g.addColorStop(0.35, '#f2c766'); g.addColorStop(0.8, '#d8962f'); g.addColorStop(1, '#a8661d');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.clip();
+    ctx.fillStyle = 'rgba(190,100,16,0.42)';
+    for (let k = 0; k < 3; k++) {
+      const a = spin + k * 2.1;
+      ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.5, r * 0.34, r * 0.24, a, 0, TAU); ctx.fill();
+    }
+    if (mode === 'pot') {
+      ctx.fillStyle = 'rgba(168,86,14,0.88)';
+      ctx.fillRect(x - r, y + r * 0.32, r * 2, r);
+      ctx.fillStyle = 'rgba(255,205,130,0.4)';
+      ctx.beginPath(); ctx.ellipse(x, y + r * 0.32, r * 0.95, r * 0.1, 0, 0, TAU); ctx.fill();
+    } else if (mode === 'stick') {
+      ctx.fillStyle = 'rgba(176,90,14,0.35)';
+      ctx.fillRect(x - r, y + r * 0.45, r * 2, r);
+    }
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath(); ctx.ellipse(x - r * 0.38, y - r * 0.42, r * 0.22, r * 0.13, -0.5, 0, TAU); ctx.fill();
+  }
+
+  // tip at (tx,ty); balls positioned by .off (fraction of r, sideways) and .rel (px above the tip)
+  function drawSkewer(tx, ty, list, k, ang) {
+    const r = L.r, w = Math.max(3, r * 0.2), len = r * (1.3 + (STICK_CAP - 1) * 1.86) + r * 3.4;
+    ctx.save();
+    ctx.translate(tx, ty); ctx.rotate(ang); ctx.scale(k, k);
+    const g = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+    g.addColorStop(0, '#a77e40'); g.addColorStop(0.5, '#ecd29a'); g.addColorStop(1, '#9c733a');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(w / 2, -r * 0.8); ctx.lineTo(w / 2, -len); ctx.lineTo(-w / 2, -len); ctx.lineTo(-w / 2, -r * 0.8);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(110,78,36,0.55)';
+    ctx.fillRect(-w / 2 - 0.5, -len * 0.9, w + 1, Math.max(1.5, w * 0.35));
+    for (const b of list) drawBall(-b.off * r, b.rel, r, b.spin, 'stick');
+    ctx.restore();
+  }
+
+  function drawPot() {
+    const { cx, cy, R, sq } = L, depth = R * 0.42;
+    ctx.fillStyle = 'rgba(40,40,40,0.22)';
+    ctx.beginPath(); ctx.ellipse(cx, cy + depth + 4, R * 1.05, R * sq * 0.55, 0, 0, TAU); ctx.fill();
+    const body = ctx.createLinearGradient(cx - R, 0, cx + R, 0);
+    body.addColorStop(0, '#5f6664'); body.addColorStop(0.18, '#d9dddb'); body.addColorStop(0.42, '#8e9593');
+    body.addColorStop(0.7, '#f0f2f1'); body.addColorStop(1, '#5b6260');
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.moveTo(cx - R, cy);
+    ctx.lineTo(cx - R * 0.97, cy + depth);
+    ctx.ellipse(cx, cy + depth, R * 0.97, R * sq * 0.97, 0, Math.PI, 0, true);
+    ctx.lineTo(cx + R, cy);
+    ctx.closePath(); ctx.fill();
+    // handles
+    ctx.fillStyle = '#6c7371';
+    rr(cx - R - R * 0.1, cy + depth * 0.25, R * 0.12, R * 0.07, 3); ctx.fill();
+    rr(cx + R - R * 0.02, cy + depth * 0.25, R * 0.12, R * 0.07, 3); ctx.fill();
+    // rim
+    const rim = ctx.createLinearGradient(cx - R, cy - R * sq, cx + R, cy + R * sq);
+    rim.addColorStop(0, '#f4f6f5'); rim.addColorStop(0.5, '#9ca3a1'); rim.addColorStop(1, '#e6e9e8');
+    ctx.fillStyle = rim;
+    ctx.beginPath(); ctx.ellipse(cx, cy, R, R * sq, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#737a78';
+    ctx.beginPath(); ctx.ellipse(cx, cy, R * 0.95, R * sq * 0.95, 0, 0, TAU); ctx.fill();
+    // curry
+    const liq = ctx.createRadialGradient(cx - R * 0.2, cy - R * sq * 0.3, R * 0.05, cx, cy, R * 0.95);
+    liq.addColorStop(0, '#eaa53c'); liq.addColorStop(0.55, '#c8761f'); liq.addColorStop(1, '#7c3f0d');
+    ctx.fillStyle = liq;
+    ctx.beginPath(); ctx.ellipse(cx, cy + R * sq * 0.03, R * 0.92, R * sq * 0.9, 0, 0, TAU); ctx.fill();
+    // oily sheen
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(cx, cy + R * sq * 0.03, R * 0.92, R * sq * 0.9, 0, 0, TAU); ctx.clip();
+    for (let i = 0; i < 6; i++) {
+      const a = tNow * 0.18 + i * 1.05, d = R * (0.25 + 0.1 * (i % 3));
+      ctx.fillStyle = `rgba(255,${190 + i * 6},90,0.10)`;
+      ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * d, cy + Math.sin(a) * d * sq, R * 0.18, R * 0.05, a * 0.5, 0, TAU); ctx.fill();
+    }
+    for (const rp of ripples) {
+      const k = rp.t / 0.7;
+      ctx.strokeStyle = `rgba(255,225,170,${0.55 * (1 - k)})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(cx + rp.x, cy + rp.y * sq, L.r * (0.6 + k * 3.2), L.r * (0.6 + k * 3.2) * sq, 0, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawBalls() {
+    const { cx, cy, R, sq } = L;
+    const list = balls.map((b) => ({ b, s: ballScreen(b) })).sort((p, q) => p.s.sy - q.s.sy);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, W, cy);
+    ctx.ellipse(cx, cy + R * sq * 0.03, R * 0.92, R * sq * 0.9, 0, 0, TAU);
+    ctx.clip();
+    for (const { b, s } of list) {
+      if (b.drop > 0.02) {
+        ctx.fillStyle = `rgba(60,25,0,${0.25 * (1 - b.drop)})`;
+        ctx.beginPath(); ctx.ellipse(cx + b.x, cy + b.y * sq + L.r * 0.3, L.r * 0.8, L.r * 0.8 * sq, 0, 0, TAU); ctx.fill();
+        drawBall(s.sx, s.sy, L.r, b.spin, 'drop');
+      } else {
+        drawBall(s.sx, s.sy, L.r, b.spin, 'pot');
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawSteam() {
+    for (const p of steam) {
+      const k = p.t / p.life;
+      ctx.fillStyle = `rgba(255,255,255,${0.09 * Math.sin(Math.PI * k)})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, L.r * (0.8 + k * 1.8) * p.s, 0, TAU); ctx.fill();
+    }
+  }
+
+  function drawAim() {
+    if (stick.pressed) return;
+    const fx = stick.x - L.cx, fy = (stick.y - L.cy) / L.sq;
+    if (Math.hypot(fx, fy) > L.R * 0.92) return;
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.ellipse(stick.x, stick.y, L.r * 0.32, L.r * 0.32 * L.sq, 0, 0, TAU); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(60,25,0,0.35)';
+    ctx.beginPath(); ctx.ellipse(stick.x, stick.y, L.r * 0.12, L.r * 0.12 * L.sq, 0, 0, TAU); ctx.fill();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    if (bg) ctx.drawImage(bg, 0, 0, W, H);
+    const people = customers.concat(leavers).sort((a, b) => a.x - b.x);
+    for (const c of people) drawCustomer(c);
+    drawPot();
+    drawBalls();
+    drawSteam();
+    drawAim();
+    drawSkewer(stick.x, tipY(), stick.balls, 1, 0);
+    for (const f of flyers) {
+      const h = handPos(f.target);
+      const e = f.t < 0.5 ? 2 * f.t * f.t : 1 - Math.pow(-2 * f.t + 2, 2) / 2;
+      const x = f.x0 + (h.x - f.x0) * e;
+      const y = f.y0 + (h.y - f.y0) * e - Math.sin(Math.PI * f.t) * L.R * 0.35;
+      const kEnd = (3.4 * custScale(f.target)) / L.r;
+      drawSkewer(x, y, f.balls, 1 + (kEnd - 1) * e, 0.15 * e);
+    }
+    const fontBody = getComputedStyle(document.documentElement).getPropertyValue('--font-body');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const p of pops) {
+      const k = p.t / 0.9;
+      ctx.globalAlpha = 1 - k;
+      ctx.font = `900 ${p.size}px ${fontBody}`;
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(60,25,10,0.75)';
+      ctx.strokeText(p.text, p.x, p.y - k * 40);
+      ctx.fillStyle = p.color;
+      ctx.fillText(p.text, p.x, p.y - k * 40);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------- update ----------
+  function update(dt) {
+    if (state === 'play') {
+      timeLeft -= dt;
+      if (timeLeft <= 0) { timeLeft = 0; endGame(); }
+    }
+    const target = stick.pressed ? 1 : 0;
+    stick.depth += (target - stick.depth) * Math.min(1, dt * (stick.pressed ? 22 : 14));
+    if (stick.pressed && !stick.resolved && stick.depth > 0.85) { stick.resolved = true; if (state === 'play') resolvePoke(); }
+
+    stick.balls.forEach((b, i, a) => { b.rel += (slotRel(i, a.length) - b.rel) * Math.min(1, dt * 14); });
+
+    physics(dt);
+
+    const pending = balls.length;
+    if (pending < BALL_COUNT) {
+      refillTimer += dt;
+      if (refillTimer > 0.55) {
+        refillTimer = 0;
+        balls.push(makeBall(rand(-0.5, 0.5) * L.R, rand(-0.7, -0.3) * L.rin, 1));
+      }
+    } else refillTimer = 0;
+
+    ripples.forEach((r) => (r.t += dt)); ripples = ripples.filter((r) => r.t < 0.7);
+    pops.forEach((p) => (p.t += dt)); pops = pops.filter((p) => p.t < 0.9);
+
+    if (!reduceMotion && Math.random() < dt * 7) {
+      steam.push({ x: L.cx + rand(-0.7, 0.7) * L.R, y: L.cy + rand(-0.3, 0.3) * L.R * L.sq, t: 0, life: rand(1.6, 2.6), s: rand(0.8, 1.4), vx: rand(-8, 8) });
+    }
+    steam.forEach((p) => { p.t += dt; p.y -= dt * L.R * 0.28; p.x += p.vx * dt; });
+    steam = steam.filter((p) => p.t < p.life);
+
+    for (const f of flyers) {
+      f.t += dt / 0.5;
+      if (f.t >= 1) {
+        const c = f.target;
+        customers.splice(customers.indexOf(c), 1);
+        Object.assign(c, { leaving: true, wait: 0.55, bubble: f.say, bubbleT: 1.5, held: f.balls, mood: f.mood });
+        leavers.push(c);
+        spawnCustomer(-40);
+      }
+    }
+    flyers = flyers.filter((f) => f.t < 1);
+
+    const walk = (L.top / 165) * 150 * dt;
+    for (const c of customers) {
+      const d = c.tx - c.x;
+      c.x += Math.sign(d) * Math.min(Math.abs(d), walk);
+    }
+    for (const c of leavers) {
+      c.bubbleT -= dt;
+      if (c.wait > 0) c.wait -= dt; else c.x += walk * 0.9;
+    }
+    leavers = leavers.filter((c) => c.x < W + 60);
+
+    const t = Math.max(0, timeLeft);
+    hudTime.textContent = t.toFixed(1);
+    hudTime.classList.toggle('low', t <= 10 && state === 'play');
+    timebar.style.transform = `scaleX(${t / GAME_TIME})`;
+  }
+
+  function updateHUD() {
+    hudScore.textContent = score;
+    hudSticks.textContent = sticks;
+    dotEls.forEach((d, i) => d.classList.toggle('on', i < stick.balls.length));
+  }
+
+  // ---------- input ----------
+  function setPos(e) {
+    const rect = cv.getBoundingClientRect();
+    const nx = e.clientX - rect.left, ny = e.clientY - rect.top;
+    if (stick.pressed && stick.resolved && state === 'play') {
+      // dragging a stick that is down in the pot stirs the fishballs around it
+      const dx = nx - stick.x, dy = ny - stick.y, m = Math.hypot(dx, dy);
+      if (m > 0.5) {
+        const fx = nx - L.cx, fy = (ny - L.cy) / L.sq;
+        for (const b of balls) {
+          if (b.drop > 0) continue;
+          const d = Math.hypot(b.x - fx, b.y - fy);
+          if (d < L.r * 2.4) { b.vx += dx * 6; b.vy += (dy / L.sq) * 6; }
+        }
+      }
+    }
+    stick.x = nx; stick.y = ny; stick.hasPointer = true;
+  }
+  cv.addEventListener('pointermove', setPos);
+  cv.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    setPos(e);
+    if (state !== 'play' || stick.pressed) return;
+    stick.pressed = true; stick.resolved = false;
+  });
+  function release() {
+    if (!stick.pressed) return;
+    stick.pressed = false;
+    if (state === 'play' && stick.balls.length >= STICK_CAP) handOut();
+    updateHUD();
+  }
+  cv.addEventListener('pointerup', release);
+  cv.addEventListener('pointercancel', release);
+
+  // ---------- game flow ----------
+  function startGame() {
+    initAudio();
+    if (ac && ac.state === 'suspended') ac.resume();
+    state = 'play';
+    timeLeft = GAME_TIME; score = 0; sticks = 0; perfects = 0; slips = 0;
+    stick.balls = []; stick.pressed = false;
+    flyers = []; pops = [];
+    seedBalls();
+    $('intro').hidden = true; $('result').hidden = true;
+    updateHUD();
+  }
+  function rankFor(n) {
+    if (n >= 48) return '傳說級魚蛋佬';
+    if (n >= 36) return '魚蛋師傅';
+    if (n >= 24) return '熟手學徒';
+    if (n >= 12) return '新嚟幫手';
+    return '篤到手軟';
+  }
+  function endGame() {
+    state = 'over';
+    stick.pressed = false;
+    addPop('時間到！', W / 2, L.cy - L.R * 0.2, '#ffe27a', 30);
+    if (score > best) { best = score; try { localStorage.setItem('fishball-best', String(best)); } catch (e) {} }
+    $('rank').textContent = rankFor(score);
+    $('r-score').textContent = score;
+    $('r-sticks').textContent = `${sticks} 串`;
+    $('r-perfect').textContent = `${perfects} 次`;
+    $('r-slip').textContent = `${slips} 次`;
+    $('r-best').textContent = `${best} 粒`;
+    setTimeout(() => { $('result').hidden = false; }, 900);
+  }
+  $('start').addEventListener('click', startGame);
+  $('again').addEventListener('click', startGame);
+
+  // ---------- boot ----------
+  resize();
+  seedBalls();
+  for (let i = 0; i < 4; i++) spawnCustomer(slotX(i));
+  updateHUD();
+  new ResizeObserver(() => resize()).observe(stage);
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now; tNow += dt;
+    update(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
