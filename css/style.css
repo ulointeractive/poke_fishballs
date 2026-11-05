@@ -146,6 +146,8 @@ body {
   border: 3px solid #8d9593;
   background: #b9bfbd;
 }
+/* during a game nothing on the page may pan or zoom; buttons still get taps */
+html.playing, html.playing body, html.playing .app, html.playing .stage { touch-action: none; }
 #pot { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: none; display: block; }
 /* pop-ups cover the whole screen; js/layout.js shrinks a card that is too tall so nothing scrolls */
 .overlay {
@@ -249,6 +251,7 @@ body {
 .summary b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
 .summary span { font-size: 12px; color: var(--muted); }
 .hint { margin: 0; font-size: 12px; color: var(--muted); text-align: center; }
+.version { font-size: 10px; color: var(--muted); text-align: center; opacity: 0.7; margin-top: -4px; }
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
 .field-row { display: flex; gap: 8px; }
 .field input {

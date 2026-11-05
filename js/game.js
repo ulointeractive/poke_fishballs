@@ -62,6 +62,7 @@ function update(dt) {
   }
   leavers = leavers.filter((c) => c.x < W + 60);
 
+  document.documentElement.classList.toggle('playing', state === 'play');
   const t = Math.max(0, timeLeft);
   hudTime.textContent = t.toFixed(1);
   hudTime.classList.toggle('low', t <= 10 && state === 'play');
@@ -121,29 +122,37 @@ function release() {
 cv.addEventListener('pointerup', release);
 
 // ---------- no zooming on phones ----------
-// Fast tapping looks like a double-tap to iPhone Safari, which then zooms the page in (and the page
-// can't scroll, so it can't be zoomed back out). Blocking the touch events stops that; the pointer
-// events above still arrive, so poking works as before.
-['touchstart', 'touchmove', 'touchend'].forEach((type) => cv.addEventListener(type, (e) => e.preventDefault(), { passive: false }));
-// a double-tap anywhere else on the page (not on a button) must not zoom either
+// Fast tapping looks like a double-tap to iPhone Safari, which zooms the page in (and the page can't
+// scroll, so it can't be zoomed back out). While a game is running, the browser's own handling of every
+// touch is switched off everywhere on the page, except on buttons so they still work. Pointer events
+// still arrive, so poking works as before.
+const VIEWPORT = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+const viewportMeta = document.querySelector('meta[name=viewport]');
+const onButton = (e) => e.target && e.target.closest && e.target.closest('button, a, input, textarea');
 let lastTouchEnd = 0;
+function blockTouch(e) {
+  if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }   // two fingers: pinch, never allowed
+  if (e.target === cv || (state === 'play' && !onButton(e))) e.preventDefault();
+}
+['touchstart', 'touchmove'].forEach((type) => document.addEventListener(type, blockTouch, { passive: false, capture: true }));
 document.addEventListener('touchend', (e) => {
-  const now = e.timeStamp;
-  if (now - lastTouchEnd < 400 && !e.target.closest('button, a, input, textarea')) e.preventDefault();
+  const now = e.timeStamp, quick = now - lastTouchEnd < 500;
   lastTouchEnd = now;
-}, { passive: false });
+  if (e.target === cv || (state === 'play' && !onButton(e)) || (quick && !onButton(e))) e.preventDefault();
+}, { passive: false, capture: true });
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false, capture: true });
 // iPhone pinch gestures
-['gesturestart', 'gesturechange'].forEach((type) => document.addEventListener(type, (e) => e.preventDefault()));
-// if the page still ends up zoomed in somehow, put it back to normal size
+['gesturestart', 'gesturechange', 'gestureend'].forEach((type) => document.addEventListener(type, (e) => e.preventDefault(), { passive: false }));
+// if the page still ends up zoomed in somehow, put it straight back to normal size
+function unzoom() {
+  const vv = window.visualViewport;
+  if (!vv || vv.scale <= 1.01 || !viewportMeta) return;
+  viewportMeta.content = VIEWPORT.replace('initial-scale=1', 'initial-scale=0.99');
+  setTimeout(() => { viewportMeta.content = VIEWPORT; window.scrollTo(0, 0); }, 30);
+}
 if (window.visualViewport) {
-  const meta = document.querySelector('meta[name=viewport]');
-  window.visualViewport.addEventListener('resize', () => {
-    if (window.visualViewport.scale > 1.01 && meta) {
-      const c = meta.content;
-      meta.content = c.replace('maximum-scale=1', 'maximum-scale=1.01');
-      requestAnimationFrame(() => { meta.content = c; });
-    }
-  });
+  window.visualViewport.addEventListener('resize', unzoom);
+  window.visualViewport.addEventListener('scroll', unzoom);
 }
 cv.addEventListener('pointercancel', release);
 
