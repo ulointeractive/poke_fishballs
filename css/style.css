@@ -15,7 +15,7 @@
   --font-body: "Chiron Hei HK", "Noto Sans TC", "PingFang HK", "Microsoft JhengHei", system-ui, sans-serif;
   color-scheme: light;
 }
-html, body { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; overscroll-behavior: none; }
 [hidden] { display: none !important; }
 body {
   background-color: var(--tile);
@@ -26,6 +26,9 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;   /* no double-tap zoom on phones */
 }
 .app {
   box-sizing: border-box;
@@ -39,6 +42,8 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 12px;
 }
+.side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tools { display: flex; flex-wrap: wrap; gap: 6px; }
 .stall {
   display: flex;
   flex-wrap: wrap;
@@ -111,7 +116,8 @@ body {
   background: var(--card);
   border: 2px solid var(--sign);
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 5px 11px;
+  min-height: 32px;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -119,8 +125,11 @@ body {
 .stage {
   position: relative;
   flex: 1;
-  min-height: 360px;
+  min-height: 300px;
   border-radius: 10px;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;   /* no copy/share popup on long-press (iPhone) */
   overflow: hidden;
   border: 3px solid #8d9593;
   background: #b9bfbd;
@@ -271,4 +280,37 @@ body {
   .hud { gap: 10px; }
   .val { font-size: 19px; }
   .meter { gap: 8px; }
+  .stall { padding: 8px 10px; }
+  .card { padding: 16px; }
+}
+@media (max-width: 360px) {
+  .app { gap: 8px; padding-block: 8px; }
+  .sign-sub { display: none; }
+  .hud-item { min-width: 36px; }
+  .val { font-size: 17px; }
+  .chip { font-size: 12px; padding: 4px 9px; }
+  .card h1 { font-size: 28px; }
+  .stage { min-height: 260px; }
+}
+/* phones held sideways: controls in a column on the left, the pot fills the rest */
+@media (orientation: landscape) and (max-height: 540px) {
+  .app {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(170px, 230px) 1fr;
+    gap: 10px;
+    padding-block: 8px;
+  }
+  .side { overflow-y: auto; }
+  .stall { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 10px; }
+  .sign-zh { font-size: 22px; }
+  .sign-sub { display: none; }
+  .hud { justify-content: space-between; gap: 6px; }
+  .val { font-size: 18px; }
+  .meter { flex-wrap: wrap; gap: 6px; }
+  .timebar { flex-basis: 100%; }
+  .chip { font-size: 12px; padding: 4px 9px; min-height: 30px; }
+  .stage { min-height: 0; }
+  .hint { display: none; }
+  .card { padding: 14px 16px; gap: 10px; }
 }

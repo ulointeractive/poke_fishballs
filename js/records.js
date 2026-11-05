@@ -119,7 +119,7 @@ const Store = {
 };
 
 const fmtDate = (ms) => {
-  try { return new Date(ms).toLocaleString('zh-HK', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+  try { return new Date(ms).toLocaleString(t('date.locale'), { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
   catch (e) { return ''; }
 };
 function li(cls) { const el = document.createElement('li'); if (cls) el.className = cls; return el; }
@@ -127,13 +127,10 @@ function emptyRow(text) { const el = li('empty'); el.textContent = text; return 
 
 // a random stall-style name for players who don't type one (no places or personal details)
 function randomName() {
-  const epithets = ['無影', '閃電', '傳說', '暗黑', '爆裂', '究極', '神級', '隱世', '狂熱', '超速', '鐵腕', '天才', '一擊', '午夜'];
-  const roles = ['篤蛋手', '竹籤刺客', '魚蛋獵人', '咖喱忍者', '魚蛋狙擊手', '竹籤武士', '魚蛋怪盜', '篤篤教主',
-    '魚蛋特務', '咖喱魔術師', '魚蛋收割機', '串燒大將', '咖喱旋風', '魚蛋終結者', '竹籤劍聖'];
-  return pick(epithets) + pick(roles);
+  return pick(t('names.epithets')) + t('names.join') + pick(t('names.roles'));
 }
 function cleanName(s) {
-  return String(s || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
+  return String(s || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 24);
 }
 function syncNameInputs() {
   for (const id of ['name-intro', 'name-result']) {
@@ -147,7 +144,7 @@ function showChamp(name, pts) {
   if (name == null) { box.hidden = true; return; }
   $('champ-name').textContent = name;
   $('champ-pts').textContent = pts;
-  const u = document.createElement('small'); u.textContent = ' 分'; $('champ-pts').appendChild(u);
+  const u = document.createElement('small'); u.textContent = ' ' + t('unit.pts'); $('champ-pts').appendChild(u);
   box.hidden = false;
 }
 function showIntroRecord(text) {
@@ -169,37 +166,37 @@ async function renderBoards() {
     const who = document.createElement('span'); who.className = 'who'; who.textContent = nameText;
     const sub = document.createElement('small'); sub.textContent = subText; who.appendChild(sub);
     const p = document.createElement('span'); p.className = 'pts'; p.textContent = pts;
-    const u = document.createElement('small'); u.textContent = '分'; p.appendChild(u);
+    const u = document.createElement('small'); u.textContent = t('unit.pts'); p.appendChild(u);
     el.append(pos, who, p);
     return el;
   };
   if (Store.mode === 'cloud') {
-    note.textContent = Store.canSave ? '每人每關只計最高分。' : '你可以睇排行榜，但冇權限儲存分數。請叫分享者俾你「Contributor」權限。';
+    note.textContent = Store.canSave ? t('lb.note') : t('lb.readonly');
     if (seq !== renderSeq) return;
-    const nameOf = (r) => cleanName(r.name) || '無名英雄';
+    const nameOf = (r) => cleanName(r.name) || t('anon');
     const list = Store.leaders[lbLevel];
     if (!Store.lbLoaded[lbLevel]) {
       showChamp(null);
-      lb.replaceChildren(emptyRow(Store.lbTimedOut ? '暫時連唔到排行榜，遲啲再試。' : '載入緊…'));
+      lb.replaceChildren(emptyRow(Store.lbTimedOut ? t('lb.unreachable') : t('lb.loading')));
     } else if (!list.length) {
       showChamp(null);
-      lb.replaceChildren(emptyRow('未有人上榜，你做第一個！'));
+      lb.replaceChildren(emptyRow(t('lb.empty')));
     } else {
       showChamp(nameOf(list[0]), list[0].best);
-      lb.replaceChildren(...list.map((r, i) => row(i + 1, r.id === Store.uid ? nameOf(r) + '（你）' : nameOf(r),
-        lbLevel === 'hard' ? `${r.sticks || 0} 串 · 正中 ${r.perfects || 0} · 篤錯 ${r.wrong || 0}` : `${r.sticks || 0} 串 · 正中 ${r.perfects || 0} 次`,
+      lb.replaceChildren(...list.map((r, i) => row(i + 1, r.id === Store.uid ? t('you.tag', nameOf(r)) : nameOf(r),
+        lbLevel === 'hard' ? t('lb.subHard', r.sticks || 0, r.perfects || 0, r.wrong || 0) : t('lb.subNormal', r.sticks || 0, r.perfects || 0),
         r.best, r.id === Store.uid)));
     }
     const top = Store.leaders[level][0];
-    showIntroRecord(top ? `${LEVELS[level].label}關現時紀錄：${nameOf(top)}，${top.best} 分。你破唔破到？` : '');
+    showIntroRecord(top ? t('intro.record', levelLabel(level), nameOf(top), top.best) : '');
   } else {
-    note.textContent = '而家係離線模式：排行榜只計呢部機玩過嘅分數。';
+    note.textContent = t('lb.offline');
     const top = Store.history.filter((r) => (r.level || 'normal') === lbLevel).sort((a, b) => b.score - a.score).slice(0, 10);
-    if (top.length) showChamp(Store.name || '你', top[0].score); else showChamp(null);
-    if (!top.length) lb.replaceChildren(emptyRow('未有紀錄，玩一局先！'));
-    else lb.replaceChildren(...top.map((r, i) => row(i + 1, Store.name || '你', fmtDate(r.at), r.score, false)));
+    if (top.length) showChamp(Store.name || t('you'), top[0].score); else showChamp(null);
+    if (!top.length) lb.replaceChildren(emptyRow(t('hist.empty')));
+    else lb.replaceChildren(...top.map((r, i) => row(i + 1, Store.name || t('you'), fmtDate(r.at), r.score, false)));
     const b = Store.localBest(level);
-    showIntroRecord(b ? `你喺呢部機${LEVELS[level].label}關嘅最高分：${b} 分` : '');
+    showIntroRecord(b ? t('intro.local', levelLabel(level), b) : '');
   }
   // personal history
   const h = Store.history;
@@ -209,20 +206,20 @@ async function renderBoards() {
   $('h-best').textContent = bestN;
   $('h-avg').textContent = bestH;
   const hl = $('hist-list');
-  if (!h.length) hl.replaceChildren(emptyRow('未有紀錄，玩一局先！'));
+  if (!h.length) hl.replaceChildren(emptyRow(t('hist.empty')));
   else hl.replaceChildren(...h.map((r) => {
     const lv = r.level || 'normal';
     const best = lv === 'hard' ? bestH : bestN;
     const el = li(r.score === best && best > 0 ? 'me' : '');
     const who = document.createElement('span'); who.className = 'who';
-    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = LEVELS[lv].label;
+    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = levelLabel(lv);
     who.append(tag, document.createTextNode(fmtDate(r.at)));
     const sub = document.createElement('small');
-    sub.textContent = `${r.served != null ? r.served + ' 粒 · ' : ''}${r.sticks} 串 · 正中 ${r.perfects} · 滑走 ${r.slips}${lv === 'hard' ? ` · 篤錯 ${r.wrong || 0}` : ''}`;
+    sub.textContent = t('hist.sub', r, lv === 'hard');
     who.appendChild(sub);
     const bar = document.createElement('div'); bar.className = 'bar'; bar.style.width = `${best ? Math.max(4, (r.score / best) * 100) : 0}%`; who.appendChild(bar);
     const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = r.score;
-    const u = document.createElement('small'); u.textContent = '分'; pts.appendChild(u);
+    const u = document.createElement('small'); u.textContent = t('unit.pts'); pts.appendChild(u);
     el.append(who, pts);
     return el;
   }));
@@ -255,6 +252,8 @@ function setLevel(lv) {
 }
 $('lv-normal').addEventListener('click', () => setLevel('normal'));
 $('lv-hard').addEventListener('click', () => setLevel('hard'));
+$('lang').addEventListener('click', () => setLang(lang === 'zh' ? 'en' : 'zh'));
+langListeners.push(() => { renderBoards(); syncNameInputs(); });
 $('r-menu').addEventListener('click', () => { $('result').hidden = true; $('intro').hidden = false; setLevel(playLevel); });
 $('tab-lb').addEventListener('click', () => showTab('lb'));
 $('tab-hist').addEventListener('click', () => showTab('hist'));
@@ -264,7 +263,7 @@ $('close-board').addEventListener('click', () => { $('board').hidden = true; });
 $('name-intro').addEventListener('change', (e) => { Store.setName(e.target.value); });
 async function saveResultName() {
   const ok = await Store.setName($('name-result').value);
-  toast(ok ? (Store.name ? `已儲存：${Store.name}` : '已清除名') : '儲存唔到名：你冇權限寫入排行榜。');
+  toast(ok ? (Store.name ? t('toast.nameSaved', Store.name) : t('toast.nameCleared')) : t('toast.nameFail'));
 }
 $('save-name').addEventListener('click', saveResultName);
 $('roll-intro').addEventListener('click', () => { Store.setName(randomName()); });

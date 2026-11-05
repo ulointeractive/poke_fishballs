@@ -10,7 +10,7 @@ function inCurry(sx, sy) {
 function resolvePoke() {
   const tx = stick.x, ty = stick.y;
   const fx = tx - L.cx, fy = (ty - L.cy) / L.sq;
-  if (!inCurry(tx, ty)) { addPop('篤空氣', tx, ty - 24, '#3b3330', 15); return; }
+  if (!inCurry(tx, ty)) { addPop(t('pop.air'), tx, ty - 24, '#3b3330', 15); return; }
   if (stick.balls.length >= STICK_CAP) return;
   ripples.push({ x: fx, y: fy, t: 0 });
 
@@ -23,7 +23,7 @@ function resolvePoke() {
   if (!hit) {
     impulse(fx, fy, L.r * 4, L.R * 0.55);
     sound('drip');
-    addPop('冇中', tx, ty - 24, '#fff2d6', 16);
+    addPop(t('pop.miss'), tx, ty - 24, '#fff2d6', 16);
     return;
   }
   const off = (tx - hs.sx) / L.r;
@@ -31,7 +31,7 @@ function resolvePoke() {
     hit.vx += -Math.sign(off) * L.R * 1.1;
     impulse(fx, fy, L.r * 3.5, L.R * 0.6);
     slips++;
-    addPop('滑走咗！', tx, ty - 24, '#ffd0c4', 17);
+    addPop(t('pop.slip'), tx, ty - 24, '#ffd0c4', 17);
     return;
   }
   balls.splice(balls.indexOf(hit), 1);
@@ -41,12 +41,12 @@ function resolvePoke() {
     // wrong item: lose points, and it still takes a place on the stick
     wrong++;
     score = Math.max(0, score - WRONG_PENALTY);
-    addPop(`篤錯${KINDS[hit.kind]}！−${WRONG_PENALTY}`, tx, ty - 30, '#ff9b8a', 20);
+    addPop(t('pop.wrong', kindName(hit.kind), WRONG_PENALTY), tx, ty - 30, '#ff9b8a', 20);
   } else {
     served++;
     if (Math.abs(off) < 0.18) {
       perfects++; score += 1 + CENTER_BONUS;
-      sound('perfect'); addPop(`正中！+${1 + CENTER_BONUS}`, tx, ty - 30, '#ffe27a', 22);
+      sound('perfect'); addPop(t('pop.perfect', 1 + CENTER_BONUS), tx, ty - 30, '#ffe27a', 22);
     } else {
       score += 1;
       sound('poke'); addPop('+1', tx, ty - 30, '#fff', 18);
@@ -65,9 +65,9 @@ function handOut() {
   const odd = stick.balls.find((b) => b.kind !== 'fish');
   const avg = stick.balls.reduce((s, b) => s + Math.abs(b.off), 0) / n;
   let say, mood;
-  if (odd) { say = pick(['我要魚蛋呀！', `點解有${KINDS[odd.kind]}嘅？`]); mood = 0; }
+  if (odd) { say = pick(t('say.wrong'))(kindName(odd.kind)); mood = 0; }
   else {
-    say = avg < 0.2 ? pick(['正呀！', '好靚！']) : avg < 0.42 ? pick(['唔該！', '多謝！']) : pick(['咁歪嘅…', '歪咗喎']);
+    say = pick(t(avg < 0.2 ? 'say.great' : avg < 0.42 ? 'say.ok' : 'say.bad'));
     mood = avg < 0.2 ? 2 : avg < 0.42 ? 1 : 0;
   }
   const list = stick.balls.map((b, i, a) => ({ off: b.off, rel: slotRel(i, a.length), v: b.v, kind: b.kind }));
@@ -84,7 +84,7 @@ function handOut() {
       b.kind = pick(OTHER_KINDS);
       balls.push(b);
     }
-    addPop('加料！雜嘢多咗', L.cx, L.cy - L.R * L.sq * 0.6, '#ffd0c4', 18);
+    addPop(t('pop.more'), L.cx, L.cy - L.R * L.sq * 0.6, '#ffd0c4', 18);
   }
   updateHUD();
 }

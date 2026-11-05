@@ -17,6 +17,9 @@ The game was inspired by the creator's childhood memory of buying curry fishball
 - [Names, leaderboard and history](#names-leaderboard-and-history)
 - [Sharing results](#sharing-results)
 - [Sound](#sound)
+- [Language](#language)
+- [Devices and screen sizes](#devices-and-screen-sizes)
+- [Privacy, data and security](#privacy-data-and-security)
 - [Running the game](#running-the-game)
 - [For developers](#for-developers)
 - [Score benchmarks](#score-benchmarks)
@@ -142,8 +145,8 @@ Shown at the end of each game:
 
 ### Names
 
-- Players can type a name of up to 12 characters, on the start screen or after a game.
-- Anyone who leaves it blank gets a random name when their first game finishes, for example 無影竹籤刺客, 午夜咖喱忍者 or 究極魚蛋收割機.
+- Players can type a name of up to 24 characters, on the start screen or after a game.
+- Anyone who leaves it blank gets a random name when their first game finishes, in the language they're playing in: for example 無影竹籤刺客 or 午夜咖喱忍者, or Shadow Curry Ninja or Iron Stick Samurai.
 - Tap **隨機** to roll a new random name at any time. It saves right away.
 - Names come only from what the player types or the random generator. No account names, device names or other personal details are used.
 
@@ -197,7 +200,88 @@ Anyone opening the shared link needs access to the artifact. Set its sharing (or
 | Miss into the curry | Water-drop "plip" with a tiny splash |
 | Slip, wrong item, poking outside the pot | Silent |
 
-**聲音 開 / 關** in the top bar turns all sound on or off. Sound starts after the first tap, as browsers require.
+**聲音 開 / 關** (Sound on / off) turns all sound on or off. Sound starts after the first tap, as browsers require. On iPhone, the side silent switch also mutes the game.
+
+---
+
+## Language
+
+- The **EN / 粵** button switches the whole game between Cantonese (Traditional Chinese) and English: every screen, button, pop-up message, customer line, rank title, share message and result image.
+- On a player's first visit, the game picks Cantonese if their browser language is Chinese, and English otherwise. After that it remembers the player's choice on that device.
+- Random names come out in the current language. Names already saved stay as they are.
+- All text lives in `js/i18n.js`. To change a word, edit it there.
+
+---
+
+## Devices and screen sizes
+
+The game runs in any modern web browser. Nothing to install.
+
+| Platform | Supported browsers |
+|---|---|
+| iPhone / iPad | Safari, Chrome and others (iOS / iPadOS 15 or newer) |
+| Android phones and tablets | Chrome, Samsung Internet, Firefox (Android 8 or newer, current browser) |
+| Desktop | Chrome, Edge, Safari, Firefox (current versions) |
+
+Works with touch, mouse or pen. On a keyboard, Esc or P pauses.
+
+**Screen layouts**
+
+- **Phones held upright:** the top bar and buttons sit above the pot. On narrow phones (320 px wide, like iPhone SE), the buttons wrap onto two lines and the subtitle is hidden.
+- **Phones held sideways:** the score and buttons move into a column on the left, and the pot fills the rest of the screen.
+- **Tablets and desktops:** the game sits in a centred column up to 760 px wide.
+- The pot, items and customers redraw to fit whenever the screen size or orientation changes.
+
+Tested by emulating these screens in Chromium: iPhone SE, iPhone 15 Pro Max, iPhone 15 sideways, Pixel 7 upright and sideways, Galaxy S9+, iPad Pro 11 upright and sideways, desktop at 1440×900 and 1024×640, and a 320×568 phone. None scroll sideways or up and down, and the start screen fits on all of them.
+
+Not yet tested on real Safari, the browser engine used on every iPhone and iPad. A real-device check before launch is recommended.
+
+**Phone details handled**
+
+- No double-tap zoom, no long-press menus, and no text selection while playing.
+- No pull-to-refresh while dragging the stick.
+- Sound starts on the first tap, as iOS requires, and comes back after a phone call or app switch.
+- Leaving the app or tab pauses the game automatically.
+- Layouts respect the iPhone notch and home bar.
+
+---
+
+## Privacy, data and security
+
+### Outside services the game contacts
+
+| Service | Why | What it receives |
+|---|---|---|
+| Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`) | Downloads the two Chinese fonts | The player's IP address and browser details, as with any web font. No game data. |
+| claude.ai artifact services (only when played as the artifact) | Leaderboard, history, saving the result image | See "What is stored" below |
+
+There are no analytics, ads, tracking pixels, cookies, API keys or passwords anywhere in the code. The game doesn't use the camera, microphone, location, contacts or photos.
+
+The claude.ai artifact link appears in the code only as text in the share message.
+
+### What is stored
+
+| Where | What | Who can see it |
+|---|---|---|
+| Online leaderboard (`scores`, `scoresHard`) | For each player: an opaque claude.ai id, the leaderboard name they chose or were given, best score and its stats, number of games, date of the best game | Everyone who can open the artifact |
+| Online history (`data/users/<id>/history`) | The player's last 50 games: level, score, stats, date | Only that player, not even the owner |
+| The browser's local storage | `fishball-lang` (language), `fishball-name` (leaderboard name), `fishball-history` (history when played offline or without save permission) | Only that browser |
+
+- **Player identity:** the game asks claude.ai only for an opaque player id, a random-looking code used to keep each player's scores separate. It does **not** request names, photos or email addresses.
+- **Names:** come only from what the player typed or the random generator.
+
+### Browser features used, only when the player taps
+
+- **Clipboard:** copies the share message. The game only writes; it never reads the clipboard.
+- **Share sheet:** on phones that support it.
+- **File download:** saves the result image. The player confirms first.
+
+### Things to be aware of
+
+- **Scores can be faked.** The game runs entirely in the player's browser, so a technically skilled player with save permission could write a fake best score for themselves. They can't change anyone else's score. The artifact owner can delete any entry, which Claude can do on request.
+- **Names aren't moderated.** A player could type something rude. The owner can remove it the same way.
+- **Who can save:** only people with Contributor access or higher can write to the leaderboard. Viewers can play and see it, but their scores stay on their own device.
+- **Google Fonts:** if you'd rather the game contacted no outside service, the fonts can be bundled with the game instead.
 
 ---
 
@@ -214,8 +298,9 @@ Anyone opening the shared link needs access to the artifact. Set its sharing (or
 
 ```
 index.html        page structure: top bar, start / result / pause / leaderboard screens
-css/style.css     all colours, fonts and layout
-js/config.js      game settings: time, scoring, levels, item names, SAVE_RANKING switch
+css/style.css     all colours, fonts and layout (including phone and sideways layouts)
+js/config.js      game settings: time, scoring, levels, SAVE_RANKING switch
+js/i18n.js        every on-screen text in Cantonese and English, and the language switch
 js/state.js       page elements, small helpers, live game state
 js/records.js     leaderboard, personal history, player names
 js/share.js       share text and result image
@@ -233,14 +318,14 @@ Where to look for common changes:
 | To change… | Edit |
 |---|---|
 | Game length, points, penalty, refill speed, level settings, the leaderboard switch | `js/config.js` |
-| Any text on the start, result or pause screens | `index.html` |
+| Any text in either language (screens, buttons, messages, customer lines, rank titles, random names) | `js/i18n.js` |
 | Colours, fonts, button styles | `css/style.css` |
 | Random names, leaderboard behaviour | `js/records.js` |
-| What customers say | `js/poke.js` (`handOut`) |
+| When customers say each line | `js/poke.js` (`handOut`) |
 | How customers look | `js/customers.js` |
 | How fishballs and other items look | `js/items.js` (`paintItem`) |
 | Sounds | `js/sound.js` |
-| Rank titles and their score thresholds | `js/game.js` (`rankFor`) |
+| Rank title score thresholds | `js/game.js` (`rankFor`) |
 
 The scripts are plain scripts, not modules, so the game works when you double-click `index.html`. They load in the order listed in `index.html`. Each file can use anything the files before it defined, so keep that order when adding files.
 

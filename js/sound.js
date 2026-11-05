@@ -52,6 +52,7 @@ function sound(kind) {
 }
 $('mute').addEventListener('click', () => {
   muted = !muted;
-  $('mute').textContent = muted ? '聲音 關' : '聲音 開';
+  $('mute').textContent = t(muted ? 'btn.soundOff' : 'btn.soundOn');
   $('mute').setAttribute('aria-pressed', String(muted));
 });
+langListeners.push(() => { $('mute').textContent = t(muted ? 'btn.soundOff' : 'btn.soundOn'); });

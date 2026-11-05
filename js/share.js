@@ -8,8 +8,7 @@ function toast(msg) {
   toastTimer = setTimeout(() => { $('toast').textContent = ''; }, 4000);
 }
 function shareText(r) {
-  const who = Store.name ? `${Store.name}喺` : '我喺';
-  return `${who}「篤魚蛋」${r.level === 'hard' ? '挑戰關' : ''}一分鐘攞咗 ${r.score} 分！篤咗 ${r.served} 粒魚蛋，交咗 ${r.sticks} 串，正中 ${r.perfects} 次。你破唔破到？\n${SHARE_URL}`;
+  return `${t('share.text', Store.name, r, r.level === 'hard')}\n${SHARE_URL}`;
 }
 $('share').addEventListener('click', async () => {
   if (!lastRun) return;
@@ -20,10 +19,10 @@ $('share').addEventListener('click', async () => {
   }
   try {
     await navigator.clipboard.writeText(text);
-    toast('成績已複製，貼去 WhatsApp 或者 IG 啦！');
+    toast(t('toast.copied'));
   } catch (e) {
     box.value = text; box.hidden = false; box.focus(); box.select();
-    toast('揀晒段文字再複製。');
+    toast(t('toast.select'));
   }
 });
 
@@ -37,15 +36,15 @@ function resultImage(r) {
   for (let i = 0; i <= 1080; i += 60) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 1080); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(1080, i); g.stroke(); }
   g.fillStyle = '#a8231b'; g.fillRect(80, 80, 920, 200);
   g.fillStyle = '#f4c55a'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = `900 110px ${fd}`; g.fillText('咖喱魚蛋', 540, 185);
+  g.font = `900 110px ${fd}`; g.fillText(t('sign.title'), 540, 185);
   g.fillStyle = '#fbfbf8'; g.fillRect(80, 320, 920, 680);
   g.fillStyle = '#2b1f17';
-  g.font = `700 48px ${fb}`; g.fillText((Store.name || '一分鐘挑戰') + (r.level === 'hard' ? ' · 挑戰關' : ''), 540, 410);
+  g.font = `700 48px ${fb}`; g.fillText((Store.name || t('img.subtitle')) + (r.level === 'hard' ? t('img.hard') : ''), 540, 410);
   g.font = `900 260px ${fd}`; g.fillText(String(r.score), 540, 600);
-  g.font = `700 48px ${fb}`; g.fillStyle = '#6d625a'; g.fillText('分', 540, 750);
+  g.font = `700 48px ${fb}`; g.fillStyle = '#6d625a'; g.fillText(t('unit.pts'), 540, 750);
   g.font = `400 40px ${fb}`;
-  g.fillText(`${r.served} 粒 · ${r.sticks} 串 · 正中 ${r.perfects} 次`, 540, 830);
-  g.fillStyle = '#a8231b'; g.font = `700 40px ${fb}`; g.fillText('你破唔破到？', 540, 920);
+  g.fillText(t('img.stats', r), 540, 830);
+  g.fillStyle = '#a8231b'; g.font = `700 40px ${fb}`; g.fillText(t('img.cta'), 540, 920);
   // a little stick of fishballs
   g.fillStyle = '#d9b877'; g.fillRect(930, 340, 10, 260);
   for (let i = 0; i < 6; i++) {
@@ -61,11 +60,11 @@ $('save-img').addEventListener('click', async () => {
   const blob = await resultImage(lastRun);
   if (!blob) return;
   if (downloads) {
-    try { await downloads.save({ filename: `篤魚蛋-${lastRun.score}分.png`, data: blob }); toast('成績圖已儲存。'); }
-    catch (e) { toast('冇儲存成績圖。'); }
+    try { await downloads.save({ filename: t('img.file', lastRun.score), data: blob }); toast(t('toast.imgSaved')); }
+    catch (e) { toast(t('toast.imgSkipped')); }
   } else {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = `篤魚蛋-${lastRun.score}分.png`;
+    a.href = URL.createObjectURL(blob); a.download = t('img.file', lastRun.score);
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }

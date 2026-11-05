@@ -88,8 +88,11 @@ function setPos(e) {
   stick.x = nx; stick.y = ny; stick.hasPointer = true;
 }
 cv.addEventListener('pointermove', setPos);
+cv.addEventListener('contextmenu', (e) => e.preventDefault());   // no long-press menu on Android
 cv.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  // phones can suspend sound after a call or app switch; wake it on the next touch
+  if (ac && ac.state !== 'running') { try { ac.resume(); } catch (err) {} }
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
   setPos(e);
   if (state !== 'play' || stick.pressed) return;
@@ -114,22 +117,22 @@ function pauseGame() {
   if (state !== 'play') return;
   state = 'paused';
   stick.pressed = false; stick.needLift = false;
-  $('pause-info').textContent = `${LEVELS[playLevel].label}關 · 仲有 ${timeLeft.toFixed(1)} 秒 · ${score} 分`;
+  showPauseInfo();
   $('paused').hidden = false;
-  $('pause').textContent = '暫停中';
+  $('pause').textContent = t('btn.paused');
 }
 function resumeGame() {
   if (state !== 'paused') return;
   $('paused').hidden = true;
-  $('pause').textContent = '暫停';
+  $('pause').textContent = t('btn.pause');
   state = 'play';
 }
 $('pause').addEventListener('click', () => { if (state === 'play') pauseGame(); else resumeGame(); });
 $('resume').addEventListener('click', resumeGame);
-$('restart').addEventListener('click', () => { $('paused').hidden = true; $('pause').textContent = '暫停'; level = playLevel; startGame(); });
+$('restart').addEventListener('click', () => { $('paused').hidden = true; $('pause').textContent = t('btn.pause'); level = playLevel; startGame(); });
 $('quit').addEventListener('click', () => {
   // leave without saving this game
-  $('paused').hidden = true; $('pause').textContent = '暫停';
+  $('paused').hidden = true; $('pause').textContent = t('btn.pause');
   state = 'ready'; stick.balls = []; score = 0; sticks = 0; timeLeft = GAME_TIME;
   updateHUD(); setChips(true);
   $('intro').hidden = false; setLevel(playLevel);
@@ -153,46 +156,61 @@ function startGame() {
   setChips(false);
   updateHUD();
 }
+let lastSave = null;
+// result screen text; re-run when the language changes
+function fillResult(run, res) {
+  if (!run) return;
+  const lv = run.level;
+  $('rank').textContent = rankFor(run.score, lv);
+  $('r-level').textContent = t('level.name', levelLabel(lv));
+  $('r-score').textContent = run.score;
+  $('r-sticks').textContent = t('n.sticks', run.sticks);
+  $('r-served').textContent = t('n.balls', run.served);
+  $('r-perfect').textContent = t('n.times', run.perfects);
+  $('r-slip').textContent = t('n.times', run.slips);
+  $('r-wrong').textContent = t('n.items', run.wrong);
+  $('r-wrong').hidden = $('r-wrong-l').hidden = lv !== 'hard';
+  if (!res) return;
+  $('r-best').textContent = t('n.pts', Math.max(run.score, Store.localBest(lv), (Store.mine[lv] && Store.mine[lv].best) || 0));
+  const place = Store.place(lv);
+  $('r-place').textContent = res.saved === 'test' ? t('r.test') : place ? t('r.rank', place) : t('r.localOnly');
+  $('r-save').textContent = res.saved === 'readonly' ? t('r.readonly') : res.saved === 'test' ? t('r.testNote') : '';
+}
+function showPauseInfo() {
+  $('pause-info').textContent = t('pause.info', levelLabel(playLevel), timeLeft.toFixed(1), score);
+}
+langListeners.push(() => {
+  $('pause').textContent = t(state === 'paused' ? 'btn.paused' : 'btn.pause');
+  if (state === 'paused') showPauseInfo();
+  if (!$('result').hidden) fillResult(lastRun, lastSave);
+});
+
 function rankFor(n, lv) {
-  const t = lv === 'hard' ? [240, 180, 120, 60] : [320, 240, 160, 80];
-  if (n >= t[0]) return '傳說級魚蛋佬';
-  if (n >= t[1]) return '魚蛋師傅';
-  if (n >= t[2]) return '熟手學徒';
-  if (n >= t[3]) return '新嚟幫手';
-  return '篤到手軟';
+  const steps = lv === 'hard' ? [240, 180, 120, 60] : [320, 240, 160, 80];
+  const i = steps.findIndex((min) => n >= min);
+  return t('rank.' + (i < 0 ? 4 : i));
 }
 async function endGame() {
   state = 'over';
   stick.pressed = false;
   setChips(true);
-  addPop('時間到！', W / 2, L.cy - L.R * 0.2, '#ffe27a', 30);
+  addPop(t('pop.timeUp'), W / 2, L.cy - L.R * 0.2, '#ffe27a', 30);
   const run = { level: playLevel, score, sticks, served, perfects, slips, wrong, at: Date.now() };
   lastRun = run;
   $('share-text').hidden = true;
   $('toast').textContent = '';
   syncNameInputs();
-  $('rank').textContent = rankFor(score, playLevel);
-  $('r-level').textContent = `${LEVELS[playLevel].label}關`;
-  $('r-wrong').textContent = `${wrong} 件`;
-  $('r-wrong').hidden = $('r-wrong-l').hidden = playLevel !== 'hard';
-  $('r-score').textContent = score;
-  $('r-sticks').textContent = `${sticks} 串`;
-  $('r-served').textContent = `${served} 粒`;
-  $('r-perfect').textContent = `${perfects} 次`;
-  $('r-slip').textContent = `${slips} 次`;
+  fillResult(run, null);
   $('r-new').hidden = true;
-  $('r-place').textContent = '儲存緊…';
+  $('r-place').textContent = t('r.saving');
   $('r-save').textContent = '';
   const shown = new Promise((res) => setTimeout(res, 900));
   let res = { isNew: false, saved: 'local' };
   try { res = await Store.saveRun(run); } catch (e) {}
   await shown;
   $('r-new').hidden = !res.isNew;
-  $('r-best').textContent = `${Math.max(score, Store.localBest(playLevel), (Store.mine[playLevel] && Store.mine[playLevel].best) || 0)} 分`;
-  const place = Store.place(playLevel);
-  $('r-place').textContent = res.saved === 'test' ? '測試模式' : place ? `第 ${place} 名` : '只計呢部機';
-  $('r-save').textContent = res.saved === 'readonly' ? '你嘅分數只儲存喺呢部機：你冇權限寫入排行榜。'
-    : res.saved === 'test' ? '測試模式：呢局冇上排行榜。' : '';
+  lastSave = res;
+  fillResult(run, res);
   $('result').hidden = false;
   renderBoards();
 }

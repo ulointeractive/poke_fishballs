@@ -7,11 +7,12 @@ const GAME_TIME = 60;
 const REFILL_EVERY = 0.25;    // seconds between new items dropped into the pot
 const WRONG_PENALTY = 2;      // challenge level: poking anything that isn't a fishball
 const LEVELS = {
-  normal: { label: '普通', count: 30, others: 0, flow: 1 },
+  normal: { count: 30, others: 0, flow: 1 },
   // 挑戰 gets harder with every stick: more non-fishball items join the pot
-  hard:   { label: '挑戰', count: 34, others: 0.4, flow: 1.35, rampOthers: 0.03, maxOthers: 0.7, rampCount: 1, maxExtra: 10, dropPerStick: 2 },
+  hard:   { count: 34, others: 0.4, flow: 1.35, rampOthers: 0.03, maxOthers: 0.7, rampCount: 1, maxExtra: 10, dropPerStick: 2 },
 };
-const KINDS = { fish: '魚蛋', radish: '白蘿蔔', beef: '牛丸', cuttle: '墨魚丸', skin: '豬皮' };
+// the items that can be in the pot (their names, in both languages, are in js/i18n.js)
+const KINDS = { fish: 'fish', radish: 'radish', beef: 'beef', cuttle: 'cuttle', skin: 'skin' };
 const OTHER_KINDS = ['radish', 'beef', 'cuttle', 'skin'];
 const COLLECTION = { normal: 'scores', hard: 'scoresHard' };
 const HISTORY_MAX = 50;
