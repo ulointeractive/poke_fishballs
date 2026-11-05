@@ -15,7 +15,10 @@
   --font-body: "Chiron Hei HK", "Noto Sans TC", "PingFang HK", "Microsoft JhengHei", system-ui, sans-serif;
   color-scheme: light;
 }
-html, body { height: 100%; margin: 0; overscroll-behavior: none; }
+/* the whole game is one screen: the page itself never scrolls (dvh = the visible part of a phone screen) */
+html, body { height: 100%; margin: 0; overscroll-behavior: none; overflow: hidden; }
+html, body { height: 100dvh; }
+body { position: fixed; inset: 0; width: 100%; }
 [hidden] { display: none !important; }
 body {
   background-color: var(--tile);
@@ -33,6 +36,7 @@ body {
 .app {
   box-sizing: border-box;
   height: 100%;
+  overflow: hidden;
   max-width: 760px;
   margin: 0 auto;
   display: flex;
@@ -48,8 +52,9 @@ body {
 .controls .meter { flex: 1 1 180px; min-width: 0; }
 .tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-left: auto; }
 .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.card-top h1 { min-width: 0; }
-.chip.lang { flex-shrink: 0; margin-top: 4px; }
+.card-top h1, .card-top h2 { min-width: 0; }
+.top-tools { display: flex; gap: 6px; flex-shrink: 0; }
+.chip.lang { flex-shrink: 0; min-width: 44px; min-height: 36px; }
 .stall {
   display: flex;
   flex-wrap: nowrap;              /* title on the left, time / score / sticks always top right */
@@ -132,7 +137,7 @@ body {
 .stage {
   position: relative;
   flex: 1;
-  min-height: 300px;
+  min-height: 0;
   border-radius: 10px;
   -webkit-user-select: none;
   user-select: none;
@@ -142,12 +147,14 @@ body {
   background: #b9bfbd;
 }
 #pot { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: none; display: block; }
+/* pop-ups cover the whole screen; js/layout.js shrinks a card that is too tall so nothing scrolls */
 .overlay {
-  position: absolute; inset: 0;
+  position: fixed; inset: 0; z-index: 10;
   display: grid; place-items: center;
-  background: rgba(43, 31, 23, 0.42);
-  padding: 16px;
-  overflow: auto;
+  background: rgba(43, 31, 23, 0.5);
+  box-sizing: border-box;
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  overflow: hidden;
 }
 .card {
   background: var(--card);
@@ -179,7 +186,11 @@ body {
 .steps small { color: var(--muted); font-size: 12px; display: block; }
 .note { font-size: 13px; color: var(--muted); }
 .row { display: flex; gap: 10px; flex-wrap: wrap; }
-.row > .btn { flex: 1; }
+.row > .btn { flex: 1 1 auto; }
+/* fitted cards are shrunk instead of cut off; the records card keeps its list scrollable inside */
+.fit .card:not(.scroll) { max-height: none; overflow: visible; }
+.card.scroll { overflow: hidden; }
+.card.scroll .list { flex: 1 1 auto; min-height: 60px; overflow-y: auto; overscroll-behavior: contain; }
 .btn {
   font: inherit;
   font-weight: 700;
@@ -192,6 +203,8 @@ body {
   border-radius: 6px;
   padding: 12px 16px;
   cursor: pointer;
+  white-space: nowrap;      /* "我嘅紀錄" stays on one line; buttons wrap as a whole instead */
+  word-break: keep-all;
 }
 .btn.ghost { color: var(--sign); background: transparent; border: 2px solid var(--sign); padding: 10px 14px; }
 .btn:active { transform: translateY(2px); }
@@ -274,7 +287,8 @@ body {
 .level:focus-visible, .seg button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .legend canvas { width: 100%; max-width: 320px; height: 64px; align-self: center; display: block; }
 .legend-cols.four { grid-template-columns: repeat(4, 1fr); }
-.seg { display: flex; gap: 6px; margin-bottom: 10px; }
+.seg { display: flex; gap: 6px; }
+.seg button { white-space: nowrap; }
 .seg button {
   font: inherit; font-size: 14px; font-weight: 700; flex: 1; cursor: pointer;
   border: 2px solid var(--sign); border-radius: 999px; padding: 5px 8px;
@@ -305,7 +319,6 @@ body {
   .val { font-size: 17px; }
   .chip { font-size: 12px; padding: 4px 9px; }
   .card h1 { font-size: 28px; }
-  .stage { min-height: 260px; }
 }
 /* phones held sideways: controls in a column on the left, the pot fills the rest */
 @media (orientation: landscape) and (max-height: 540px) {

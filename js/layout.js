@@ -12,7 +12,7 @@ function resize() {
   L.top = clamp(H * 0.25, 100, 170);
   L.depth = 0.4;
   const availH = H - L.top - 14;
-  L.R = Math.max(70, Math.min(W * 0.47, availH / (2 * 0.58 + L.depth + 0.04)));
+  L.R = Math.max(70, Math.min(W * 0.44, availH / (2 * 0.58 + L.depth + 0.04)));
   // on tall (phone) screens, tilt the pot towards the player so it fills the space
   L.sq = clamp((availH / L.R - L.depth - 0.06) / 2, 0.58, 0.8);
   L.cx = W / 2;
@@ -62,3 +62,38 @@ function buildBackground() {
   b.strokeStyle = 'rgba(255,255,255,0.18)'; b.lineWidth = 1;
   for (let i = 0; i < 14; i++) { const y = L.top + 8 + i * 9; b.beginPath(); b.moveTo(0, y); b.lineTo(W, y + 30); b.stroke(); }
 }
+
+// ---------- pop-ups always fit the screen ----------
+// A card that is taller than the screen is shrunk (CSS zoom) instead of scrolled.
+// The records card is not shrunk: its list of games scrolls inside it.
+const canZoom = window.CSS && CSS.supports && CSS.supports('zoom', '0.5');
+if (canZoom) document.documentElement.classList.add('fit');
+function fitCards() {
+  if (!canZoom) return;
+  document.querySelectorAll('.overlay:not([hidden]) > .card:not(.scroll)').forEach((card) => {
+    const box = card.parentElement, cs = getComputedStyle(box);
+    const availH = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    card.style.zoom = '1';
+    let z = 1;
+    // shrinking makes lines narrower, which can wrap text, so check a few times
+    for (let i = 0; i < 4; i++) {
+      const h = card.getBoundingClientRect().height;   // on-screen size, zoom included
+      if (h <= availH + 1) break;
+      z = Math.max(0.4, z * (availH / h));
+      card.style.zoom = String(z);
+    }
+  });
+}
+let fitQueued = false;
+function queueFit() {
+  if (fitQueued) return;
+  fitQueued = true;
+  requestAnimationFrame(() => { fitQueued = false; fitCards(); });
+}
+window.addEventListener('resize', queueFit);
+window.addEventListener('orientationchange', queueFit);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueFit);
+document.querySelectorAll('.overlay').forEach((o) => new MutationObserver(queueFit).observe(o, {
+  attributes: true, attributeFilter: ['hidden'], subtree: true, childList: true, characterData: true,
+}));
+queueFit();

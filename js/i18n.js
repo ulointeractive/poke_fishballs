@@ -36,7 +36,7 @@ const STRINGS = {
     'btn.start': '開檔！',
     'result.new': '新紀錄！', 'unit.pts': '分',
     'r.sticks': '交咗俾客人', 'r.served': '篤到魚蛋', 'r.perfect': '正中紅心', 'r.slip': '滑走咗',
-    'r.wrong': '篤錯嘢', 'r.best': '你嘅最佳', 'r.place': '排名',
+    'r.wrong': '篤錯嘢', 'r.best': '你嘅最佳',
     'btn.share': '分享成績', 'btn.saveImg': '儲存成績圖', 'share.aria': '成績文字',
     'btn.again': '再篤過', 'btn.menu': '換關卡',
     'pause.title': '暫停咗', 'btn.restart': '重新開始', 'btn.quit': '返主頁',
@@ -65,7 +65,7 @@ const STRINGS = {
     'say.air': ['唔好篤空氣啦', '篤邊度呀？', '喂，煲喺下面呀', '空氣唔使錢㗎咩？'],
     'say.miss': ['睇真啲先篤啦', '又冇中？', '魚蛋走晒去邊？'],
     'say.slow': ['快手啲', '快啲啦，我趕時間', '等到頸都長', '師傅，好肚餓呀', '仲未得呀？'],
-    'r.rank': (n) => `呢部機第 ${n} 名`, 'r.privacy': '呢局只儲存喺你部機。',
+    'r.privacy': '呢局只儲存喺你部機。',
     'hist.empty': '未有紀錄，玩一局先！',
     'intro.local': (lv, best) => `你喺呢部機${lv}關嘅最高分：${best} 分`,
     'rec.sub': (r) => `${r.served ?? 0} 粒 · ${r.sticks} 串`,
@@ -107,7 +107,7 @@ const STRINGS = {
     'btn.start': 'Open the stall!',
     'result.new': 'New best!', 'unit.pts': 'pts',
     'r.sticks': 'Sticks served', 'r.served': 'Fishballs poked', 'r.perfect': 'Centre hits', 'r.slip': 'Slipped',
-    'r.wrong': 'Wrong items', 'r.best': 'Your best', 'r.place': 'Rank',
+    'r.wrong': 'Wrong items', 'r.best': 'Your best',
     'btn.share': 'Share result', 'btn.saveImg': 'Save image', 'share.aria': 'Result text',
     'btn.again': 'Play again', 'btn.menu': 'Change level',
     'pause.title': 'Paused', 'btn.restart': 'Restart', 'btn.quit': 'Main menu',
@@ -135,7 +135,7 @@ const STRINGS = {
     'say.air': ['Stop poking the air!', 'Where are you poking?', "Hey, the pot's down there!", 'Is air free now?'],
     'say.miss': ['Look before you poke!', 'Missed again?', 'Where did the fishballs go?'],
     'say.slow': ['Hurry up!', "Quick, I'm in a rush!", "I've been waiting forever!", "Boss, I'm starving!", 'Not ready yet?'],
-    'r.rank': (n) => `#${n} on this device`, 'r.privacy': 'This game is saved on your device only.',
+    'r.privacy': 'This game is saved on your device only.',
     'hist.empty': 'No games yet. Play one first!',
     'intro.local': (lv, best) => `Your best ${lv} score on this device: ${best} pts`,
     'rec.sub': (r) => `${r.served ?? 0} fishballs · ${r.sticks} sticks`,
@@ -151,10 +151,9 @@ const STRINGS = {
 let lang = 'zh';
 try {
   const saved = localStorage.getItem('fishball-lang');
-  lang = saved === 'en' || saved === 'zh' ? saved : (/^zh/i.test(navigator.language || '') ? 'zh' : 'en');
-} catch (e) {
-  lang = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
-}
+  // Cantonese unless the player has switched to English before
+  lang = saved === 'en' ? 'en' : 'zh';
+} catch (e) {}
 
 // t('key') for text, t('key', a, b) for text with values in it
 function t(key, ...args) {
@@ -173,8 +172,8 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
   document.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
-  const btn = document.getElementById('lang');
-  if (btn) { btn.textContent = t('btn.lang'); btn.setAttribute('aria-label', t('btn.langAria')); }
+  // every popup has its own language button
+  document.querySelectorAll('.lang').forEach((btn) => { btn.textContent = t('btn.lang'); btn.setAttribute('aria-label', t('btn.langAria')); });
 }
 
 // the other files register here to redraw their dynamic text when the language changes

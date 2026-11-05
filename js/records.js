@@ -33,10 +33,6 @@ const Store = {
     try { Object.keys(localStorage).filter((k) => k.startsWith('fishball-')).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
     this.history = [];
   },
-  // this game's place among all games of the same level on this device
-  place(run) {
-    return this.runsFor(run.level).filter((x) => x.score > run.score).length + 1;
-  },
 };
 
 const fmtDate = (ms) => {
@@ -113,7 +109,7 @@ function setLevel(lv) {
 }
 $('lv-normal').addEventListener('click', () => setLevel('normal'));
 $('lv-hard').addEventListener('click', () => setLevel('hard'));
-$('lang').addEventListener('click', () => setLang(lang === 'zh' ? 'en' : 'zh'));
+document.querySelectorAll('.lang').forEach((b) => b.addEventListener('click', () => setLang(lang === 'zh' ? 'en' : 'zh')));
 langListeners.push(renderBoards);
 $('r-menu').addEventListener('click', () => { $('result').hidden = true; $('intro').hidden = false; setLevel(playLevel); });
 $('close-board').addEventListener('click', () => { $('board').hidden = true; });
