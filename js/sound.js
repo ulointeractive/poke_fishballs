@@ -183,11 +183,12 @@ function track(cfg) {
 }
 const MUSIC = {
   // The game's track: a driving beat (drums, pumping bass, soft held chords), no melody, in a bright major key.
-  // C major, plain three-note chords voiced close together: C (C E G) - G (B D G) - Am (C E A) - F (C F A), 124 bpm.
+  // C major, plain three-note chords, each with its own root as the top (most audible) note, so the changes
+  // are clear: C (E G C) - G (B D G) - Am (C E A) - F (A C F), 124 bpm.
   main: track({
     bpm: 124, pad: true,
     roots: [-21, -26, -24, -28],
-    chords: [[3, 7, 10], [2, 5, 10], [3, 7, 12], [3, 8, 12]],
+    chords: [[7, 10, 15], [2, 5, 10], [3, 7, 12], [0, 3, 8]],
   }),
 };
 // the track the game plays (one of the keys above)
