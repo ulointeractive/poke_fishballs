@@ -19,8 +19,7 @@ function resolvePoke() {
   const reach = L.r * 1.25;
   let hit = null, hs = null, hd = Infinity;
   for (const b of balls) {
-    // a sinking item still counts until it has almost disappeared
-    if (b.drop > 0.05 || b.sink > 0.85) continue;
+    if (b.drop > 0.05) continue;   // still falling in
     const s = ballScreen(b), dx = tx - s.sx, dy = ty - s.sy, d = dx * dx + dy * dy;
     if (d < reach * reach && d < hd) { hit = b; hs = s; hd = d; }
   }
@@ -86,7 +85,7 @@ function handOut() {
   sound('whoosh');
   const cfg = LEVELS[playLevel];
   if (cfg.dropPerStick && state === 'play') {
-    // every finished stick brings more of the other stuff up into the pot
+    // every finished stick drops more of the other stuff into the pot
     for (let i = 0; i < cfg.dropPerStick && countKind(false) < wantOthers(); i++) {
       const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * L.rin;
       const b = makeBall(Math.cos(a) * d, Math.sin(a) * d, 1);
