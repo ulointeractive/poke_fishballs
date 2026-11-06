@@ -66,11 +66,10 @@ When items overlap, the poke hits the one in front.
 ### The pot
 
 - Fishballs float and drift in every direction: a few eddies turn both ways and wander around the pot, and the whole pot swirls gently clockwise, then anticlockwise. The pattern starts differently each game.
-- **Items don't stay forever.** Every item, fishball or not, floats for 8–15 seconds, bobs lower for a second, then sinks out of sight over about 1.7 seconds. While it sinks and fades it can still be poked, until it has almost disappeared.
-- **New items float up from the bottom of the pot**, anywhere in it, and can be poked once they reach the surface.
+- **New items drop into the pot** from a little above it, anywhere in the pot, and land with a ripple and a plop. They can be poked once they have landed. Items stay in the pot until they are poked.
 - Every poke pushes nearby items away with a ripple. Dragging the stick while it's down in the pot stirs the items around it.
 - **The curry boils harder as time runs out.** It starts at a gentle simmer. Bubbles rise more and more often and bump the fishballs, and the current speeds up to 3.4× by the last second, the eddies churn and switch direction faster, and the items get jostled in random directions, so the last 20 seconds are the hardest. (The pot calms down again after the game.)
-- The stall keeps topping up the pot: a new item rises up about every 0.25 seconds whenever the pot is below its target.
+- The stall keeps topping up the pot: a new item drops in about every 0.25 seconds whenever the pot is below its target.
 
 ### Customers
 
@@ -218,7 +217,7 @@ The link in the message is the game's GitHub Pages address (`SHARE_URL` in `js/c
 | Off-centre hit | A dull, wobbly "bonk" with no chime, and an orange **篤歪咗 +1** |
 | Slipped off (篤太邊) | A slow, wet slide (about 0.7 seconds), then a little splash |
 | Wrong item (挑戰) | "Uh-oh": two falling notes |
-| New item reaches the surface | A soft "bloop" |
+| New item drops into the pot | A small "plop" |
 | Stick handed over | A whoosh as the stick flies over |
 | Customer gets a neat stick | Cash-drawer "ka-ching" and a rising run of bells (with a sparkle for a very neat stick) |
 | Customer gets a crooked stick or a wrong item | A sad "wah-wah" |

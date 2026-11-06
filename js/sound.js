@@ -117,7 +117,7 @@ function sound(kind) {
   else if (kind === 'serve0') serveSound(0);
   else if (kind === 'serve1') serveSound(1);
   else if (kind === 'serve2') serveSound(2);
-  else if (kind === 'plop') tone('sine', 180, 320, 0.08, 0.05);   // an item bobbing up to the surface
+  else if (kind === 'plop') tone('sine', 300, 120, 0.08, 0.08);   // an item dropping into the curry
   else if (kind === 'drip') droplet();
 }
 $('mute').addEventListener('click', () => {

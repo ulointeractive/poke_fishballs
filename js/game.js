@@ -16,7 +16,7 @@ function update(dt) {
 
   physics(dt);
 
-  // the stall keeps topping up: new items float up from the bottom of the pot, anywhere in it
+  // the stall keeps topping up: new items drop into the pot, anywhere in it
   if (countKind(true) < wantFish() || countKind(false) < wantOthers()) {
     refillTimer += dt;
     if (refillTimer > REFILL_EVERY) {
